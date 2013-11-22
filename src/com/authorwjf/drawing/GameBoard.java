@@ -1,5 +1,6 @@
 //TODO update the game to have a maze background, and some way to detect where walls all for collision detection.
 //TODO Change the spaceship (sprite 2) to be something more suitable to a navigate a maze.
+//TODO Sprite2's location seems to be the top left of it's bounding rectangle instead of the center.
 package com.authorwjf.drawing;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 public class GameBoard extends View {
@@ -30,12 +32,17 @@ public class GameBoard extends View {
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
 	private Point sprite1;
 	private Point sprite2;
+	private Point sprite2Velocity = new Point(0, 0);
 	private Bitmap bm1 = null;
 	private Matrix m = null;
 	private Bitmap bm2 = null;
 	// Collision flag and point
 	private boolean collisionDetected = false;
 	private Point lastCollision = new Point(-1, -1);
+	// acceleration flag
+	private boolean isAccelerating = false;
+	private int xTouch;
+	private int yTouch;
 
 	private int sprite1Rotation = 0;
 
@@ -198,5 +205,88 @@ public class GameBoard extends View {
 			canvas.drawLine(lastCollision.x + 5, lastCollision.y - 5,
 					lastCollision.x - 5, lastCollision.y + 5, p);
 		}
+	}
+
+	// Method for getting touch state--requires android 2.1 or greater
+	// TODO Make the spaceship accelerate towards wherever is being touched, and
+	// deaccelerate while the screen is not being touched.
+	@Override
+	synchronized public boolean onTouchEvent(MotionEvent ev) {
+		switch (ev.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			xTouch = Math.round(ev.getX());
+			yTouch = Math.round(ev.getY());
+			isAccelerating = true;
+			break;
+		case MotionEvent.ACTION_UP:
+			isAccelerating = false;
+			break;
+		case MotionEvent.ACTION_MOVE:
+			xTouch = Math.round(ev.getX());
+			yTouch = Math.round(ev.getY());
+			isAccelerating = true;
+			break;
+		}
+		return true;
+	}
+
+	// Currently returns the velocity for functions in main to use. Should be
+	// refactored so that is not needed.
+	public Point updateVelocity() {
+		if (isAccelerating) {
+			// Increase velocity with touch information
+			// TODO add a scale factor;
+			sprite2Velocity.x += xTouch - sprite2.x;
+			sprite2Velocity.y += yTouch - sprite2.y;
+		} else {
+			// TODO fix friction currently the sprite
+			// Decrease velocity
+			int xFriction = -1 * Math.round(Math.signum(sprite2Velocity.x));
+			int yFriction = -1 * Math.round(Math.signum(sprite2Velocity.y));
+			sprite2Velocity.x = (sprite2Velocity.x > 0) ? sprite2Velocity.x
+					- xFriction : sprite2Velocity.x + xFriction;
+			sprite2Velocity.y = (sprite2Velocity.y > 0) ? sprite2Velocity.y
+					- yFriction : sprite2Velocity.y + yFriction;
+
+		}
+		// set and enforce max speed;
+		// TODO enforce actual speed instead of coordinate-wise speed.
+		final int maxSpeed = 5;
+		int xDir = Math.round(Math.signum(sprite2Velocity.x));
+		int yDir = Math.round(Math.signum(sprite2Velocity.y));
+		sprite2Velocity.x = (Math.abs(sprite2Velocity.x) > 5) ? xDir * maxSpeed
+				: sprite2Velocity.x;
+		sprite2Velocity.y = (Math.abs(sprite2Velocity.y) > 5) ? yDir * maxSpeed
+				: sprite2Velocity.y;
+
+		return sprite2Velocity;
+	}
+
+	public void resetSprite2Velocity() {
+		sprite2Velocity = new Point(0, 0);
+	}
+
+	// TODO Better boundary checking
+	// What this does: update the position, then check if we are outside
+	// the boundary,
+	// if we are: reverse direction.
+	// This sort of boundary checking has issues, because the velocity
+	// gets overwritten by the next call. So we can head outside the
+	// boundary with two successive impulses.
+	// Something about how I changed update velocity broke this.
+	public void updatePosition() {
+		// TODO do I need  this.getWidth() and this.getSprite2Width() instead?
+		int sprite2MaxX = getWidth() - getSprite2Width();
+		int sprite2MaxY = getHeight()- getSprite2Height();
+		sprite2.x = sprite2.x + sprite2Velocity.x;
+		if (sprite2.x > sprite2MaxX || sprite2.x < 5) {
+			sprite2Velocity.x *= -1;
+		}
+		sprite2.y = sprite2.y + sprite2Velocity.y;
+		if (sprite2.y > sprite2MaxY || sprite2.y < 5) {
+			sprite2Velocity.y *= -1;
+		}
+		setSprite2(sprite2.x,sprite2.y);
+		
 	}
 }
