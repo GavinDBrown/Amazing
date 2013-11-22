@@ -1,6 +1,6 @@
 Amazing
 =======
 
-First commit
+A project to convert a simple tutorial from the TechRepublic into a maze navigation game.
 
-Currently working on getting the spaceship (sprite2) to follow impulses created by the mouse and have correct boundary checking on the spaceship.
+Look for TODO statements commented inline in code for things that need done.
