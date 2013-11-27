@@ -6,3 +6,6 @@ Changed package names
 Deleted textview that used to be on the top.
 Fixed friction
 Changed `Point sprite2` to track the center of the sprite instead of the top left corner. Note: this broke the current collision detection system, and the sprite can now spawn halfway off screen.
+
+11/26/2013
+Max speed is now enforced non-coordinate wise.
