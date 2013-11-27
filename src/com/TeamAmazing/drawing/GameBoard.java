@@ -122,7 +122,8 @@ public class GameBoard extends View {
 		bm1 = BitmapFactory.decodeResource(getResources(), R.drawable.asteroid);
 		bm2 = BitmapFactory.decodeResource(getResources(), R.drawable.ufo);
 		sprite1Bounds = new Rect(0, 0, bm1.getWidth(), bm1.getHeight());
-		// TODO This might be something to change so that collision detection works again
+		// TODO This might be something to change so that collision detection
+		// works again
 		sprite2Bounds = new Rect(0, 0, bm2.getWidth(), bm2.getHeight());
 	}
 
@@ -139,7 +140,8 @@ public class GameBoard extends View {
 
 	// TODO This usually works, but for some reason when the spaceship bottom
 	// hits the asteroid it draws the red x in the wrong spot. I have a screen
-	// shot demonstrating this.
+	// shot demonstrating this. Now it isn't close to working because of how I
+	// changed where the sprite is drawn.
 	private boolean checkForCollision() {
 		if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
 			return false;
@@ -198,8 +200,9 @@ public class GameBoard extends View {
 				sprite1Rotation = 0;
 		}
 		if (sprite2.x >= 0) {
-			//Draws the bitmap, with sprite2.x,y as the center
-			canvas.drawBitmap(bm2, sprite2.x - sprite2Bounds.width()/2, sprite2.y - sprite2Bounds.height()/2, null);
+			// Draws the bitmap, with sprite2.x,y as the center
+			canvas.drawBitmap(bm2, sprite2.x - sprite2Bounds.width() / 2,
+					sprite2.y - sprite2Bounds.height() / 2, null);
 		}
 		collisionDetected = checkForCollision();
 		if (collisionDetected) {
@@ -239,7 +242,7 @@ public class GameBoard extends View {
 	public void updateVelocity() {
 		if (isAccelerating) {
 			// Increase velocity with touch information
-			// TODO add a scale factor;
+			// TODO add a scale factor?;
 			sprite2Velocity.x += xTouch - sprite2.x;
 			sprite2Velocity.y += yTouch - sprite2.y;
 		} else {
@@ -251,13 +254,16 @@ public class GameBoard extends View {
 		}
 		// set and enforce max speed;
 		// TODO enforce actual speed instead of coordinate-wise speed.
-		final int maxSpeed = 5;
-		if (Math.abs(sprite2Velocity.x) > maxSpeed)
-			sprite2Velocity.x = Math.round(Math.signum(sprite2Velocity.x))
-					* maxSpeed;
-		if (Math.abs(sprite2Velocity.y) > maxSpeed)
-			sprite2Velocity.y = Math.round(Math.signum(sprite2Velocity.y))
-					* maxSpeed;
+		final int maxSpeed = 20;
+		int speed = (int) Math.round(Math.sqrt(Math.pow(sprite2Velocity.x, 2)
+				+ Math.pow(sprite2Velocity.y, 2)));
+		if (speed > maxSpeed) {
+			sprite2Velocity.x = sprite2Velocity.x * maxSpeed / speed;
+			// TODO interestingly sprite2Velocity.y *= maxSpeed / speed; doesn't
+			// work. Why?
+			sprite2Velocity.y = sprite2Velocity.y * maxSpeed / speed;
+
+		}
 	}
 
 	public void resetSprite2Velocity() {
