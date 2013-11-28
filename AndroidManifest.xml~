@@ -5,7 +5,11 @@
 
     <uses-sdk
         android:minSdkVersion="8"
+<<<<<<< HEAD
+        android:targetSdkVersion="16" />
+=======
         android:targetSdkVersion="19" />
+>>>>>>> upstream/master
 
     <application
         android:icon="@drawable/ic_launcher"
