@@ -314,4 +314,5 @@ public class GameBoard extends View {
 		setSprite2(sprite2.x, sprite2.y);
 
 	}
+	int foo = 55;
 }
