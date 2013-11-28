@@ -20,7 +20,7 @@ public class Main extends Activity implements OnClickListener {
 	private int sprite1MaxX;
 	private int sprite1MaxY;
 	// The delay in milliseconds between frame updates
-	private static final int FRAME_DELAY = 40; // 17 => about 59 frames per
+	private static final int FRAME_DELAY = 17; // 17 => about 59 frames per
 												// second
 
 	@Override
@@ -145,12 +145,13 @@ public class Main extends Activity implements OnClickListener {
 			if (sprite1.y > sprite1MaxY || sprite1.y < 5) {
 				sprite1Velocity.y *= -1;
 			}
-			
+			GameBoard gb = (GameBoard) findViewById(R.id.the_canvas);
+			Point sprite2Velocity = gb.getSprite2Velocity();
 			// Display UFO speed
 			((TextView) findViewById(R.id.the_label))
-					.setText("Sprite information (?,?)");
-//							+ Integer.toString(spriteFriction.x) + ","
-//							+ Integer.toString(spriteFriction.y) + ")");
+					.setText("Sprite Velocity ("
+							+ Integer.toString(sprite2Velocity.x) + ","
+							+ Integer.toString(sprite2Velocity.y) + ")");
 			// TODO change this to be included in the call for sprite2, or it's
 			// own call but in the GameBoard class.
 			// Update position for sprite1
