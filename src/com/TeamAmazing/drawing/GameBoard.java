@@ -241,16 +241,9 @@ public class GameBoard extends View {
 
 	public void updateVelocity() {
 		if (isAccelerating) {
-			// TODO The sprite bounces around when you click and hold on
-			final float touchScaleFactor = .1f;
-			sprite2Velocity.x += Math.round(touchScaleFactor
-					* (xTouch - sprite2.x));
-			sprite2Velocity.y += Math.round(touchScaleFactor
-					* (yTouch - sprite2.y));
-			// if (Math.abs(xTouch - sprite2.x) > 10)
-			// sprite2Velocity.x += xTouch - sprite2.x;
-			// if (Math.abs(yTouch - sprite2.y) > 10)
-			// sprite2Velocity.y += yTouch - sprite2.y;
+			final float dimFactor = .49f;
+			sprite2Velocity.x = xTouch - sprite2.x + Math.round(dimFactor * sprite2Velocity.x);
+			sprite2Velocity.y = yTouch - sprite2.y + Math.round(dimFactor * sprite2Velocity.y);
 		} else {
 			// Decrease speed with friction.
 			int xFriction = -1
@@ -312,7 +305,5 @@ public class GameBoard extends View {
 			sprite2Velocity.y *= -1;
 		}
 		setSprite2(sprite2.x, sprite2.y);
-
 	}
-	int foo=2;
 }
