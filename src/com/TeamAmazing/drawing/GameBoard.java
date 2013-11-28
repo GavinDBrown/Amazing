@@ -118,7 +118,6 @@ public class GameBoard extends View {
 		sprite2 = new Point(-1, -1);
 		// Define a matrix so we can rotate the asteroid
 		m = new Matrix();
-		p = new Paint();
 		bm1 = BitmapFactory.decodeResource(getResources(), R.drawable.asteroid);
 		bm2 = BitmapFactory.decodeResource(getResources(), R.drawable.ufo);
 		sprite1Bounds = new Rect(0, 0, bm1.getWidth(), bm1.getHeight());
@@ -147,16 +146,19 @@ public class GameBoard extends View {
 			return false;
 		Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
 				+ sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
-		Rect r2 = new Rect(sprite2.x, sprite2.y, sprite2.x
-				+ sprite2Bounds.width(), sprite2.y + sprite2Bounds.height());
+		Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
+				- sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
+				/ 2, sprite2.y + sprite2Bounds.height() / 2);
 		Rect r3 = new Rect(r1);
 		if (r1.intersect(r2)) {
 			for (int i = r1.left; i < r1.right; i++) {
 				for (int j = r1.top; j < r1.bottom; j++) {
 					if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
 						if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
-							lastCollision = new Point(sprite2.x + i - r2.left,
-									sprite2.y + j - r2.top);
+							lastCollision = new Point(sprite2.x
+									- sprite2Bounds.width() / 2 + i - r2.left,
+									sprite2.y - sprite2Bounds.height() / 2 + j
+											- r2.top);
 							return true;
 						}
 					}
@@ -199,6 +201,7 @@ public class GameBoard extends View {
 			if (sprite1Rotation >= 360)
 				sprite1Rotation = 0;
 		}
+		// TODO why do we check if (sprite2.x >= 0)?
 		if (sprite2.x >= 0) {
 			// Draws the bitmap, with sprite2.x,y as the center
 			canvas.drawBitmap(bm2, sprite2.x - sprite2Bounds.width() / 2,
@@ -241,16 +244,11 @@ public class GameBoard extends View {
 
 	public void updateVelocity() {
 		if (isAccelerating) {
-			// TODO The sprite bounces around when you click and hold on
-			final float touchScaleFactor = .1f;
-			sprite2Velocity.x += Math.round(touchScaleFactor
-					* (xTouch - sprite2.x));
-			sprite2Velocity.y += Math.round(touchScaleFactor
-					* (yTouch - sprite2.y));
-			// if (Math.abs(xTouch - sprite2.x) > 10)
-			// sprite2Velocity.x += xTouch - sprite2.x;
-			// if (Math.abs(yTouch - sprite2.y) > 10)
-			// sprite2Velocity.y += yTouch - sprite2.y;
+			final float dimFactor = .49f;
+			sprite2Velocity.x = xTouch - sprite2.x
+					+ Math.round(dimFactor * sprite2Velocity.x);
+			sprite2Velocity.y = yTouch - sprite2.y
+					+ Math.round(dimFactor * sprite2Velocity.y);
 		} else {
 			// Decrease speed with friction.
 			int xFriction = -1
@@ -312,7 +310,5 @@ public class GameBoard extends View {
 			sprite2Velocity.y *= -1;
 		}
 		setSprite2(sprite2.x, sprite2.y);
-
 	}
-	int foo=2;
 }
