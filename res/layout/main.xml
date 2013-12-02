@@ -1,35 +1,42 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" 
+    android:layout_height="fill_parent"
     android:orientation="vertical" >
 
     <Button
-		android:id="@+id/the_button"
- 		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
- 		android:layout_gravity="center"
- 		android:gravity="center"
- 		android:enabled="false"
- 		android:text="Reset" />
-    
+        android:id="@+id/the_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:enabled="false"
+        android:gravity="center"
+        android:text="Reset" />
+
     <TextView
+        android:id="@+id/the_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Sprite Speed (?,?)"
-        android:id="@+id/the_label" />
-    
-     <TextView
+        android:text="Sprite Velocity (?,?)" />
+
+    <TextView
+        android:id="@+id/the_other_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Last Collision XY (?,?)"
-        android:id="@+id/the_other_label" />
-    
+        android:text="Sprite Friction (?,?)" />
+
+    <TextView
+        android:id="@+id/the_third_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Sprite speed ??" />
+
     <com.TeamAmazing.drawing.GameBoard
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:layout_margin="20dip"
- 		android:id="@+id/the_canvas"/>
+        android:id="@+id/the_canvas"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_margin="20dip" />
 
 </LinearLayout>

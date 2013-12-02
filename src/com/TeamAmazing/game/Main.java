@@ -32,8 +32,9 @@ public class Main extends Activity implements OnClickListener {
 		// TODO Why is the below delayed 1000 milliseconds instead of just
 		// posted?
 		// According to the TechRepublic blog:
-			//We can't initialize the graphics immediately because the layout manager
-	    	//needs to run first, thus call back in a sec.
+		// We can't initialize the graphics immediately because the layout
+		// manager
+		// needs to run first, thus call back in a sec.
 		h.postDelayed(new Runnable() {
 			@Override
 			public void run() {
@@ -114,10 +115,10 @@ public class Main extends Activity implements OnClickListener {
 				Point collisionPoint = ((GameBoard) findViewById(R.id.the_canvas))
 						.getLastCollision();
 				if (collisionPoint.x >= 0) {
-					((TextView) findViewById(R.id.the_other_label))
-							.setText("Last Collision XY ("
-									+ Integer.toString(collisionPoint.x) + ","
-									+ Integer.toString(collisionPoint.y) + ")");
+//					((TextView) findViewById(R.id.the_other_label))
+//							.setText("Last Collision XY ("
+//									+ Integer.toString(collisionPoint.x) + ","
+//									+ Integer.toString(collisionPoint.y) + ")");
 				}
 				return;
 			}
@@ -132,7 +133,7 @@ public class Main extends Activity implements OnClickListener {
 			// Update position with boundary checking
 			// TODO add sprite1's position and boundary checking to this call.
 			((GameBoard) findViewById(R.id.the_canvas)).updatePosition();
-			
+
 			// Update position and boundary checking for Sprite1
 			sprite1.x = sprite1.x + sprite1Velocity.x;
 			// TODO why 5? Shouldn't it be sprite1.width? I think this is
@@ -146,12 +147,24 @@ public class Main extends Activity implements OnClickListener {
 				sprite1Velocity.y *= -1;
 			}
 			GameBoard gb = (GameBoard) findViewById(R.id.the_canvas);
-			Point sprite2Velocity = gb.getSprite2Velocity();
+			float sprite2XVelocity = gb.sprite2XVelocity;
+			float sprite2YVelocity = gb.sprite2YVelocity;
+			float speed = (float) Math.sqrt(Math.pow(
+					sprite2XVelocity, 2)
+					+ Math.pow(sprite2YVelocity, 2));
+			float xFriction = gb.xFriction;
+			float yFriction = gb.yFriction;
 			// Display UFO speed
 			((TextView) findViewById(R.id.the_label))
 					.setText("Sprite Velocity ("
-							+ Integer.toString(sprite2Velocity.x) + ","
-							+ Integer.toString(sprite2Velocity.y) + ")");
+							+ String.format("%.2f",sprite2XVelocity) + ","
+							+ String.format("%.2f",sprite2YVelocity) + ")");
+			((TextView) findViewById(R.id.the_other_label))
+					.setText("Sprite Friction (" + String.format("%.2f", xFriction) + ","
+							+ String.format("%.2f", yFriction) + ")");
+			((TextView) findViewById(R.id.the_third_label))
+			.setText("Sprite speed (" + String.format("%.2f",speed) + ")");
+			
 			// TODO change this to be included in the call for sprite2, or it's
 			// own call but in the GameBoard class.
 			// Update position for sprite1

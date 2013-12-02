@@ -32,8 +32,13 @@ public class GameBoard extends View {
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
 	private Point sprite1;
 	private Point sprite2;
-	private Point sprite2Velocity = new Point(0, 0);
-	private final int maxSpeed = 10;
+	// TODO make velocity and friction values private and use getter and setter
+	// methods.
+	public float sprite2XVelocity = 0;
+	public float sprite2YVelocity = 0;
+	public float xFriction = 0;
+	public float yFriction = 0;
+	private final int maxSpeed = 15;
 	private Bitmap bm1 = null;
 	private Matrix m = null;
 	private Bitmap bm2 = null;
@@ -244,49 +249,55 @@ public class GameBoard extends View {
 
 	public void updateVelocity() {
 		if (isAccelerating) {
+			xFriction = 0;
+			yFriction = 0;
 			final float dimFactor = .49f;
-			sprite2Velocity.x = xTouch - sprite2.x
-					+ Math.round(dimFactor * sprite2Velocity.x);
-			sprite2Velocity.y = yTouch - sprite2.y
-					+ Math.round(dimFactor * sprite2Velocity.y);
+			final float touchFactor = .25f;
+			sprite2XVelocity = touchFactor
+					* (xTouch - sprite2.x + Math.round(dimFactor
+							* sprite2XVelocity));
+			sprite2YVelocity = touchFactor
+					* (yTouch - sprite2.y + Math.round(dimFactor
+							* sprite2YVelocity));
+			// Enforce max speed;
+			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
+					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
+			if (accSpeed > maxSpeed + 1) {
+				sprite2XVelocity = sprite2XVelocity * maxSpeed / accSpeed;
+				// TODO interestingly sprite2Velocity.y *= maxSpeed / accSpeed;
+				// doesn't
+				// work. Why?
+				sprite2YVelocity = sprite2YVelocity * maxSpeed / accSpeed;
+			}
 		} else {
 			// Decrease speed with friction.
-			int xFriction = -1
-					* Math.round(Math.signum(getSprite2Velocity().x));
-			int yFriction = -1
-					* Math.round(Math.signum(getSprite2Velocity().y));
-			sprite2Velocity.x += xFriction;
-			sprite2Velocity.y += yFriction;
-		}
-		// Enforce max speed;
-		int speed = (int) Math.round(Math.sqrt(Math.pow(getSprite2Velocity().x,
-				2) + Math.pow(getSprite2Velocity().y, 2)));
-		if (speed > maxSpeed + 1) {
-			sprite2Velocity.x = getSprite2Velocity().x * maxSpeed / speed;
-			// TODO interestingly sprite2Velocity.y *= maxSpeed / speed; doesn't
-			// work. Why?
-			sprite2Velocity.y = getSprite2Velocity().y * maxSpeed / speed;
-
+			final float friction = .05f;
+			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
+					+ Math.pow(sprite2YVelocity, 2));
+			if ((Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity)) > 0) {
+				xFriction = speed
+						* friction
+						* -1
+						* sprite2XVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
+				yFriction = speed
+						* friction
+						* -1
+						* sprite2YVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
+			}
+			sprite2XVelocity = sprite2XVelocity + xFriction;
+			sprite2YVelocity = sprite2YVelocity + yFriction;
 		}
 	}
 
 	public void resetSprite2Velocity() {
-		setSprite2Velocity(new Point(0, 0));
-	}
-
-	/**
-	 * @return the sprite2Velocity
-	 */
-	public Point getSprite2Velocity() {
-		return sprite2Velocity;
-	}
-
-	/**
-	 * @param sprite2Velocity
-	 *            the sprite2Velocity to set
-	 */
-	public void setSprite2Velocity(Point sprite2Velocity) {
-		this.sprite2Velocity = sprite2Velocity;
+		sprite2XVelocity = 0;
+		sprite2YVelocity = 0;
+		xFriction = 0;
+		yFriction = 0;
 	}
 
 	// TODO Better boundary checking
@@ -301,13 +312,13 @@ public class GameBoard extends View {
 		// TODO do I need this.getWidth() and this.getSprite2Width() instead?
 		int sprite2MaxX = getWidth() - getSprite2Width();
 		int sprite2MaxY = getHeight() - getSprite2Height();
-		sprite2.x = sprite2.x + getSprite2Velocity().x;
+		sprite2.x = Math.round(sprite2.x + sprite2XVelocity);
 		if (sprite2.x > sprite2MaxX || sprite2.x < 5) {
-			sprite2Velocity.x *= -1;
+			sprite2XVelocity *= -1;
 		}
-		sprite2.y = sprite2.y + getSprite2Velocity().y;
+		sprite2.y = Math.round(sprite2.y + sprite2YVelocity);
 		if (sprite2.y > sprite2MaxY || sprite2.y < 5) {
-			sprite2Velocity.y *= -1;
+			sprite2YVelocity *= -1;
 		}
 		setSprite2(sprite2.x, sprite2.y);
 	}
