@@ -55,6 +55,10 @@ public class GameBoard extends View {
 		sprite2 = new Point(x, y);
 	}
 
+	synchronized public void setSprite2(Point p) {
+		sprite2 = p;
+	}
+
 	// sprite 2 getter
 	synchronized public int getSprite2X() {
 		return sprite2.x;
@@ -108,34 +112,32 @@ public class GameBoard extends View {
 		collisionDetected = false;
 	}
 
-	// TODO This usually works, but not quite always, perhaps there is an issue
-	// in the bitmaps.
 	private boolean checkForCollision() {
-//		if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
-//			return false;
-//		Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
-//				+ sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
-//		Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
-//				- sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
-//				/ 2, sprite2.y + sprite2Bounds.height() / 2);
-//		Rect r3 = new Rect(r1);
-//		if (r1.intersect(r2)) {
-//			for (int i = r1.left; i < r1.right; i++) {
-//				for (int j = r1.top; j < r1.bottom; j++) {
-//					// TODO why do we have r3? Why not just use r1?
-//					if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
-//						if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
-//							lastCollision = new Point(sprite2.x
-//									- sprite2Bounds.width() / 2 + i - r2.left,
-//									sprite2.y - sprite2Bounds.height() / 2 + j
-//											- r2.top);
-//							return true;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		lastCollision = new Point(-1, -1);
+		// if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
+		// return false;
+		// Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
+		// + sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
+		// Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
+		// - sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
+		// / 2, sprite2.y + sprite2Bounds.height() / 2);
+		// Rect r3 = new Rect(r1);
+		// if (r1.intersect(r2)) {
+		// for (int i = r1.left; i < r1.right; i++) {
+		// for (int j = r1.top; j < r1.bottom; j++) {
+		// // TODO why do we have r3? Why not just use r1?
+		// if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
+		// if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
+		// lastCollision = new Point(sprite2.x
+		// - sprite2Bounds.width() / 2 + i - r2.left,
+		// sprite2.y - sprite2Bounds.height() / 2 + j
+		// - r2.top);
+		// return true;
+		// }
+		// }
+		// }
+		// }
+		// }
+		// lastCollision = new Point(-1, -1);
 		return false;
 	}
 
@@ -201,6 +203,8 @@ public class GameBoard extends View {
 		return true;
 	}
 
+	// TODO add checks so that velocity is only updated if the click was outside
+	// the sprite image.
 	public void updateVelocity() {
 		if (isAccelerating) {
 			xFriction = 0;
@@ -218,9 +222,6 @@ public class GameBoard extends View {
 					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
 			if (accSpeed > maxSpeed + 1) {
 				sprite2XVelocity = sprite2XVelocity * maxSpeed / accSpeed;
-				// TODO interestingly sprite2Velocity.y *= maxSpeed / accSpeed;
-				// doesn't
-				// work. Why?
 				sprite2YVelocity = sprite2YVelocity * maxSpeed / accSpeed;
 			}
 		} else {
@@ -254,26 +255,70 @@ public class GameBoard extends View {
 		yFriction = 0;
 	}
 
-	// TODO Better boundary checking
-	// What this does: update the position, then check if we are outside
-	// the boundary,
-	// if we are: reverse direction.
-	// This sort of boundary checking has major issues, because the velocity
-	// gets overwritten by the next call. So we can head outside the
-	// boundary with two successive impulses.
-	// Something about how I changed update velocity broke this.
+	// Tries adding the position and velocity. If that would send the sprite out
+	// of bounds then it updates position one step at a time along the velocity
+	// vector, reversing when needed.
 	public void updatePosition() {
-		// TODO do I need this.getWidth() and this.getSprite2Width() instead?
-		int sprite2MaxX = getWidth() - getSprite2Width();
-		int sprite2MaxY = getHeight() - getSprite2Height();
-		sprite2.x = Math.round(sprite2.x + sprite2XVelocity);
-		if (sprite2.x > sprite2MaxX || sprite2.x < 5) {
-			sprite2XVelocity *= -1;
+		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity),
+				Math.round(sprite2.y + sprite2YVelocity));
+		if (upLoc.x > getWidth() - getSprite2Width() / 2
+				|| upLoc.x < getSprite2Width() / 2) {
+			int xVel = Math.round(sprite2XVelocity);
+			upLoc.x = sprite2.x;
+			// Take a steps along the xVel vector, making decisions as we go.
+			while (Math.abs(xVel) > 0) {
+				if (xVel > 0) {
+					if (upLoc.x + 1 > getWidth() - getSprite2Width() / 2) {
+						upLoc.x -= 1;
+						xVel *= -1;
+						sprite2XVelocity *= -1;
+						xFriction *= -1;
+					} else {
+						upLoc.x += 1;
+					}
+					xVel--;
+				} else {
+					if (upLoc.x - 1 < getSprite2Width() / 2) {
+						upLoc.x += 1;
+						xVel *= -1;
+						sprite2XVelocity *= -1;
+						xFriction *= -1;
+					} else {
+						upLoc.x -= 1;
+					}
+					xVel++;
+				}
+			}
 		}
-		sprite2.y = Math.round(sprite2.y + sprite2YVelocity);
-		if (sprite2.y > sprite2MaxY || sprite2.y < 5) {
-			sprite2YVelocity *= -1;
+		if (upLoc.y > getHeight() - getSprite2Height() / 2
+				|| upLoc.y < getSprite2Height() / 2) {
+			int yVel = Math.round(sprite2YVelocity);
+			upLoc.y = sprite2.y;
+			// Take a steps along the yVel vector, making decisions as we go.
+			while (Math.abs(yVel) > 0) {
+				if (yVel > 0) {
+					if (upLoc.y + 1 > getHeight() - getSprite2Height() / 2) {
+						upLoc.y -= 1;
+						yVel *= -1;
+						sprite2YVelocity *= -1;
+						yFriction *= -1;
+					} else {
+						upLoc.y += 1;
+					}
+					yVel--;
+				} else {
+					if (upLoc.y - 1 < getSprite2Height() / 2) {
+						upLoc.y += 1;
+						yVel *= -1;
+						sprite2YVelocity *= -1;
+						yFriction *= -1;
+					} else {
+						upLoc.y -= 1;
+					}
+					yVel++;
+				}
+			}
 		}
-		setSprite2(sprite2.x, sprite2.y);
+		setSprite2(upLoc);
 	}
 }
