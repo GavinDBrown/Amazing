@@ -28,9 +28,7 @@ public class GameBoard extends View {
 	private List<Point> starField = null;
 	private int starAlpha = 80;
 	private int starFade = 2;
-	private Rect sprite1Bounds = new Rect(0, 0, 0, 0);
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
-	private Point sprite1;
 	private Point sprite2;
 	// TODO make velocity and friction values private and use getter and setter
 	// methods.
@@ -39,8 +37,6 @@ public class GameBoard extends View {
 	public float xFriction = 0;
 	public float yFriction = 0;
 	private final int maxSpeed = 15;
-	private Bitmap bm1 = null;
-	private Matrix m = null;
 	private Bitmap bm2 = null;
 	// Collision flag and point
 	private boolean collisionDetected = false;
@@ -50,25 +46,9 @@ public class GameBoard extends View {
 	private int xTouch;
 	private int yTouch;
 
-	private int sprite1Rotation = 0;
-
 	private static final int NUM_OF_STARS = 25;
 
 	// Allow our controller to get and set the sprite positions
-
-	// sprite 1 setter
-	synchronized public void setSprite1(int x, int y) {
-		sprite1 = new Point(x, y);
-	}
-
-	// sprite 1 getter
-	synchronized public int getSprite1X() {
-		return sprite1.x;
-	}
-
-	synchronized public int getSprite1Y() {
-		return sprite1.y;
-	}
 
 	// sprite 2 setter
 	synchronized public void setSprite2(int x, int y) {
@@ -89,14 +69,6 @@ public class GameBoard extends View {
 	}
 
 	// expose sprite bounds to controller
-	synchronized public int getSprite1Width() {
-		return sprite1Bounds.width();
-	}
-
-	synchronized public int getSprite1Height() {
-		return sprite1Bounds.height();
-	}
-
 	synchronized public int getSprite2Width() {
 		return sprite2Bounds.width();
 	}
@@ -118,16 +90,10 @@ public class GameBoard extends View {
 	public GameBoard(Context context, AttributeSet aSet) {
 		super(context, aSet);
 		p = new Paint();
-		// load our bitmaps and set the bounds for the controller
-		sprite1 = new Point(-1, -1);
+		// load our bitmap and set the bounds for the controller
 		sprite2 = new Point(-1, -1);
 		// Define a matrix so we can rotate the asteroid
-		m = new Matrix();
-		bm1 = BitmapFactory.decodeResource(getResources(), R.drawable.asteroid);
 		bm2 = BitmapFactory.decodeResource(getResources(), R.drawable.ufo);
-		sprite1Bounds = new Rect(0, 0, bm1.getWidth(), bm1.getHeight());
-		// TODO This might be something to change so that collision detection
-		// works again
 		sprite2Bounds = new Rect(0, 0, bm2.getWidth(), bm2.getHeight());
 	}
 
@@ -142,35 +108,34 @@ public class GameBoard extends View {
 		collisionDetected = false;
 	}
 
-	// TODO This usually works, but for some reason when the spaceship bottom
-	// hits the asteroid it draws the red x in the wrong spot. I have a screen
-	// shot demonstrating this. Now it isn't close to working because of how I
-	// changed where the sprite is drawn.
+	// TODO This usually works, but not quite always, perhaps there is an issue
+	// in the bitmaps.
 	private boolean checkForCollision() {
-		if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
-			return false;
-		Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
-				+ sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
-		Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
-				- sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
-				/ 2, sprite2.y + sprite2Bounds.height() / 2);
-		Rect r3 = new Rect(r1);
-		if (r1.intersect(r2)) {
-			for (int i = r1.left; i < r1.right; i++) {
-				for (int j = r1.top; j < r1.bottom; j++) {
-					if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
-						if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
-							lastCollision = new Point(sprite2.x
-									- sprite2Bounds.width() / 2 + i - r2.left,
-									sprite2.y - sprite2Bounds.height() / 2 + j
-											- r2.top);
-							return true;
-						}
-					}
-				}
-			}
-		}
-		lastCollision = new Point(-1, -1);
+//		if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
+//			return false;
+//		Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
+//				+ sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
+//		Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
+//				- sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
+//				/ 2, sprite2.y + sprite2Bounds.height() / 2);
+//		Rect r3 = new Rect(r1);
+//		if (r1.intersect(r2)) {
+//			for (int i = r1.left; i < r1.right; i++) {
+//				for (int j = r1.top; j < r1.bottom; j++) {
+//					// TODO why do we have r3? Why not just use r1?
+//					if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
+//						if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
+//							lastCollision = new Point(sprite2.x
+//									- sprite2Bounds.width() / 2 + i - r2.left,
+//									sprite2.y - sprite2Bounds.height() / 2 + j
+//											- r2.top);
+//							return true;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		lastCollision = new Point(-1, -1);
 		return false;
 	}
 
@@ -195,17 +160,6 @@ public class GameBoard extends View {
 			canvas.drawPoint(starField.get(i).x, starField.get(i).y, p);
 		}
 
-		if (sprite1.x >= 0) {
-			m.reset();
-			m.postTranslate((float) (sprite1.x), (float) (sprite1.y));
-			m.postRotate(sprite1Rotation,
-					(float) (sprite1.x + sprite1Bounds.width() / 2.0),
-					(float) (sprite1.y + sprite1Bounds.width() / 2.0));
-			canvas.drawBitmap(bm1, m, null);
-			sprite1Rotation += 5;
-			if (sprite1Rotation >= 360)
-				sprite1Rotation = 0;
-		}
 		// TODO why do we check if (sprite2.x >= 0)?
 		if (sprite2.x >= 0) {
 			// Draws the bitmap, with sprite2.x,y as the center
