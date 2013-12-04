@@ -41,8 +41,8 @@ public class Main extends Activity implements OnClickListener {
 	synchronized public void initGfx() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		gb.resetStarField();
-		Point p2 = new Point(50, 50);
-		gb.setSprite2(p2.x, p2.y);
+		Point startPos = new Point(50, 50);
+		gb.setSprite2(startPos.x, startPos.y);
 		gb.resetSprite2Velocity();
 		((Button) findViewById(R.id.the_button)).setEnabled(true);
 		frame.removeCallbacksAndMessages(frameUpdate);
@@ -51,6 +51,7 @@ public class Main extends Activity implements OnClickListener {
 	}
 
 	@Override
+	// Runs when the reset button is clicked.
 	synchronized public void onClick(View v) {
 		initGfx();
 	}

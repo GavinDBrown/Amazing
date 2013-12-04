@@ -36,17 +36,19 @@ public class GameBoard extends View {
 	public float sprite2YVelocity = 0;
 	public float xFriction = 0;
 	public float yFriction = 0;
-	private final int maxSpeed = 15;
+	private static final int MAX_SPEED = 15;
 	private Bitmap bm2 = null;
-	// Collision flag and point
 	private boolean collisionDetected = false;
 	private Point lastCollision = new Point(-1, -1);
-	// acceleration flag
 	private boolean isAccelerating = false;
 	private int xTouch;
 	private int yTouch;
 
 	private static final int NUM_OF_STARS = 25;
+	private static final float REBOUND_FAC = .5f;
+	private static final float PREVIOUS_VELOCITY_FAC = .49f;
+	private static final float TOUCH_FACTOR = .25f;
+	private static final float FRICTION = .05f;
 
 	// Allow our controller to get and set the sprite positions
 
@@ -162,12 +164,9 @@ public class GameBoard extends View {
 			canvas.drawPoint(starField.get(i).x, starField.get(i).y, p);
 		}
 
-		// TODO why do we check if (sprite2.x >= 0)?
-		if (sprite2.x >= 0) {
-			// Draws the bitmap, with sprite2.x,y as the center
-			canvas.drawBitmap(bm2, sprite2.x - sprite2Bounds.width() / 2,
-					sprite2.y - sprite2Bounds.height() / 2, null);
-		}
+		// Draws the bitmap, with sprite2.x,y as the center
+		canvas.drawBitmap(bm2, sprite2.x - sprite2Bounds.width() / 2, sprite2.y
+				- sprite2Bounds.height() / 2, null);
 		collisionDetected = checkForCollision();
 		if (collisionDetected) {
 			p.setColor(Color.RED);
@@ -203,41 +202,36 @@ public class GameBoard extends View {
 		return true;
 	}
 
-	// TODO add checks so that velocity is only updated if the click was outside
-	// the sprite image.
 	public void updateVelocity() {
 		if (isAccelerating) {
 			xFriction = 0;
 			yFriction = 0;
-			final float dimFactor = .49f;
-			final float touchFactor = .25f;
-			sprite2XVelocity = touchFactor
-					* (xTouch - sprite2.x + Math.round(dimFactor
+			sprite2XVelocity = TOUCH_FACTOR
+					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC
 							* sprite2XVelocity));
-			sprite2YVelocity = touchFactor
-					* (yTouch - sprite2.y + Math.round(dimFactor
+			sprite2YVelocity = TOUCH_FACTOR
+					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC
 							* sprite2YVelocity));
 			// Enforce max speed;
 			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
 					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
-			if (accSpeed > maxSpeed + 1) {
-				sprite2XVelocity = sprite2XVelocity * maxSpeed / accSpeed;
-				sprite2YVelocity = sprite2YVelocity * maxSpeed / accSpeed;
+			if (accSpeed > MAX_SPEED + 1) {
+				sprite2XVelocity = sprite2XVelocity * MAX_SPEED / accSpeed;
+				sprite2YVelocity = sprite2YVelocity * MAX_SPEED / accSpeed;
 			}
 		} else {
 			// Decrease speed with friction.
-			final float friction = .05f;
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
 			if ((Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity)) > 0) {
 				xFriction = speed
-						* friction
+						* FRICTION
 						* -1
 						* sprite2XVelocity
 						/ (Math.abs(sprite2XVelocity) + Math
 								.abs(sprite2YVelocity));
 				yFriction = speed
-						* friction
+						* FRICTION
 						* -1
 						* sprite2YVelocity
 						/ (Math.abs(sprite2XVelocity) + Math
@@ -269,20 +263,22 @@ public class GameBoard extends View {
 			while (Math.abs(xVel) > 0) {
 				if (xVel > 0) {
 					if (upLoc.x + 1 > getWidth() - getSprite2Width() / 2) {
+						// Rebound
 						upLoc.x -= 1;
-						xVel *= -1;
-						sprite2XVelocity *= -1;
-						xFriction *= -1;
+						xVel *= -1 * REBOUND_FAC;
+						sprite2XVelocity *= -1 * REBOUND_FAC;
+						xFriction *= -1 * REBOUND_FAC;
 					} else {
 						upLoc.x += 1;
 					}
 					xVel--;
 				} else {
 					if (upLoc.x - 1 < getSprite2Width() / 2) {
+						// Rebound
 						upLoc.x += 1;
-						xVel *= -1;
-						sprite2XVelocity *= -1;
-						xFriction *= -1;
+						xVel *= -1 * REBOUND_FAC;
+						sprite2XVelocity *= -1 * REBOUND_FAC;
+						xFriction *= -1 * REBOUND_FAC;
 					} else {
 						upLoc.x -= 1;
 					}
@@ -298,20 +294,22 @@ public class GameBoard extends View {
 			while (Math.abs(yVel) > 0) {
 				if (yVel > 0) {
 					if (upLoc.y + 1 > getHeight() - getSprite2Height() / 2) {
+						// Rebound
 						upLoc.y -= 1;
-						yVel *= -1;
-						sprite2YVelocity *= -1;
-						yFriction *= -1;
+						yVel *= -1 * REBOUND_FAC;
+						sprite2YVelocity *= -1 * REBOUND_FAC;
+						yFriction *= -1 * REBOUND_FAC;
 					} else {
 						upLoc.y += 1;
 					}
 					yVel--;
 				} else {
 					if (upLoc.y - 1 < getSprite2Height() / 2) {
+						// Rebound
 						upLoc.y += 1;
-						yVel *= -1;
-						sprite2YVelocity *= -1;
-						yFriction *= -1;
+						yVel *= -1 * REBOUND_FAC;
+						sprite2YVelocity *= -1 * REBOUND_FAC;
+						yFriction *= -1 * REBOUND_FAC;
 					} else {
 						upLoc.y -= 1;
 					}
