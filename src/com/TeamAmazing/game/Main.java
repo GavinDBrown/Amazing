@@ -12,6 +12,17 @@ import android.app.Activity;
 import android.graphics.Point;
 
 public class Main extends Activity implements OnClickListener {
+	private static final float PREVIOUS_VELOCITY_FAC = .49f;
+	private static final float TOUCH_FACTOR = .25f;
+	private static final float FRICTION = .05f;
+	private float sprite2XVelocity = 0;
+	private float sprite2YVelocity = 0;
+	private float xFriction = 0;
+	private float yFriction = 0;
+	private static final int MAX_SPEED = 15;
+	private static final float REBOUND_FAC = .5f;
+	private final Point startPos = new Point(50, 50);
+
 
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
@@ -41,9 +52,8 @@ public class Main extends Activity implements OnClickListener {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		gb.resetStarField();
 		gb.resetMaze();
-		Point startPos = new Point(50, 50);
-		gb.setSprite2(startPos.x, startPos.y);
-		gb.resetSprite2Velocity();
+		gb.setSprite2(startPos);
+		resetSprite2Velocity();
 		((Button) findViewById(R.id.the_button)).setEnabled(true);
 		frame.removeCallbacksAndMessages(frameUpdate);
 		((GameBoard) findViewById(R.id.the_canvas)).invalidate();
@@ -55,6 +65,125 @@ public class Main extends Activity implements OnClickListener {
 	synchronized public void onClick(View v) {
 		frame.removeCallbacksAndMessages(null);
 		initGfx();
+	}
+	
+	public void updateVelocity() {
+		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		if (gb.isAccelerating()) {
+			float xTouch = gb.getXTouch();
+			float yTouch = gb.getYTouch();
+			Point sprite2 = gb.getSpite2();
+			sprite2XVelocity = TOUCH_FACTOR
+					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC
+							* sprite2XVelocity));
+			sprite2YVelocity = TOUCH_FACTOR
+					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC
+							* sprite2YVelocity));
+			// Enforce max speed;
+			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
+					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
+			if (accSpeed > MAX_SPEED + 1) {
+				sprite2XVelocity = sprite2XVelocity * MAX_SPEED / accSpeed;
+				sprite2YVelocity = sprite2YVelocity * MAX_SPEED / accSpeed;
+			}
+		} else {
+			// Decrease speed with friction.
+			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
+					+ Math.pow(sprite2YVelocity, 2));
+			if ((Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity)) > 0) {
+				xFriction = speed
+						* FRICTION
+						* -1
+						* sprite2XVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
+				yFriction = speed
+						* FRICTION
+						* -1
+						* sprite2YVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
+			}
+			sprite2XVelocity = sprite2XVelocity + xFriction;
+			sprite2YVelocity = sprite2YVelocity + yFriction;
+		}
+	}
+	
+	public void updatePosition() {
+		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		Point sprite2 = gb.getSpite2();
+		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity),
+				Math.round(sprite2.y + sprite2YVelocity));
+		if (upLoc.x > gb.getWidth() - gb.getSprite2Width() / 2
+				|| upLoc.x < gb.getSprite2Width() / 2) {
+			int xVel = Math.round(sprite2XVelocity);
+			upLoc.x = sprite2.x;
+			// Take a steps along the xVel vector, making decisions as we go.
+			while (Math.abs(xVel) > 0) {
+				if (xVel > 0) {
+					if (upLoc.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2) {
+						// Rebound
+						upLoc.x -= 1;
+						xVel *= -1 * REBOUND_FAC;
+						sprite2XVelocity *= -1 * REBOUND_FAC;
+						xFriction *= -1 * REBOUND_FAC;
+					} else {
+						upLoc.x += 1;
+					}
+					xVel--;
+				} else {
+					if (upLoc.x - 1 < gb.getSprite2Width() / 2) {
+						// Rebound
+						upLoc.x += 1;
+						xVel *= -1 * REBOUND_FAC;
+						sprite2XVelocity *= -1 * REBOUND_FAC;
+						xFriction *= -1 * REBOUND_FAC;
+					} else {
+						upLoc.x -= 1;
+					}
+					xVel++;
+				}
+			}
+		}
+		if (upLoc.y > gb.getHeight() - gb.getSprite2Height() / 2
+				|| upLoc.y < gb.getSprite2Height() / 2) {
+			int yVel = Math.round(sprite2YVelocity);
+			upLoc.y = sprite2.y;
+			// Take a steps along the yVel vector, making decisions as we go.
+			while (Math.abs(yVel) > 0) {
+				if (yVel > 0) {
+					if (upLoc.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2) {
+						// Rebound
+						upLoc.y -= 1;
+						yVel *= -1 * REBOUND_FAC;
+						sprite2YVelocity *= -1 * REBOUND_FAC;
+						yFriction *= -1 * REBOUND_FAC;
+					} else {
+						upLoc.y += 1;
+					}
+					yVel--;
+				} else {
+					if (upLoc.y - 1 < gb.getSprite2Height() / 2) {
+						// Rebound
+						upLoc.y += 1;
+						yVel *= -1 * REBOUND_FAC;
+						sprite2YVelocity *= -1 * REBOUND_FAC;
+						yFriction *= -1 * REBOUND_FAC;
+					} else {
+						upLoc.y -= 1;
+					}
+					yVel++;
+				}
+			}
+		}
+		gb.setSprite2(upLoc);
+	}
+	
+	private void resetSprite2Velocity() {
+		sprite2XVelocity = 0;
+		sprite2YVelocity = 0;
+		xFriction = 0;
+		yFriction = 0;
 	}
 
 	private Runnable frameUpdate = new Runnable() {
@@ -68,24 +197,17 @@ public class Main extends Activity implements OnClickListener {
 
 		@Override
 		synchronized public void run() {
-			GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
-			if (gb.wasCollisionDetected()) {
-				return;
-			}
 			frame.removeCallbacksAndMessages(frameUpdate);
 
-			// Add our call to increase or decrease velocity
-			gb.updateVelocity();
+			// Increase or decrease velocity based on touch information.
+			updateVelocity();
 
 			// Update position with boundary checking
-			gb.updatePosition();
+			updatePosition();
 
-			float sprite2XVelocity = gb.sprite2XVelocity;
-			float sprite2YVelocity = gb.sprite2YVelocity;
+
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
-			float xFriction = gb.xFriction;
-			float yFriction = gb.yFriction;
 			// Display Velocity and Friction information
 			((TextView) findViewById(R.id.the_label))
 					.setText("Sprite Velocity ("
