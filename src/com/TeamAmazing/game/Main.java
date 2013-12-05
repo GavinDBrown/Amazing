@@ -23,7 +23,6 @@ public class Main extends Activity implements OnClickListener {
 	private static final float REBOUND_FAC = .5f;
 	private final Point startPos = new Point(50, 50);
 
-
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
 	private static final int FRAME_DELAY = 17; // 17 => about 59 frames per
@@ -66,7 +65,14 @@ public class Main extends Activity implements OnClickListener {
 		frame.removeCallbacksAndMessages(null);
 		initGfx();
 	}
-	
+
+	private void resetSprite2Velocity() {
+		sprite2XVelocity = 0;
+		sprite2YVelocity = 0;
+		xFriction = 0;
+		yFriction = 0;
+	}
+
 	public void updateVelocity() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		if (gb.isAccelerating()) {
@@ -74,14 +80,12 @@ public class Main extends Activity implements OnClickListener {
 			float yTouch = gb.getYTouch();
 			Point sprite2 = gb.getSpite2();
 			sprite2XVelocity = TOUCH_FACTOR
-					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC
-							* sprite2XVelocity));
+					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC * sprite2XVelocity));
 			sprite2YVelocity = TOUCH_FACTOR
-					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC
-							* sprite2YVelocity));
+					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC * sprite2YVelocity));
 			// Enforce max speed;
-			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
-					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
+			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(sprite2XVelocity, 2)
+					+ Math.pow(sprite2YVelocity, 2)));
 			if (accSpeed > MAX_SPEED + 1) {
 				sprite2XVelocity = sprite2XVelocity * MAX_SPEED / accSpeed;
 				sprite2YVelocity = sprite2YVelocity * MAX_SPEED / accSpeed;
@@ -91,29 +95,21 @@ public class Main extends Activity implements OnClickListener {
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
 			if ((Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity)) > 0) {
-				xFriction = speed
-						* FRICTION
-						* -1
-						* sprite2XVelocity
-						/ (Math.abs(sprite2XVelocity) + Math
-								.abs(sprite2YVelocity));
-				yFriction = speed
-						* FRICTION
-						* -1
-						* sprite2YVelocity
-						/ (Math.abs(sprite2XVelocity) + Math
-								.abs(sprite2YVelocity));
+				xFriction = speed * FRICTION * -1 * sprite2XVelocity
+						/ (Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity));
+				yFriction = speed * FRICTION * -1 * sprite2YVelocity
+						/ (Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity));
 			}
 			sprite2XVelocity = sprite2XVelocity + xFriction;
 			sprite2YVelocity = sprite2YVelocity + yFriction;
 		}
 	}
-	
+
 	public void updatePosition() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		Point sprite2 = gb.getSpite2();
-		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity),
-				Math.round(sprite2.y + sprite2YVelocity));
+		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity), Math.round(sprite2.y
+				+ sprite2YVelocity));
 		if (upLoc.x > gb.getWidth() - gb.getSprite2Width() / 2
 				|| upLoc.x < gb.getSprite2Width() / 2) {
 			int xVel = Math.round(sprite2XVelocity);
@@ -178,13 +174,6 @@ public class Main extends Activity implements OnClickListener {
 		}
 		gb.setSprite2(upLoc);
 	}
-	
-	private void resetSprite2Velocity() {
-		sprite2XVelocity = 0;
-		sprite2YVelocity = 0;
-		xFriction = 0;
-		yFriction = 0;
-	}
 
 	private Runnable frameUpdate = new Runnable() {
 
@@ -205,21 +194,17 @@ public class Main extends Activity implements OnClickListener {
 			// Update position with boundary checking
 			updatePosition();
 
-
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
 			// Display Velocity and Friction information
-			((TextView) findViewById(R.id.the_label))
-					.setText("Sprite Velocity ("
-							+ String.format("%.2f", sprite2XVelocity) + ","
-							+ String.format("%.2f", sprite2YVelocity) + ")");
-			((TextView) findViewById(R.id.the_other_label))
-					.setText("Sprite Friction ("
-							+ String.format("%.2f", xFriction) + ","
-							+ String.format("%.2f", yFriction) + ")");
-			((TextView) findViewById(R.id.the_third_label))
-					.setText("Sprite speed (" + String.format("%.2f", speed)
-							+ ")");
+			((TextView) findViewById(R.id.the_label)).setText("Sprite Velocity ("
+					+ String.format("%.2f", sprite2XVelocity) + ","
+					+ String.format("%.2f", sprite2YVelocity) + ")");
+			((TextView) findViewById(R.id.the_other_label)).setText("Sprite Friction ("
+					+ String.format("%.2f", xFriction) + "," + String.format("%.2f", yFriction)
+					+ ")");
+			((TextView) findViewById(R.id.the_third_label)).setText("Sprite speed ("
+					+ String.format("%.2f", speed) + ")");
 
 			// Redraw the canvas
 			((GameBoard) findViewById(R.id.the_canvas)).invalidate();

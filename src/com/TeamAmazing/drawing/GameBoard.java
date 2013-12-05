@@ -41,6 +41,7 @@ public class GameBoard extends View {
 	// The height of a maze cell in pixels.
 	private static final int CELL_HEIGHT = 15;
 	private static final int WALL_WIDTH = 2;
+	private static final int BOUNDARY_WIDTH = 20;
 
 	// Allow our controller to get and set the sprite positions
 
@@ -129,11 +130,18 @@ public class GameBoard extends View {
 
 	@Override
 	synchronized public void onDraw(Canvas canvas) {
+		// Draw a border around the maze
+		p.setStyle(Paint.Style.STROKE);
+		p.setStrokeWidth(BOUNDARY_WIDTH);
+		p.setColor(Color.GREEN);
+		canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), p);
 
+		p.setStyle(Paint.Style.FILL);
 		p.setColor(Color.BLACK);
 		p.setAlpha(255);
 		p.setStrokeWidth(1);
-		canvas.drawRect(0, 0, getWidth(), getHeight(), p);
+		canvas.drawRect(BOUNDARY_WIDTH, BOUNDARY_WIDTH, getWidth() - BOUNDARY_WIDTH, getHeight()
+				- BOUNDARY_WIDTH, p);
 
 		if (starField == null) {
 			initializeStars(canvas.getWidth(), canvas.getHeight());
@@ -160,22 +168,20 @@ public class GameBoard extends View {
 			if (cell1.coordinates.x == cell2.coordinates.x) {
 				p.setColor(Color.MAGENTA);
 				// Vertical cells, so I want to draw a horizontal wall
-				canvas.drawRect(
-						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH),
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH),
-						(cell1.coordinates.x + 1) * (CELL_WIDTH + WALL_WIDTH),
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH)
-								+ WALL_WIDTH, p);
+				canvas.drawRect(cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
+						(cell1.coordinates.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
+								+ BOUNDARY_WIDTH, p);
 
 			} else {
 				p.setColor(Color.RED);
 				// Horizontal cells, so I want to draw a vertical wall.
-				canvas.drawRect(
-						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH),
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH),
-						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH)
-								+ WALL_WIDTH, (cell1.coordinates.y + 1)
-								* (CELL_HEIGHT + WALL_WIDTH), p);
+				canvas.drawRect(cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
+						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
+								+ BOUNDARY_WIDTH, (cell1.coordinates.y + 1)
+								* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
 			}
 
 		}
@@ -190,8 +196,8 @@ public class GameBoard extends View {
 
 	// The width and height passed are the canvas width and height.
 	private void initializeMaze(int width, int height) {
-		maze = new Maze(width / (CELL_WIDTH + WALL_WIDTH), height
-				/ (CELL_HEIGHT + WALL_WIDTH));
+		maze = new Maze((width - 2 * BOUNDARY_WIDTH) / (CELL_WIDTH + WALL_WIDTH),
+				(height - 2 * BOUNDARY_WIDTH) / (CELL_HEIGHT + WALL_WIDTH));
 		maze.makePerfectMaze();
 	}
 
