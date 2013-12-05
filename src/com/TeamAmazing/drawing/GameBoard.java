@@ -1,12 +1,12 @@
-//TODO update the game to have a maze background, and some way to detect where walls all for collision detection.
-//TODO Change the spaceship (sprite 2) to be something more suitable to a navigate a maze.
-//TODO Sprite2's location seems to be the top left of it's bounding rectangle instead of the center.
+//TODO Add collision detection for the maze.
 package com.TeamAmazing.drawing;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.TeamAmazing.drawing.Maze.Wall;
+import com.TeamAmazing.drawing.Maze.Cell;
 import com.TeamAmazing.game.R;
 
 import android.content.Context;
@@ -14,7 +14,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -26,6 +25,7 @@ public class GameBoard extends View {
 
 	private Paint p;
 	private List<Point> starField = null;
+	private Maze maze = null;
 	private int starAlpha = 80;
 	private int starFade = 2;
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
@@ -49,6 +49,11 @@ public class GameBoard extends View {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
 	private static final float TOUCH_FACTOR = .25f;
 	private static final float FRICTION = .05f;
+	// The width of a maze cell in pixels.
+	private static final int CELL_WIDTH = 15;
+	// The height of a maze cell in pixels.
+	private static final int CELL_HEIGHT = 15;
+	private static final int WALL_WIDTH = 2;
 
 	// Allow our controller to get and set the sprite positions
 
@@ -154,6 +159,9 @@ public class GameBoard extends View {
 		if (starField == null) {
 			initializeStars(canvas.getWidth(), canvas.getHeight());
 		}
+		if (maze == null) {
+			initializeMaze(canvas.getWidth(), canvas.getHeight());
+		}
 
 		p.setColor(Color.CYAN);
 		p.setAlpha(starAlpha += starFade);
@@ -162,6 +170,35 @@ public class GameBoard extends View {
 		p.setStrokeWidth(5);
 		for (int i = 0; i < NUM_OF_STARS; i++) {
 			canvas.drawPoint(starField.get(i).x, starField.get(i).y, p);
+		}
+		// Draws the maze
+		// p.setColor(Color.MAGENTA);
+		// void drawRect(float left, float top, float right, float bottom, Paint
+		// paint)
+		for (Wall w : maze.getWalls()) {
+			Cell cell1 = w.v1;
+			Cell cell2 = w.v2;
+			if (cell1.coordinates.x == cell2.coordinates.x) {
+				p.setColor(Color.MAGENTA);
+				// Vertical cells, so I want to draw a horizontal wall
+				canvas.drawRect(
+						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH),
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH),
+						(cell1.coordinates.x + 1) * (CELL_WIDTH + WALL_WIDTH),
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH)
+								+ WALL_WIDTH, p);
+
+			} else {
+				p.setColor(Color.RED);
+				// Horizontal cells, so I want to draw a vertical wall.
+				canvas.drawRect(
+						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH),
+						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH),
+						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH)
+								+ WALL_WIDTH, (cell1.coordinates.y + 1)
+								* (CELL_HEIGHT + WALL_WIDTH), p);
+			}
+
 		}
 
 		// Draws the bitmap, with sprite2.x,y as the center
@@ -177,6 +214,13 @@ public class GameBoard extends View {
 			canvas.drawLine(lastCollision.x + 5, lastCollision.y - 5,
 					lastCollision.x - 5, lastCollision.y + 5, p);
 		}
+	}
+
+	// The width and height passed are the canvas width and height.
+	private void initializeMaze(int width, int height) {
+		maze = new Maze(width / (CELL_WIDTH + WALL_WIDTH), height
+				/ (CELL_HEIGHT + WALL_WIDTH));
+		maze.makePerfectMaze();
 	}
 
 	// Method for getting touch state--requires android 2.1 or greater
@@ -318,5 +362,9 @@ public class GameBoard extends View {
 			}
 		}
 		setSprite2(upLoc);
+	}
+
+	public void resetMaze() {
+		maze = null;
 	}
 }

@@ -1,7 +1,6 @@
 package com.TeamAmazing.game;
 
 import com.TeamAmazing.drawing.GameBoard;
-import com.TeamAmazing.drawing.Maze;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,6 +40,7 @@ public class Main extends Activity implements OnClickListener {
 	synchronized public void initGfx() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		gb.resetStarField();
+		gb.resetMaze();
 		Point startPos = new Point(50, 50);
 		gb.setSprite2(startPos.x, startPos.y);
 		gb.resetSprite2Velocity();
@@ -53,6 +53,7 @@ public class Main extends Activity implements OnClickListener {
 	@Override
 	// Runs when the reset button is clicked.
 	synchronized public void onClick(View v) {
+		frame.removeCallbacksAndMessages(null);
 		initGfx();
 	}
 

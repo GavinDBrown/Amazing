@@ -2,18 +2,19 @@ package com.TeamAmazing.drawing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 
 import android.graphics.Point;
 
 public class Maze {
-	int width;
-	int height;
-	Cell[][] cells;
-	ArrayList<Wall> walls;
+	private int width;
+	private int height;
+	private Cell[][] cells;
+	private ArrayList<Wall> walls;
 
 	public Maze(int width, int height) {
-		this.width = width;
-		this.height = height;
+		this.setWidth(width);
+		this.setHeight(height);
 		int id = 0;
 		this.cells = new Cell[width][height];
 		for (int i = 0; i < width; i++) {
@@ -35,11 +36,11 @@ public class Maze {
 		}
 	}
 
-	private class Cell {
-		int id;
-		Cell ref = this;
-		int rank = 1;
-		Point coordinates;
+	public class Cell {
+		private int id;
+		private Cell ref = this;
+		private int rank = 1;
+		public Point coordinates;
 
 		public Cell(int id, int x, int y) {
 			this.id = id;
@@ -47,7 +48,7 @@ public class Maze {
 		}
 	}
 
-	private class Wall {
+	public class Wall {
 		Cell v1;
 		Cell v2;
 
@@ -78,17 +79,59 @@ public class Maze {
 			return node;
 	}
 
-
-	public void makePerfectMaze(Maze m) {
+	public void makePerfectMaze() {
 		Collections.shuffle(walls);
-		for (Wall w : walls) {
+		for (Iterator<Wall> it = walls.iterator(); it.hasNext();) {
+			Wall w = it.next();
 			if (find(w.v1).ref.id != find(w.v2).ref.id) {
 				// The two cells the wall is between are not connected
 				// by a path, so delete the wall and union the cell's
 				// partitions.
 				union(w.v1, w.v2);
-				walls.remove(w);
+				it.remove();
 			}
 		}
+	}
+
+	/**
+	 * @return the width
+	 */
+	public int getWidth() {
+		return width;
+	}
+
+	/**
+	 * @param width the width to set
+	 */
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	/**
+	 * @return the height
+	 */
+	public int getHeight() {
+		return height;
+	}
+
+	/**
+	 * @param height the height to set
+	 */
+	public void setHeight(int height) {
+		this.height = height;
+	}
+	
+	/**
+	 * @return the cells
+	 */
+	public Cell[][] getCells() {
+		return cells;
+	}
+	
+	/**
+	 * @return the walls
+	 */
+	public ArrayList<Wall> getWalls() {
+		return walls;
 	}
 }
