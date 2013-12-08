@@ -5,9 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.TeamAmazing.drawing.Maze.Wall;
-import com.TeamAmazing.drawing.Maze.Cell;
+import com.TeamAmazing.game.Maze;
 import com.TeamAmazing.game.R;
+import com.TeamAmazing.game.Maze.Cell;
+import com.TeamAmazing.game.Maze.Wall;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -25,7 +26,7 @@ public class GameBoard extends View {
 
 	private Paint p;
 	private List<Point> starField = null;
-	private Maze maze = null;
+	public Maze maze = null;
 	private int starAlpha = 80;
 	private int starFade = 2;
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
@@ -37,15 +38,14 @@ public class GameBoard extends View {
 
 	private static final int NUM_OF_STARS = 25;
 	// The width of a maze cell in pixels.
-	private static final int CELL_WIDTH = 15;
+	private static final int CELL_WIDTH = 30;
 	// The height of a maze cell in pixels.
-	private static final int CELL_HEIGHT = 15;
-	private static final int WALL_WIDTH = 2;
+	private static final int CELL_HEIGHT = 30;
+	private static final int WALL_WIDTH = 5;
 	private static final int BOUNDARY_WIDTH = 20;
 
-	// Allow our controller to get and set the sprite positions
+	// Getters and setters.
 
-	// sprite 2 setter
 	synchronized public void setSprite2(int x, int y) {
 		sprite2 = new Point(x, y);
 	}
@@ -54,7 +54,6 @@ public class GameBoard extends View {
 		sprite2 = p;
 	}
 
-	// sprite 2 getter
 	synchronized public int getSprite2X() {
 		return sprite2.x;
 	}
@@ -63,7 +62,15 @@ public class GameBoard extends View {
 		return sprite2.y;
 	}
 
-	public Point getSpite2() {
+	synchronized public int getSprite2Width() {
+		return sprite2Bounds.width();
+	}
+
+	synchronized public int getSprite2Height() {
+		return sprite2Bounds.height();
+	}
+
+	synchronized public Point getSpite2() {
 		return sprite2;
 	}
 
@@ -71,13 +78,20 @@ public class GameBoard extends View {
 		starField = null;
 	}
 
-	// expose sprite bounds to controller
-	synchronized public int getSprite2Width() {
-		return sprite2Bounds.width();
+	synchronized public boolean isAccelerating() {
+		return isAccelerating;
 	}
 
-	synchronized public int getSprite2Height() {
-		return sprite2Bounds.height();
+	synchronized public void resetMaze() {
+		maze = null;
+	}
+
+	synchronized public float getYTouch() {
+		return yTouch;
+	}
+
+	synchronized public float getXTouch() {
+		return xTouch;
 	}
 
 	public GameBoard(Context context, AttributeSet aSet) {
@@ -100,48 +114,59 @@ public class GameBoard extends View {
 		}
 	}
 
-	// private boolean checkForCollision() {
-	// if (sprite1.x < 0 && sprite2.x < 0 && sprite1.y < 0 && sprite2.y < 0)
-	// return false;
-	// Rect r1 = new Rect(sprite1.x, sprite1.y, sprite1.x
-	// + sprite1Bounds.width(), sprite1.y + sprite1Bounds.height());
-	// Rect r2 = new Rect(sprite2.x - sprite2Bounds.width() / 2, sprite2.y
-	// - sprite2Bounds.height() / 2, sprite2.x + sprite2Bounds.width()
-	// / 2, sprite2.y + sprite2Bounds.height() / 2);
-	// Rect r3 = new Rect(r1);
-	// if (r1.intersect(r2)) {
-	// for (int i = r1.left; i < r1.right; i++) {
-	// for (int j = r1.top; j < r1.bottom; j++) {
-	// if (bm1.getPixel(i - r3.left, j - r3.top) != Color.TRANSPARENT) {
-	// if (bm2.getPixel(i - r2.left, j - r2.top) != Color.TRANSPARENT) {
-	// lastCollision = new Point(sprite2.x
-	// - sprite2Bounds.width() / 2 + i - r2.left,
-	// sprite2.y - sprite2Bounds.height() / 2 + j
-	// - r2.top);
-	// return true;
-	// }
-	// }
-	// }
-	// }
-	// }
-	// lastCollision = new Point(-1, -1);
-	// return false;
-	// }
+	private void drawBoundaryCell(Cell cell, Canvas canvas) {
+		if (cell.getCoords().x == 0) {
+			// Cell is on the left so draw a vertical wall to
+			// the left of it.
+			canvas.drawRect(BOUNDARY_WIDTH, cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH)
+					+ BOUNDARY_WIDTH, BOUNDARY_WIDTH + WALL_WIDTH, (cell.getCoords().y + 1)
+					* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH, p);
+		}
+		if (cell.getCoords().x == maze.getWidth() - 1) {
+			// Cell is on the right so draw a vertical wall to the
+			// right of it.
+			canvas.drawRect(maze.getWidth() * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+					cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
+					maze.getWidth() * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH,
+					(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH
+							+ WALL_WIDTH, p);
+		}
+		if (cell.getCoords().y == 0) {
+			// Cell is on the top so draw a horizontal wall above
+			// it.
+			canvas.drawRect((cell.getCoords().x) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+					BOUNDARY_WIDTH, (cell.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH)
+							+ BOUNDARY_WIDTH + WALL_WIDTH, WALL_WIDTH + BOUNDARY_WIDTH, p);
+
+		}
+		if (cell.getCoords().y == maze.getHeight() - 1) {
+			// Cell is on the bottom so draw a horizontal wall below
+			// it.
+			// canvas.drawRect(left, top, right, bottom, paint)
+			canvas.drawRect((cell.getCoords().x) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+					maze.getHeight() * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+					(cell.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
+							+ WALL_WIDTH, maze.getHeight() * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
+							+ BOUNDARY_WIDTH, p);
+
+		}
+	}
+
+	// TODO calculate a cell's Rect once, and save that information.
 
 	@Override
 	synchronized public void onDraw(Canvas canvas) {
 		// Draw a border around the maze
-		p.setStyle(Paint.Style.STROKE);
-		p.setStrokeWidth(BOUNDARY_WIDTH);
-		p.setColor(Color.GREEN);
-		canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), p);
+		// p.setStyle(Paint.Style.STROKE);
+		// p.setStrokeWidth(BOUNDARY_WIDTH);
+		// p.setColor(Color.GREEN);
+		// canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), p);
 
 		p.setStyle(Paint.Style.FILL);
 		p.setColor(Color.BLACK);
 		p.setAlpha(255);
 		p.setStrokeWidth(1);
-		canvas.drawRect(BOUNDARY_WIDTH, BOUNDARY_WIDTH, getWidth() - BOUNDARY_WIDTH, getHeight()
-				- BOUNDARY_WIDTH, p);
+		canvas.drawRect(0, 0, getWidth(), getHeight(), p);
 
 		if (starField == null) {
 			initializeStars(canvas.getWidth(), canvas.getHeight());
@@ -159,31 +184,39 @@ public class GameBoard extends View {
 			canvas.drawPoint(starField.get(i).x, starField.get(i).y, p);
 		}
 		// Draws the maze
-		// p.setColor(Color.MAGENTA);
-		// void drawRect(float left, float top, float right, float bottom, Paint
-		// paint)
+		p.setColor(Color.MAGENTA);
 		for (Wall w : maze.getWalls()) {
-			Cell cell1 = w.v1;
-			Cell cell2 = w.v2;
-			if (cell1.coordinates.x == cell2.coordinates.x) {
-				p.setColor(Color.MAGENTA);
-				// Vertical cells, so I want to draw a horizontal wall
-				canvas.drawRect(cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
-						(cell1.coordinates.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
-								+ BOUNDARY_WIDTH, p);
+			Cell cell1 = w.getV1();
+			Cell cell2 = w.getV2();
+			if (cell1 != null && cell2 != null) {
+				// Draw the cells on the inside.
+				if (cell1.getCoords().x == cell2.getCoords().x) {
+					// Vertical cells, so I want to draw a horizontal wall
+					canvas.drawRect((cell1.getCoords().x) * (CELL_WIDTH + WALL_WIDTH)
+							+ BOUNDARY_WIDTH, (cell1.getCoords().y + 1)
+							* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
+							(cell1.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
+									+ WALL_WIDTH, (cell1.getCoords().y + 1)
+									* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH, p);
+
+				} else {
+					// Horizontal cells, so I want to draw a vertical wall.
+					canvas.drawRect((cell1.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH)
+							+ BOUNDARY_WIDTH, cell1.getCoords().y * (CELL_HEIGHT + WALL_WIDTH)
+							+ BOUNDARY_WIDTH, (cell1.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH)
+							+ WALL_WIDTH + BOUNDARY_WIDTH, (cell1.getCoords().y + 1)
+							* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH, p);
+				}
 
 			} else {
-				p.setColor(Color.RED);
-				// Horizontal cells, so I want to draw a vertical wall.
-				canvas.drawRect(cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-						cell1.coordinates.y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
-						cell1.coordinates.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
-								+ BOUNDARY_WIDTH, (cell1.coordinates.y + 1)
-								* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
-			}
+				// Draw the cells on the boundary
+				if (cell1 != null) {
+					drawBoundaryCell(cell1, canvas);
+				} else {
+					drawBoundaryCell(cell2, canvas);
+				}
 
+			}
 		}
 
 		// Check if the sprite has been initialized with a start position.
@@ -194,16 +227,19 @@ public class GameBoard extends View {
 		}
 	}
 
-	// The width and height passed are the canvas width and height.
+	/**
+	 * 
+	 * @param width
+	 *            The width of the canvas the maze is drawn on.
+	 * @param height
+	 *            The height of the canvas the maze is drawn on.
+	 */
 	private void initializeMaze(int width, int height) {
 		maze = new Maze((width - 2 * BOUNDARY_WIDTH) / (CELL_WIDTH + WALL_WIDTH),
 				(height - 2 * BOUNDARY_WIDTH) / (CELL_HEIGHT + WALL_WIDTH));
 		maze.makePerfectMaze();
 	}
 
-	// Method for getting touch state--requires android 2.1 or greater
-	// The touch event only triggers if a down event happens inside this view,
-	// however move events and up events can happen outside the view
 	@Override
 	synchronized public boolean onTouchEvent(MotionEvent ev) {
 		switch (ev.getAction()) {
@@ -222,21 +258,5 @@ public class GameBoard extends View {
 			break;
 		}
 		return true;
-	}
-
-	public boolean isAccelerating() {
-		return isAccelerating;
-	}
-
-	public void resetMaze() {
-		maze = null;
-	}
-
-	public float getYTouch() {
-		return yTouch;
-	}
-
-	public float getXTouch() {
-		return xTouch;
 	}
 }

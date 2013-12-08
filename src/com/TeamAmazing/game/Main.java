@@ -13,13 +13,13 @@ import android.graphics.Point;
 
 public class Main extends Activity implements OnClickListener {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
-	private static final float TOUCH_FACTOR = .25f;
+	private static final float TOUCH_FACTOR = .10f;
 	private static final float FRICTION = .05f;
 	private float sprite2XVelocity = 0;
 	private float sprite2YVelocity = 0;
 	private float xFriction = 0;
 	private float yFriction = 0;
-	private static final int MAX_SPEED = 15;
+	private static final int MAX_SPEED = 20;
 	private static final float REBOUND_FAC = .5f;
 	private final Point startPos = new Point(50, 50);
 
@@ -66,6 +66,9 @@ public class Main extends Activity implements OnClickListener {
 		initGfx();
 	}
 
+	/**
+	 * Set sprite2 Velocity's and Friction to 0.
+	 */
 	private void resetSprite2Velocity() {
 		sprite2XVelocity = 0;
 		sprite2YVelocity = 0;
@@ -73,6 +76,9 @@ public class Main extends Activity implements OnClickListener {
 		yFriction = 0;
 	}
 
+	/**
+	 * Update the velocity of objects on the gameboard.
+	 */
 	public void updateVelocity() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		if (gb.isAccelerating()) {
@@ -105,6 +111,9 @@ public class Main extends Activity implements OnClickListener {
 		}
 	}
 
+	/**
+	 * Update the position of the objects on the gameboard.
+	 */
 	public void updatePosition() {
 		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		Point sprite2 = gb.getSpite2();
@@ -175,15 +184,11 @@ public class Main extends Activity implements OnClickListener {
 		gb.setSprite2(upLoc);
 	}
 
+	/**
+	 * Update the gameboard every FRAME_DELAY milliseconds. Updates the velocity
+	 * and position and then redraws the canvas.
+	 */
 	private Runnable frameUpdate = new Runnable() {
-
-		// The main loop that drives the game.
-		// Checks if there was a collision,
-		// Updates velocity,
-		// Does boundary checking,
-		// Updates position based on velocity,
-		// Redraws the canvas.
-
 		@Override
 		synchronized public void run() {
 			frame.removeCallbacksAndMessages(frameUpdate);
@@ -194,20 +199,21 @@ public class Main extends Activity implements OnClickListener {
 			// Update position with boundary checking
 			updatePosition();
 
+			// Display Velocity and Friction information
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
-			// Display Velocity and Friction information
-			((TextView) findViewById(R.id.the_label)).setText("Sprite Velocity ("
+			((TextView) findViewById(R.id.the_label)).setText("Velocity ("
 					+ String.format("%.2f", sprite2XVelocity) + ","
 					+ String.format("%.2f", sprite2YVelocity) + ")");
-			((TextView) findViewById(R.id.the_other_label)).setText("Sprite Friction ("
+			((TextView) findViewById(R.id.the_other_label)).setText("Friction ("
 					+ String.format("%.2f", xFriction) + "," + String.format("%.2f", yFriction)
 					+ ")");
-			((TextView) findViewById(R.id.the_third_label)).setText("Sprite speed ("
+			((TextView) findViewById(R.id.the_third_label)).setText("Speed ("
 					+ String.format("%.2f", speed) + ")");
 
 			// Redraw the canvas
 			((GameBoard) findViewById(R.id.the_canvas)).invalidate();
+
 			// Loop, after FRAME_DELAY milliseconds.
 			frame.postDelayed(frameUpdate, FRAME_DELAY);
 		}

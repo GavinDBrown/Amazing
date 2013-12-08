@@ -1,4 +1,4 @@
-package com.TeamAmazing.drawing;
+package com.TeamAmazing.game;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,8 +13,8 @@ public class Maze {
 	private ArrayList<Wall> walls;
 
 	public Maze(int width, int height) {
-		this.setWidth(width);
-		this.setHeight(height);
+		this.width = width;
+		this.height = height;
 		int id = 0;
 		this.cells = new Cell[width][height];
 		for (int i = 0; i < width; i++) {
@@ -23,7 +23,19 @@ public class Maze {
 				id++;
 			}
 		}
-		this.walls = new ArrayList<Wall>(2 * width * height - width - height);
+		this.walls = new ArrayList<Wall>(2 * (width + 1) * (height + 1));
+		for (int i = 0; i < width; i++) {
+			// Add walls on the top and bottom
+			walls.add(new Wall(cells[i][0], null));
+			walls.add(new Wall(cells[i][height - 1], null));
+		}
+		for (int j = 0; j < height; j++) {
+			// Add walls on the left and right
+			walls.add(new Wall(cells[0][j], null));
+			walls.add(new Wall(cells[width - 1][j], null));
+		}
+
+		// Add the walls inside the maze.
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				if (i < width - 1) {
@@ -40,11 +52,14 @@ public class Maze {
 		private int id;
 		private Cell ref = this;
 		private int rank = 1;
-		public Point coordinates;
+		private Point coordinates;
 
 		public Cell(int id, int x, int y) {
 			this.id = id;
 			this.coordinates = new Point(x, y);
+		}
+		public Point getCoords(){
+			return coordinates;
 		}
 	}
 
@@ -55,6 +70,14 @@ public class Maze {
 		public Wall(Cell node1, Cell node2) {
 			this.v1 = node1;
 			this.v2 = node2;
+		}
+
+		public Cell getV1() {
+			return this.v1;
+		}
+
+		public Cell getV2() {
+			return this.v2;
 		}
 	}
 
@@ -79,16 +102,22 @@ public class Maze {
 			return node;
 	}
 
+	/**
+	 * Creates a perfect maze using a union-find algorithm. 
+	 */
 	public void makePerfectMaze() {
 		Collections.shuffle(walls);
 		for (Iterator<Wall> it = walls.iterator(); it.hasNext();) {
 			Wall w = it.next();
-			if (find(w.v1).ref.id != find(w.v2).ref.id) {
-				// The two cells the wall is between are not connected
-				// by a path, so delete the wall and union the cell's
-				// partitions.
-				union(w.v1, w.v2);
-				it.remove();
+			// Avoid the walls on the boundary
+			if (w.v1 != null && w.v2 != null) {
+				if (find(w.v1).ref.id != find(w.v2).ref.id) {
+					// The two cells the wall is between are not connected
+					// by a path, so delete the wall and union the cell's
+					// partitions.
+					union(w.v1, w.v2);
+					it.remove();
+				}
 			}
 		}
 	}
@@ -101,13 +130,6 @@ public class Maze {
 	}
 
 	/**
-	 * @param width the width to set
-	 */
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	/**
 	 * @return the height
 	 */
 	public int getHeight() {
@@ -115,19 +137,12 @@ public class Maze {
 	}
 
 	/**
-	 * @param height the height to set
-	 */
-	public void setHeight(int height) {
-		this.height = height;
-	}
-	
-	/**
 	 * @return the cells
 	 */
 	public Cell[][] getCells() {
 		return cells;
 	}
-	
+
 	/**
 	 * @return the walls
 	 */
