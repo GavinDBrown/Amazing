@@ -3,6 +3,8 @@ package com.TeamAmazing.game;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import android.graphics.Rect;
+
 
 import android.graphics.Point;
 
@@ -64,8 +66,9 @@ public class Maze {
 	}
 
 	public class Wall {
-		Cell v1;
-		Cell v2;
+		private Cell v1;
+		private Cell v2;
+		private Rect bounds = null;
 
 		public Wall(Cell node1, Cell node2) {
 			this.v1 = node1;
@@ -78,6 +81,12 @@ public class Maze {
 
 		public Cell getV2() {
 			return this.v2;
+		}
+		public Rect getBounds(){
+			return bounds;
+		}
+		public void setBounds(Rect r){
+			this.bounds = r;
 		}
 	}
 

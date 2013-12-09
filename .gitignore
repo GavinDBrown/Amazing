@@ -25,7 +25,8 @@ proguard/
 # ignore gimp files
 *.xcf
 
-# some specific files relative to Gavin's folder
-.settings/org.eclipse.jdt.core.prefs
+# Eclipse settings files
+.settings/org.eclipse.*
+.settings/org.eclipse.*
 .classpath
 
