@@ -38,11 +38,11 @@ public class GameBoard extends View {
 
 	private static final int NUM_OF_STARS = 25;
 	// The width of a maze cell in pixels.
-	private static final int CELL_WIDTH = 30;
+	public static final int CELL_WIDTH = 60;
 	// The height of a maze cell in pixels.
-	private static final int CELL_HEIGHT = 30;
-	private static final int WALL_WIDTH = 5;
-	private static final int BOUNDARY_WIDTH = 20;
+	public static final int CELL_HEIGHT = 60;
+	public static final int WALL_WIDTH = 5;
+	public static final int BOUNDARY_WIDTH = 20;
 	private static final int SPRITE_WIDTH = 25;
 	private static final int SPRITE_HEIGHT = 13;
 
@@ -128,9 +128,9 @@ public class GameBoard extends View {
 		if (starField == null) {
 			initializeStars(canvas.getWidth(), canvas.getHeight());
 		}
-		if (maze == null) {
-			initializeMaze(canvas.getWidth(), canvas.getHeight());
-		}
+//		if (maze == null){
+//			initializeMaze();
+//		}
 
 		p.setColor(Color.CYAN);
 		p.setAlpha(starAlpha += starFade);
@@ -140,12 +140,20 @@ public class GameBoard extends View {
 		for (int i = 0; i < NUM_OF_STARS; i++) {
 			canvas.drawPoint(starField.get(i).x, starField.get(i).y, p);
 		}
-		// Draws the maze
+		// Draw the maze
 		p.setColor(Color.MAGENTA);
 		for (Wall w : maze.getWalls()) {
 			canvas.drawRect(w.getBounds(), p);
 		}
-
+		
+		// Draw the end cell.
+		p.setColor(Color.RED);
+		Point endPoint = maze.getCell(Maze.END_CELL).getCoords();
+		canvas.drawRect(endPoint.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
+				endPoint.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
+				(endPoint.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (endPoint.y + 1)
+						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
+		
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {
 			// Draws the bitmap, with sprite2.x,y as the center
@@ -154,187 +162,7 @@ public class GameBoard extends View {
 		}
 	}
 
-	/**
-	 * Set the bounds for a horizontal wall above the cell.
-	 * 
-	 * @param wall
-	 *            The wall to have it's bounds set.
-	 * @param cell
-	 *            The cell that has a wall above it.
-	 */
-	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
-		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				(cell.getCoords().y) * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, (cell
-						.getCoords().x + 1)
-						* (CELL_WIDTH + WALL_WIDTH)
-						+ BOUNDARY_WIDTH
-						+ WALL_WIDTH, (cell.getCoords().y) * (CELL_HEIGHT + WALL_WIDTH)
-						+ WALL_WIDTH + BOUNDARY_WIDTH));
-	}
-
-	/**
-	 * Set the bounds for a horizontal wall below the cell.
-	 * 
-	 * @param wall
-	 *            The wall to have it's bounds set.
-	 * @param cell
-	 *            The cell that has a wall below it.
-	 */
-	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
-		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, (cell
-						.getCoords().x + 1)
-						* (CELL_WIDTH + WALL_WIDTH)
-						+ BOUNDARY_WIDTH
-						+ WALL_WIDTH, (cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH)
-						+ WALL_WIDTH + BOUNDARY_WIDTH));
-	}
-
-	/**
-	 * Set the bounds for a vertical wall to the left of the cell.
-	 * 
-	 * @param wall
-	 *            The wall to have it's bounds set.
-	 * @param cell
-	 *            The cell that has a wall to the left of it.
-	 */
-	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect(cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
-				cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH, (cell
-						.getCoords().y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH
-						+ WALL_WIDTH));
-	}
-
-	/**
-	 * Set the bounds for a vertical wall to the right of the cell.
-	 * 
-	 * @param wall
-	 *            The wall to have it's bounds set.
-	 * @param cell
-	 *            The cell that has a wall to the right of it.
-	 */
-	private void setWallBoundsRightCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect((cell.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
-				(cell.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH));
-	}
-
-	/**
-	 * Set the bounds for a wall next to a cell on the boundary of the maze.
-	 * 
-	 * @param wall
-	 *            The wall to have it's bounds set.
-	 * @param cell
-	 *            The cell that the wall is next to.
-	 * @param corners
-	 *            Boolean flags that determine the behavior of how corner cell
-	 *            walls are drawn.
-	 */
-	private void setWallBoundsBoundaryCell(Wall wall, Cell cell, boolean[] corners) {
-		if (cell.getCoords().x == 0) {
-			// TopLeft, TopRight, BottomLeft, BottomRight
-			if (cell.getCoords().y == 0 && !corners[0]) {
-				// Cell is on the top left => horizontal wall above
-				// it.
-				setWallBoundsAboveCell(wall, cell);
-				// Set the flag topLeft so the second wall with
-				// cells at (0,0) and null will be drawn on the
-				// left.
-				corners[0] = true;
-			} else if (cell.getCoords().y == maze.getHeight() - 1 && !corners[2]) {
-				// Cell is on the bottom left => horizontal wall
-				// below it.
-				setWallBoundsBelowCell(wall, cell);
-				// Set the flag bottomLeft so the second wall
-				// with cells at (0, maze.getHeight() - 1) and null
-				// will be drawn on the left.
-				corners[2] = true;
-			} else {
-				// Cell is on the left => vertical wall to
-				// the left of it.
-				setWallBoundsLeftCell(wall, cell);
-			}
-		} else if (cell.getCoords().x == maze.getWidth() - 1) {
-			if (cell.getCoords().y == 0 && !corners[1]) {
-				// Cell is on the top right => horizontal wall above
-				// it.
-				setWallBoundsAboveCell(wall, cell);
-				// Set the flag topRight so the second wall with
-				// cells at (0, maze.getHeight() - 1) and null will
-				// be drawn on the right.
-				corners[1] = true;
-			} else if (cell.getCoords().y == maze.getHeight() - 1 && !corners[3]) {
-				// Cell is on the bottom right => horizontal wall
-				// below it.
-				setWallBoundsBelowCell(wall, cell);
-				// Set the flag bottomRight so the second wall
-				// with cells at (maze.getWidth()-1,
-				// maze.getHeight() - 1) and null will be drawn on
-				// the right.
-				corners[3] = true;
-			} else {
-				// Cell is on the right => vertical wall to the
-				// right of it.
-				setWallBoundsRightCell(wall, cell);
-			}
-		} else if (cell.getCoords().y == 0) {
-			// Cell is on the top => horizontal wall above
-			// it.
-			setWallBoundsAboveCell(wall, cell);
-		} else if (cell.getCoords().y == maze.getHeight() - 1) {
-			// Cell is on the bottom => horizontal wall below
-			// it.
-			setWallBoundsBelowCell(wall, cell);
-		}
-	}
-
-	/**
-	 * 
-	 * @param width
-	 *            The width of the canvas the maze is drawn on.
-	 * @param height
-	 *            The height of the canvas the maze is drawn on.
-	 */
-	private void initializeMaze(int width, int height) {
-		maze = new Maze((width - 2 * BOUNDARY_WIDTH) / (CELL_WIDTH + WALL_WIDTH),
-				(height - 2 * BOUNDARY_WIDTH) / (CELL_HEIGHT + WALL_WIDTH));
-		maze.makePerfectMaze();
-		// Each corner will have two indistinguishable walls that need to be
-		// drawn differently so set a boolean flag for each corner.
-		// topLeft, topRight, bottomLeft, bottomRight
-		boolean[] corners = { false, false, false, false };
-		for (Wall w : maze.getWalls()) {
-			Cell cell1 = w.getV1();
-			Cell cell2 = w.getV2();
-			if (cell1 != null && cell2 != null) {
-				// Cells on the inside.
-				if (cell1.getCoords().x == cell2.getCoords().x) {
-					// Vertical inside cells => horizontal wall below cell1.
-					setWallBoundsBelowCell(w, cell1);
-				} else {
-					// Horizontal inside cells => vertical wall to the right of
-					// cell1.
-					setWallBoundsRightCell(w, cell1);
-				}
-			} else {
-				// Cells on the boundary
-				if (cell1 != null) {
-					setWallBoundsBoundaryCell(w, cell1, corners);
-				} else {
-					// The first cell of a wall should never be null, but
-					// this is included for future usability.
-					setWallBoundsBoundaryCell(w, cell2, corners);
-				}
-
-			}
-		}
-	}
+	
 
 	@Override
 	synchronized public boolean onTouchEvent(MotionEvent ev) {

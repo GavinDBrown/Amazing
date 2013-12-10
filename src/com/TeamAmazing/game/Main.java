@@ -1,15 +1,22 @@
 package com.TeamAmazing.game;
 
-import com.TeamAmazing.drawing.GameBoard;
-
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.app.Activity;
-import android.graphics.Point;
+
+import com.TeamAmazing.drawing.GameBoard;
+import com.TeamAmazing.game.Maze.Cell;
+import com.TeamAmazing.game.Maze.Wall;
 
 public class Main extends Activity implements OnClickListener {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
@@ -21,7 +28,6 @@ public class Main extends Activity implements OnClickListener {
 	private float yFriction = 0;
 	private static final int MAX_SPEED = 20;
 	private static final float REBOUND_FAC = .5f;
-	private final Point startPos = new Point(50, 50);
 
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
@@ -32,26 +38,39 @@ public class Main extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		Handler h = new Handler();
 		((Button) findViewById(R.id.the_button)).setOnClickListener(this);
-		// According to the TechRepublic blog:
-		// We can't initialize the graphics immediately because the layout
-		// manager
-		// needs to run first, thus we post with a 1 second delay.
-		// I changed it to 0 seconds, change this if it crashes at startup.
-		h.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				initGfx();
-			}
-		}, 0);
+		initGfx();
 	}
 
 	synchronized public void initGfx() {
-		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		ViewTreeObserver vto = gb.getViewTreeObserver();
+		vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+
+			@Override
+			@SuppressLint("NewApi")
+			@SuppressWarnings("deprecation")
+			public void onGlobalLayout() {
+				// Initialize stuff that is dependent on the view already having
+				// been measured.
+				gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
+				Point startPos = gb.maze.getCell(Maze.START_CELL).getCoords();
+				startPos.x = startPos.x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+						+ GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_WIDTH / 2;
+				startPos.y = startPos.y * (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+						+ GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_HEIGHT / 2;
+				gb.setSprite2(startPos);
+
+				ViewTreeObserver obs = gb.getViewTreeObserver();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+					obs.removeOnGlobalLayoutListener(this);
+				} else {
+					obs.removeGlobalOnLayoutListener(this);
+				}
+			}
+
+		});
 		gb.resetStarField();
-		gb.resetMaze();
-		gb.setSprite2(startPos);
 		resetSprite2Velocity();
 		((Button) findViewById(R.id.the_button)).setEnabled(true);
 		frame.removeCallbacksAndMessages(frameUpdate);
@@ -110,7 +129,7 @@ public class Main extends Activity implements OnClickListener {
 			sprite2YVelocity = sprite2YVelocity + yFriction;
 		}
 	}
-	
+
 	// TODO add boundary checking for the walls.
 	/**
 	 * Update the position of the objects on the gameboard.
@@ -220,4 +239,210 @@ public class Main extends Activity implements OnClickListener {
 		}
 
 	};
+
+	/**
+	 * Set the bounds for a horizontal wall above the cell.
+	 * 
+	 * @param wall
+	 *            The wall to have it's bounds set.
+	 * @param cell
+	 *            The cell that has a wall above it.
+	 */
+	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
+		// Horizontal wall
+		wall.setBounds(new Rect((cell.getCoords().x)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, (cell
+				.getCoords().y)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
+				+ GameBoard.WALL_WIDTH, cell.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
+				+ GameBoard.BOUNDARY_WIDTH));
+	}
+
+	/**
+	 * Set the bounds for a horizontal wall below the cell.
+	 * 
+	 * @param wall
+	 *            The wall to have it's bounds set.
+	 * @param cell
+	 *            The cell that has a wall below it.
+	 */
+	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
+		// Horizontal wall
+		wall.setBounds(new Rect((cell.getCoords().x)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, (cell
+				.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
+				+ GameBoard.WALL_WIDTH, (cell.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
+				+ GameBoard.BOUNDARY_WIDTH));
+	}
+
+	/**
+	 * Set the bounds for a vertical wall to the left of the cell.
+	 * 
+	 * @param wall
+	 *            The wall to have it's bounds set.
+	 * @param cell
+	 *            The cell that has a wall to the left of it.
+	 */
+	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
+		wall.setBounds(new Rect(cell.getCoords().x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, cell
+				.getCoords().x
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
+				+ GameBoard.WALL_WIDTH));
+	}
+
+	/**
+	 * Set the bounds for a vertical wall to the right of the cell.
+	 * 
+	 * @param wall
+	 *            The wall to have it's bounds set.
+	 * @param cell
+	 *            The cell that has a wall to the right of it.
+	 */
+	private void setWallBoundsRightCell(Wall wall, Cell cell) {
+		wall.setBounds(new Rect((cell.getCoords().x + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, cell
+				.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
+				+ GameBoard.WALL_WIDTH));
+	}
+
+	/**
+	 * Set the bounds for a wall next to a cell on the boundary of the maze.
+	 * 
+	 * @param wall
+	 *            　The wall to have it's bounds set.
+	 * @param cell
+	 *            　The cell that the wall is next to.
+	 * @param corners
+	 *            　Boolean flags that determine the behavior of how corner cell
+	 *            walls are drawn.
+	 * @param mazeWidth
+	 *            　How many cells are in one row of the maze.
+	 * @param mazeHeight
+	 *            How many cells are in one column of the maze.
+	 */
+	private void setWallBoundsBoundaryCell(Wall wall, Cell cell, boolean[] corners, int mazeWidth,
+			int mazeHeight) {
+		if (cell.getCoords().x == 0) {
+			// TopLeft, TopRight, BottomLeft, BottomRight
+			if (cell.getCoords().y == 0 && !corners[0]) {
+				// Cell is on the top left => horizontal wall above
+				// it.
+				setWallBoundsAboveCell(wall, cell);
+				// Set the flag topLeft so the second wall with
+				// cells at (0,0) and null will be drawn on the
+				// left.
+				corners[0] = true;
+			} else if (cell.getCoords().y == mazeHeight - 1 && !corners[2]) {
+				// Cell is on the bottom left => horizontal wall
+				// below it.
+				setWallBoundsBelowCell(wall, cell);
+				// Set the flag bottomLeft so the second wall
+				// with cells at (0, maze.getHeight() - 1) and null
+				// will be drawn on the left.
+				corners[2] = true;
+			} else {
+				// Cell is on the left => vertical wall to
+				// the left of it.
+				setWallBoundsLeftCell(wall, cell);
+			}
+		} else if (cell.getCoords().x == mazeWidth - 1) {
+			if (cell.getCoords().y == 0 && !corners[1]) {
+				// Cell is on the top right => horizontal wall above
+				// it.
+				setWallBoundsAboveCell(wall, cell);
+				// Set the flag topRight so the second wall with
+				// cells at (0, maze.getHeight() - 1) and null will
+				// be drawn on the right.
+				corners[1] = true;
+			} else if (cell.getCoords().y == mazeHeight - 1 && !corners[3]) {
+				// Cell is on the bottom right => horizontal wall
+				// below it.
+				setWallBoundsBelowCell(wall, cell);
+				// Set the flag bottomRight so the second wall
+				// with cells at (maze.getWidth()-1,
+				// maze.getHeight() - 1) and null will be drawn on
+				// the right.
+				corners[3] = true;
+			} else {
+				// Cell is on the right => vertical wall to the
+				// right of it.
+				setWallBoundsRightCell(wall, cell);
+			}
+		} else if (cell.getCoords().y == 0) {
+			// Cell is on the top => horizontal wall above
+			// it.
+			setWallBoundsAboveCell(wall, cell);
+		} else if (cell.getCoords().y == mazeHeight - 1) {
+			// Cell is on the bottom => horizontal wall below
+			// it.
+			setWallBoundsBelowCell(wall, cell);
+		}
+	}
+
+	/**
+	 * Creates a Maze object and initializes it with a random perfect maze.
+	 * 
+	 * @param canvasWidth
+	 *            The width of the canvas the maze is drawn on.
+	 * @param canvasHeight
+	 *            The height of the canvas the maze is drawn on.
+	 * @return The initialized Maze object.
+	 */
+	private Maze initializeMaze(int canvasWidth, int canvasHeight) {
+		Maze maze = new Maze((canvasWidth - 2 * GameBoard.BOUNDARY_WIDTH)
+				/ (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH),
+				(canvasHeight - 2 * GameBoard.BOUNDARY_WIDTH)
+						/ (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH));
+		maze.makePerfectMaze();
+		// Set the start and finish cells.
+		maze.getCells()[0][0].setType(Maze.START_CELL);
+		maze.getCells()[maze.getWidth() - 1][maze.getHeight() - 1].setType(Maze.END_CELL);
+		// Each corner will have two indistinguishable walls that need have
+		// different orientations so set a boolean flag for each corner.
+		// topLeft, topRight, bottomLeft, bottomRight
+		boolean[] corners = { false, false, false, false };
+		for (Wall w : maze.getWalls()) {
+			Cell cell1 = w.getV1();
+			Cell cell2 = w.getV2();
+			if (cell1 != null && cell2 != null) {
+				// Cells on the inside.
+				if (cell1.getCoords().x == cell2.getCoords().x) {
+					// Vertical inside cells => horizontal wall below cell1.
+					setWallBoundsBelowCell(w, cell1);
+				} else {
+					// Horizontal inside cells => vertical wall to the right of
+					// cell1.
+					setWallBoundsRightCell(w, cell1);
+				}
+			} else {
+				// Cells on the boundary
+				if (cell1 != null) {
+					setWallBoundsBoundaryCell(w, cell1, corners, maze.getWidth(), maze.getHeight());
+				} else {
+					// The first cell of a wall should never be null, but
+					// this is included for future usability.
+					setWallBoundsBoundaryCell(w, cell2, corners, maze.getWidth(), maze.getHeight());
+				}
+
+			}
+		}
+		return maze;
+	}
+
 }

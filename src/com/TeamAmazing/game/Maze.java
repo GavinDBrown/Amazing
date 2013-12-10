@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import android.graphics.Rect;
 
-
 import android.graphics.Point;
 
 public class Maze {
@@ -13,6 +12,9 @@ public class Maze {
 	private int height;
 	private Cell[][] cells;
 	private ArrayList<Wall> walls;
+	public static final int REGULAR_CELL = 0;
+	public static final int START_CELL = 1;
+	public static final int END_CELL = 2;
 
 	public Maze(int width, int height) {
 		this.width = width;
@@ -55,14 +57,25 @@ public class Maze {
 		private Cell ref = this;
 		private int rank = 1;
 		private Point coordinates;
+		private int type = REGULAR_CELL;
 
 		public Cell(int id, int x, int y) {
 			this.id = id;
 			this.coordinates = new Point(x, y);
 		}
-		public Point getCoords(){
+
+		public Point getCoords() {
 			return coordinates;
 		}
+
+		public int getType() {
+			return type;
+		}
+
+		public void setType(int type) {
+			this.type = type;
+		}
+
 	}
 
 	public class Wall {
@@ -82,10 +95,12 @@ public class Maze {
 		public Cell getV2() {
 			return this.v2;
 		}
-		public Rect getBounds(){
+
+		public Rect getBounds() {
 			return bounds;
 		}
-		public void setBounds(Rect r){
+
+		public void setBounds(Rect r) {
 			this.bounds = r;
 		}
 	}
@@ -112,7 +127,7 @@ public class Maze {
 	}
 
 	/**
-	 * Creates a perfect maze using a union-find algorithm. 
+	 * Creates a perfect maze using a union-find algorithm.
 	 */
 	public void makePerfectMaze() {
 		Collections.shuffle(walls);
@@ -129,6 +144,25 @@ public class Maze {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Return the first Cell of the given type.
+	 * 
+	 * @param type
+	 *            The type of the Cell to be returned.
+	 * @return Returns the first Cell found of the given type, if no Cell is
+	 *         found returns null.
+	 */
+	public Cell getCell(int type) {
+		for (int i = 0; i < cells.length; i++) {
+			for (int j = 0; j < cells[0].length; j++) {
+				if (cells[i][j].type == type)
+					return cells[i][j];
+			}
+
+		}
+		return null;
 	}
 
 	/**
