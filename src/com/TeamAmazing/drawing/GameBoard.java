@@ -43,9 +43,10 @@ public class GameBoard extends View {
 	private static final int CELL_HEIGHT = 30;
 	private static final int WALL_WIDTH = 5;
 	private static final int BOUNDARY_WIDTH = 20;
+	private static final int SPRITE_WIDTH = 25;
+	private static final int SPRITE_HEIGHT = 13;
 
 	// Getters and setters.
-
 	synchronized public void setSprite2(int x, int y) {
 		sprite2 = new Point(x, y);
 	}
@@ -100,7 +101,9 @@ public class GameBoard extends View {
 		// load our bitmap and set the bounds for the controller
 		sprite2 = new Point(-1, -1);
 		// Define a matrix so we can rotate the asteroid
-		bm2 = BitmapFactory.decodeResource(getResources(), R.drawable.ufo);
+		bm2 = Bitmap.createScaledBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.ufo), SPRITE_WIDTH,
+				SPRITE_HEIGHT, false);
 		sprite2Bounds = new Rect(0, 0, bm2.getWidth(), bm2.getHeight());
 	}
 
@@ -223,6 +226,75 @@ public class GameBoard extends View {
 	}
 
 	/**
+	 * Set the bounds for a wall next to a cell on the boundary of the maze.
+	 * 
+	 * @param wall
+	 *            The wall to have it's bounds set.
+	 * @param cell
+	 *            The cell that the wall is next to.
+	 * @param corners
+	 *            Boolean flags that determine the behavior of how corner cell
+	 *            walls are drawn.
+	 */
+	private void setWallBoundsBoundaryCell(Wall wall, Cell cell, boolean[] corners) {
+		if (cell.getCoords().x == 0) {
+			// TopLeft, TopRight, BottomLeft, BottomRight
+			if (cell.getCoords().y == 0 && !corners[0]) {
+				// Cell is on the top left => horizontal wall above
+				// it.
+				setWallBoundsAboveCell(wall, cell);
+				// Set the flag topLeft so the second wall with
+				// cells at (0,0) and null will be drawn on the
+				// left.
+				corners[0] = true;
+			} else if (cell.getCoords().y == maze.getHeight() - 1 && !corners[2]) {
+				// Cell is on the bottom left => horizontal wall
+				// below it.
+				setWallBoundsBelowCell(wall, cell);
+				// Set the flag bottomLeft so the second wall
+				// with cells at (0, maze.getHeight() - 1) and null
+				// will be drawn on the left.
+				corners[2] = true;
+			} else {
+				// Cell is on the left => vertical wall to
+				// the left of it.
+				setWallBoundsLeftCell(wall, cell);
+			}
+		} else if (cell.getCoords().x == maze.getWidth() - 1) {
+			if (cell.getCoords().y == 0 && !corners[1]) {
+				// Cell is on the top right => horizontal wall above
+				// it.
+				setWallBoundsAboveCell(wall, cell);
+				// Set the flag topRight so the second wall with
+				// cells at (0, maze.getHeight() - 1) and null will
+				// be drawn on the right.
+				corners[1] = true;
+			} else if (cell.getCoords().y == maze.getHeight() - 1 && !corners[3]) {
+				// Cell is on the bottom right => horizontal wall
+				// below it.
+				setWallBoundsBelowCell(wall, cell);
+				// Set the flag bottomRight so the second wall
+				// with cells at (maze.getWidth()-1,
+				// maze.getHeight() - 1) and null will be drawn on
+				// the right.
+				corners[3] = true;
+			} else {
+				// Cell is on the right => vertical wall to the
+				// right of it.
+				setWallBoundsRightCell(wall, cell);
+			}
+		} else if (cell.getCoords().y == 0) {
+			// Cell is on the top => horizontal wall above
+			// it.
+			setWallBoundsAboveCell(wall, cell);
+		} else if (cell.getCoords().y == maze.getHeight() - 1) {
+			// Cell is on the bottom => horizontal wall below
+			// it.
+			setWallBoundsBelowCell(wall, cell);
+		}
+	}
+
+	/**
 	 * 
 	 * @param width
 	 *            The width of the canvas the maze is drawn on.
@@ -233,136 +305,31 @@ public class GameBoard extends View {
 		maze = new Maze((width - 2 * BOUNDARY_WIDTH) / (CELL_WIDTH + WALL_WIDTH),
 				(height - 2 * BOUNDARY_WIDTH) / (CELL_HEIGHT + WALL_WIDTH));
 		maze.makePerfectMaze();
-		boolean topLeftDone = false;
-		boolean topRightDone = false;
-		boolean bottomLeftDone = false;
-		boolean bottomRightDone = false;
+		// Each corner will have two indistinguishable walls that need to be
+		// drawn differently so set a boolean flag for each corner.
+		// topLeft, topRight, bottomLeft, bottomRight
+		boolean[] corners = { false, false, false, false };
 		for (Wall w : maze.getWalls()) {
 			Cell cell1 = w.getV1();
 			Cell cell2 = w.getV2();
 			if (cell1 != null && cell2 != null) {
 				// Cells on the inside.
 				if (cell1.getCoords().x == cell2.getCoords().x) {
-					// Vertical inside cells => horizontal wall below.
+					// Vertical inside cells => horizontal wall below cell1.
 					setWallBoundsBelowCell(w, cell1);
 				} else {
-					// Horizontal inside cells => vertical wall to the right.
+					// Horizontal inside cells => vertical wall to the right of
+					// cell1.
 					setWallBoundsRightCell(w, cell1);
 				}
 			} else {
 				// Cells on the boundary
 				if (cell1 != null) {
-					if (cell1.getCoords().x == 0) {
-						if (cell1.getCoords().y == 0 && !topLeftDone) {
-							// Cell is on the top left => horizontal wall above
-							// it.
-							setWallBoundsAboveCell(w, cell1);
-							// Set the flag topLeftDone so the second wall with
-							// cells at (0,0) and null will be drawn on the
-							// left.
-							topLeftDone = true;
-						} else if (cell1.getCoords().y == maze.getHeight() - 1 && !bottomLeftDone) {
-							// Cell is on the bottom left => horizontal wall
-							// below it.
-							setWallBoundsBelowCell(w, cell1);
-							// Set the flag bottomLeftDone so the second wall
-							// with cells at (0, maze.getHeight() - 1) and null
-							// will be drawn on the left.
-							bottomLeftDone = true;
-						} else {
-							// Cell is on the left => vertical wall to
-							// the left of it.
-							setWallBoundsLeftCell(w, cell1);
-						}
-					} else if (cell1.getCoords().x == maze.getWidth() - 1) {
-						if (cell1.getCoords().y == 0 && !topRightDone) {
-							// Cell is on the top right => horizontal wall above
-							// it.
-							setWallBoundsAboveCell(w, cell1);
-							// Set the flag topRightDone so the second wall with
-							// cells at (0, maze.getHeight() - 1) and null will
-							// be drawn on the right.
-							topRightDone = true;
-						} else if (cell1.getCoords().y == maze.getHeight() - 1 && !bottomRightDone) {
-							// Cell is on the bottom right => horizontal wall
-							// below it.
-							setWallBoundsBelowCell(w, cell1);
-							// Set the flag bottomRightDone so the second wall
-							// with cells at (maze.getWidth()-1,
-							// maze.getHeight() - 1) and null will be drawn on
-							// the right.
-							bottomRightDone = true;
-						} else {
-							// Cell is on the right => vertical wall to the
-							// right of it.
-							setWallBoundsRightCell(w, cell1);
-						}
-					} else if (cell1.getCoords().y == 0) {
-						// Cell is on the top => horizontal wall above
-						// it.
-						setWallBoundsAboveCell(w, cell1);
-					} else if (cell1.getCoords().y == maze.getHeight() - 1) {
-						// Cell is on the bottom => horizontal wall below
-						// it.
-						setWallBoundsBelowCell(w, cell1);
-					}
+					setWallBoundsBoundaryCell(w, cell1, corners);
 				} else {
-					// Only the second cell of a wall should ever be null, but
+					// The first cell of a wall should never be null, but
 					// this is included for future usability.
-					if (cell2.getCoords().x == 0) {
-						if (cell2.getCoords().y == 0 && !topLeftDone) {
-							// Cell is on the top left => horizontal wall above
-							// it.
-							setWallBoundsAboveCell(w, cell2);
-							// Set the flag topLeftDone so the second wall with
-							// cells at (0,0) and null will be drawn on the
-							// left.
-							topLeftDone = true;
-						} else if (cell2.getCoords().y == maze.getHeight() - 1 && !bottomLeftDone) {
-							// Cell is on the bottom left => horizontal wall
-							// below it.
-							setWallBoundsBelowCell(w, cell2);
-							// Set the flag bottomLeftDone so the second wall
-							// with cells at (0, maze.getHeight() - 1) and null
-							// will be drawn on the left.
-							bottomLeftDone = true;
-						} else {
-							// Cell is on the left => vertical wall to
-							// the left of it.
-							setWallBoundsLeftCell(w, cell2);
-						}
-					} else if (cell2.getCoords().x == maze.getWidth() - 1) {
-						if (cell2.getCoords().y == 0 && !topRightDone) {
-							// Cell is on the top right => horizontal wall above
-							// it.
-							setWallBoundsAboveCell(w, cell2);
-							// Set the flag topRightDone so the second wall with
-							// cells at (0, maze.getHeight() - 1) and null will
-							// be drawn on the right.
-							topRightDone = true;
-						} else if (cell2.getCoords().y == maze.getHeight() - 1 && !bottomRightDone) {
-							// Cell is on the bottom right => horizontal wall
-							// below it.
-							setWallBoundsBelowCell(w, cell2);
-							// Set the flag bottomRightDone so the second wall
-							// with cells at (maze.getWidth()-1,
-							// maze.getHeight() - 1) and null will be drawn on
-							// the right.
-							bottomRightDone = true;
-						} else {
-							// Cell is on the right => vertical wall to the
-							// right of it.
-							setWallBoundsRightCell(w, cell2);
-						}
-					} else if (cell2.getCoords().y == 0) {
-						// Cell is on the top => horizontal wall above
-						// it.
-						setWallBoundsAboveCell(w, cell2);
-					} else if (cell2.getCoords().y == maze.getHeight() - 1) {
-						// Cell is on the bottom => horizontal wall below
-						// it.
-						setWallBoundsBelowCell(w, cell2);
-					}
+					setWallBoundsBoundaryCell(w, cell2, corners);
 				}
 
 			}

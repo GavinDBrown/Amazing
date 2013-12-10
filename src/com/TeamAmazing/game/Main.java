@@ -110,7 +110,8 @@ public class Main extends Activity implements OnClickListener {
 			sprite2YVelocity = sprite2YVelocity + yFriction;
 		}
 	}
-
+	
+	// TODO add boundary checking for the walls.
 	/**
 	 * Update the position of the objects on the gameboard.
 	 */
