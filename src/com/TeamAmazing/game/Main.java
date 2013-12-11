@@ -54,12 +54,14 @@ public class Main extends Activity implements OnClickListener {
 				// Initialize stuff that is dependent on the view already having
 				// been measured.
 				gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-				Point startPos = gb.maze.getCell(Maze.START_CELL).getCoords();
-				startPos.x = startPos.x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
-						+ GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_WIDTH / 2;
-				startPos.y = startPos.y * (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
-						+ GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_HEIGHT / 2;
-				gb.setSprite2(startPos);
+				Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
+				// startPos.x = startPos.x * (GameBoard.CELL_WIDTH +
+				// GameBoard.WALL_WIDTH)
+				// + GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_WIDTH / 2;
+				// startPos.y = startPos.y * (GameBoard.CELL_HEIGHT +
+				// GameBoard.WALL_WIDTH)
+				// + GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_HEIGHT / 2;
+				gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
 
 				ViewTreeObserver obs = gb.getViewTreeObserver();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -78,9 +80,23 @@ public class Main extends Activity implements OnClickListener {
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
 	}
 
+	public static Rect calculateCellRect(Cell cell) {
+		return new Rect(cell.getCoords().x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH,
+				(cell.getCoords().y + 1) * (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+						+ GameBoard.BOUNDARY_WIDTH);
+	}
+
 	@Override
 	// Runs when the reset button is clicked.
 	synchronized public void onClick(View v) {
+		resetGame();
+	}
+	
+	private void resetGame(){
 		frame.removeCallbacksAndMessages(null);
 		initGfx();
 	}
@@ -131,11 +147,12 @@ public class Main extends Activity implements OnClickListener {
 	}
 
 	// TODO add boundary checking for the walls.
+	// TODO reset the maze when the sprite is in the end cell.
 	/**
 	 * Update the position of the objects on the gameboard.
 	 */
 	public void updatePosition() {
-		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		Point sprite2 = gb.getSpite2();
 		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity), Math.round(sprite2.y
 				+ sprite2YVelocity));
@@ -202,6 +219,14 @@ public class Main extends Activity implements OnClickListener {
 			}
 		}
 		gb.setSprite2(upLoc);
+		// Check if we are in the end cell.
+		// TODO NOTE, having the check here means that if we bounce into and out
+		// of the cell in one frame that it won't count.
+		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(upLoc.x, upLoc.y)){
+			// Sprite is inside the end cell.
+			resetGame();
+		}
+		
 	}
 
 	/**

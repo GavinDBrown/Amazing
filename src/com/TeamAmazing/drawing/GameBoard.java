@@ -1,13 +1,12 @@
-//TODO Add collision detection for the maze.
 package com.TeamAmazing.drawing;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.TeamAmazing.game.Main;
 import com.TeamAmazing.game.Maze;
 import com.TeamAmazing.game.R;
-import com.TeamAmazing.game.Maze.Cell;
 import com.TeamAmazing.game.Maze.Wall;
 
 import android.content.Context;
@@ -148,12 +147,12 @@ public class GameBoard extends View {
 		
 		// Draw the end cell.
 		p.setColor(Color.RED);
-		Point endPoint = maze.getCell(Maze.END_CELL).getCoords();
-		canvas.drawRect(endPoint.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				endPoint.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				(endPoint.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (endPoint.y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
-		
+		canvas.drawRect(Main.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
+//		canvas.drawRect(endPoint.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
+//				endPoint.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
+//				(endPoint.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (endPoint.y + 1)
+//						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
+//		
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {
 			// Draws the bitmap, with sprite2.x,y as the center
