@@ -148,11 +148,7 @@ public class GameBoard extends View {
 		// Draw the end cell.
 		p.setColor(Color.RED);
 		canvas.drawRect(Main.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
-//		canvas.drawRect(endPoint.x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-//				endPoint.y * (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-//				(endPoint.x + 1) * (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (endPoint.y + 1)
-//						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH, p);
-//		
+		
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {
 			// Draws the bitmap, with sprite2.x,y as the center
@@ -160,9 +156,7 @@ public class GameBoard extends View {
 					sprite2.y - sprite2Bounds.height() / 2, null);
 		}
 	}
-
 	
-
 	@Override
 	synchronized public boolean onTouchEvent(MotionEvent ev) {
 		switch (ev.getAction()) {

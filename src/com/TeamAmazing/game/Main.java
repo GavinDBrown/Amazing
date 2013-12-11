@@ -95,8 +95,8 @@ public class Main extends Activity implements OnClickListener {
 	synchronized public void onClick(View v) {
 		resetGame();
 	}
-	
-	private void resetGame(){
+
+	private void resetGame() {
 		frame.removeCallbacksAndMessages(null);
 		initGfx();
 	}
@@ -147,86 +147,101 @@ public class Main extends Activity implements OnClickListener {
 	}
 
 	// TODO add boundary checking for the walls.
-	// TODO reset the maze when the sprite is in the end cell.
 	/**
 	 * Update the position of the objects on the gameboard.
 	 */
 	public void updatePosition() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
-		Point sprite2 = gb.getSpite2();
-		Point upLoc = new Point(Math.round(sprite2.x + sprite2XVelocity), Math.round(sprite2.y
-				+ sprite2YVelocity));
-		if (upLoc.x > gb.getWidth() - gb.getSprite2Width() / 2
-				|| upLoc.x < gb.getSprite2Width() / 2) {
-			int xVel = Math.round(sprite2XVelocity);
-			upLoc.x = sprite2.x;
-			// Take a steps along the xVel vector, making decisions as we go.
-			while (Math.abs(xVel) > 0) {
-				if (xVel > 0) {
-					if (upLoc.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2) {
-						// Rebound
-						upLoc.x -= 1;
-						xVel *= -1 * REBOUND_FAC;
-						sprite2XVelocity *= -1 * REBOUND_FAC;
-						xFriction *= -1 * REBOUND_FAC;
-					} else {
-						upLoc.x += 1;
-					}
-					xVel--;
-				} else {
-					if (upLoc.x - 1 < gb.getSprite2Width() / 2) {
-						// Rebound
-						upLoc.x += 1;
-						xVel *= -1 * REBOUND_FAC;
-						sprite2XVelocity *= -1 * REBOUND_FAC;
-						xFriction *= -1 * REBOUND_FAC;
-					} else {
-						upLoc.x -= 1;
-					}
-					xVel++;
+		Point vel = new Point(Math.round(sprite2XVelocity), Math.round(sprite2YVelocity));
+		while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
+			if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
+				takeNStepsInXDirection(vel, Math.abs(vel.x / vel.y));
+				takeNStepsInYDirection(vel, 1);
+			} else if (Math.abs(vel.y) > Math.abs(vel.x) && vel.x != 0) {
+				takeNStepsInYDirection(vel, Math.abs(vel.y / vel.x));
+				takeNStepsInXDirection(vel, 1);
+			} else {
+				if (Math.abs(vel.x) > 0) {
+					takeNStepsInXDirection(vel, 1);
+				}
+				if (Math.abs(vel.y) > 0) {
+					takeNStepsInYDirection(vel, 1);
 				}
 			}
 		}
-		if (upLoc.y > gb.getHeight() - gb.getSprite2Height() / 2
-				|| upLoc.y < gb.getSprite2Height() / 2) {
-			int yVel = Math.round(sprite2YVelocity);
-			upLoc.y = sprite2.y;
-			// Take a steps along the yVel vector, making decisions as we go.
-			while (Math.abs(yVel) > 0) {
-				if (yVel > 0) {
-					if (upLoc.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2) {
-						// Rebound
-						upLoc.y -= 1;
-						yVel *= -1 * REBOUND_FAC;
-						sprite2YVelocity *= -1 * REBOUND_FAC;
-						yFriction *= -1 * REBOUND_FAC;
-					} else {
-						upLoc.y += 1;
-					}
-					yVel--;
-				} else {
-					if (upLoc.y - 1 < gb.getSprite2Height() / 2) {
-						// Rebound
-						upLoc.y += 1;
-						yVel *= -1 * REBOUND_FAC;
-						sprite2YVelocity *= -1 * REBOUND_FAC;
-						yFriction *= -1 * REBOUND_FAC;
-					} else {
-						upLoc.y -= 1;
-					}
-					yVel++;
-				}
-			}
-		}
-		gb.setSprite2(upLoc);
+
 		// Check if we are in the end cell.
 		// TODO NOTE, having the check here means that if we bounce into and out
 		// of the cell in one frame that it won't count.
-		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(upLoc.x, upLoc.y)){
+		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(gb.getSpite2().x,
+				gb.getSpite2().y)) {
 			// Sprite is inside the end cell.
 			resetGame();
 		}
-		
+	}
+
+	private void takeNStepsInYDirection(Point vel, int n) {
+		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		Point sprite2 = gb.getSpite2();
+		while (n > 0) {
+			// Take a steps along the yVel vector, making decisions as we go.
+			if (vel.y > 0) {
+				if (sprite2.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2) {
+					// Rebound
+					sprite2.y -= 1;
+					vel.y *= -1 * REBOUND_FAC;
+					sprite2YVelocity *= -1 * REBOUND_FAC;
+					yFriction *= -1 * REBOUND_FAC;
+				} else {
+					sprite2.y += 1;
+				}
+				vel.y--;
+			} else {
+				if (sprite2.y - 1 < gb.getSprite2Height() / 2) {
+					// Rebound
+					sprite2.y += 1;
+					vel.y *= -1 * REBOUND_FAC;
+					sprite2YVelocity *= -1 * REBOUND_FAC;
+					yFriction *= -1 * REBOUND_FAC;
+				} else {
+					sprite2.y -= 1;
+				}
+				vel.y++;
+			}
+			n--;
+		}
+	}
+
+	private void takeNStepsInXDirection(Point vel, int n) {
+		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		Point sprite2 = gb.getSpite2();
+		while (n > 0) {
+			// Take a steps along the xVel vector, making decisions as we go.
+			if (vel.x > 0) {
+				if (sprite2.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2) {
+					// Rebound
+					sprite2.x -= 1;
+					vel.x *= -1 * REBOUND_FAC;
+					sprite2XVelocity *= -1 * REBOUND_FAC;
+					xFriction *= -1 * REBOUND_FAC;
+				} else {
+					sprite2.x += 1;
+				}
+				vel.x--;
+			} else {
+				if (sprite2.x - 1 < gb.getSprite2Width() / 2) {
+					// Rebound
+					sprite2.x += 1;
+					vel.x *= -1 * REBOUND_FAC;
+					sprite2XVelocity *= -1 * REBOUND_FAC;
+					xFriction *= -1 * REBOUND_FAC;
+				} else {
+					sprite2.x -= 1;
+				}
+				vel.x++;
+			}
+			n--;
+		}
 	}
 
 	/**
