@@ -26,7 +26,7 @@ public class Main extends Activity implements OnClickListener {
 	private float sprite2YVelocity = 0;
 	private float xFriction = 0;
 	private float yFriction = 0;
-	private static final int MAX_SPEED = 20;
+	private static final int MAX_SPEED = 10;
 	private static final float REBOUND_FAC = .5f;
 
 	private Handler frame = new Handler();
@@ -179,6 +179,14 @@ public class Main extends Activity implements OnClickListener {
 			resetGame();
 		}
 	}
+	// TODO update to use pixel perfect collision detection
+	private boolean wallsIntersects(int left, int top, int right, int bottom) {
+		for (Wall w : ((GameBoard) findViewById(R.id.the_canvas)).maze.getWalls()) {
+			if (w.getBounds().intersects(left, top, right, bottom))
+				return true;
+		}
+		return false;
+	}
 
 	private void takeNStepsInYDirection(Point vel, int n) {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
@@ -186,7 +194,12 @@ public class Main extends Activity implements OnClickListener {
 		while (n > 0) {
 			// Take a steps along the yVel vector, making decisions as we go.
 			if (vel.y > 0) {
-				if (sprite2.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2) {
+				if (sprite2.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2
+						|| wallsIntersects(
+								sprite2.x - gb.getSprite2Width() / 2,
+								sprite2.y + 1 - gb.getSprite2Height() / 2,
+								sprite2.x + gb.getSprite2Width() / 2, 
+								sprite2.y + 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y -= 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -197,7 +210,12 @@ public class Main extends Activity implements OnClickListener {
 				}
 				vel.y--;
 			} else {
-				if (sprite2.y - 1 < gb.getSprite2Height() / 2) {
+				if (sprite2.y - 1 < gb.getSprite2Height() / 2
+						|| wallsIntersects(
+								sprite2.x - gb.getSprite2Width() / 2,
+								sprite2.y - 1 - gb.getSprite2Height() / 2,
+								sprite2.x + gb.getSprite2Width() / 2, 
+								sprite2.y - 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y += 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -218,7 +236,12 @@ public class Main extends Activity implements OnClickListener {
 		while (n > 0) {
 			// Take a steps along the xVel vector, making decisions as we go.
 			if (vel.x > 0) {
-				if (sprite2.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2) {
+				if (sprite2.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2
+						|| wallsIntersects(
+								sprite2.x +1- gb.getSprite2Width() / 2,
+								sprite2.y  - gb.getSprite2Height() / 2,
+								sprite2.x + 1+gb.getSprite2Width() / 2, 
+								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.x -= 1;
 					vel.x *= -1 * REBOUND_FAC;
@@ -229,7 +252,12 @@ public class Main extends Activity implements OnClickListener {
 				}
 				vel.x--;
 			} else {
-				if (sprite2.x - 1 < gb.getSprite2Width() / 2) {
+				if (sprite2.x - 1 < gb.getSprite2Width() / 2
+						|| wallsIntersects(
+								sprite2.x -1- gb.getSprite2Width() / 2,
+								sprite2.y  - gb.getSprite2Height() / 2,
+								sprite2.x -1+ gb.getSprite2Width() / 2, 
+								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.x += 1;
 					vel.x *= -1 * REBOUND_FAC;

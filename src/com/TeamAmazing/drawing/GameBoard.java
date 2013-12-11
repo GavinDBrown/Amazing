@@ -147,8 +147,9 @@ public class GameBoard extends View {
 		
 		// Draw the end cell.
 		p.setColor(Color.RED);
+		// TODO Calculate the end cell's Rect once and save the information.
 		canvas.drawRect(Main.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
-		
+
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {
 			// Draws the bitmap, with sprite2.x,y as the center
