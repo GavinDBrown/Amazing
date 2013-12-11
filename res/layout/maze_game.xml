@@ -3,15 +3,6 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <Button
-        android:id="@+id/the_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:enabled="false"
-        android:gravity="center"
-        android:text="@string/reset_maze" />
-
     <com.TeamAmazing.drawing.GameBoard
         android:id="@+id/the_canvas"
         android:layout_width="fill_parent"

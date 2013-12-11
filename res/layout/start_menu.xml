@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="@string/start" 
-        android:onClick="start"/>
+        android:onClick="start"
+        android:text="@string/start" />
 
 </LinearLayout>

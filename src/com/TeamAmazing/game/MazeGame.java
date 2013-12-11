@@ -8,17 +8,17 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.Button;
 
 import com.TeamAmazing.drawing.GameBoard;
 import com.TeamAmazing.game.Maze.Cell;
 import com.TeamAmazing.game.Maze.Wall;
 
-public class MazeGame extends Activity implements OnClickListener {
+public class MazeGame extends Activity  {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
 	private static final float TOUCH_FACTOR = .10f;
 	private static final float FRICTION = .05f;
@@ -38,12 +38,29 @@ public class MazeGame extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.maze_game);
-	    ActionBar actionBar = getActionBar();
-	    actionBar.setDisplayHomeAsUpEnabled(true);
-		((Button) findViewById(R.id.the_button)).setOnClickListener(this);
+		ActionBar actionBar = getActionBar();
+		actionBar.setDisplayHomeAsUpEnabled(true);
 		initGfx();
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    // Inflate the menu items for use in the action bar
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.maze_game_activity_actions, menu);
+	    return super.onCreateOptionsMenu(menu);
+	}
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle presses on the action bar items
+	    switch (item.getItemId()) {
+	        case R.id.reset_maze:
+	            resetGame();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+	}
 	synchronized public void initGfx() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		// Check if the View has been measured.
@@ -83,7 +100,6 @@ public class MazeGame extends Activity implements OnClickListener {
 		}
 		gb.resetStarField();
 		resetSprite2Velocity();
-		((Button) findViewById(R.id.the_button)).setEnabled(true);
 		frame.removeCallbacksAndMessages(frameUpdate);
 		((GameBoard) findViewById(R.id.the_canvas)).invalidate();
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
@@ -99,11 +115,6 @@ public class MazeGame extends Activity implements OnClickListener {
 						+ GameBoard.BOUNDARY_WIDTH);
 	}
 
-	@Override
-	// Runs when the reset button is clicked.
-	synchronized public void onClick(View v) {
-		resetGame();
-	}
 
 	private void resetGame() {
 		frame.removeCallbacksAndMessages(null);

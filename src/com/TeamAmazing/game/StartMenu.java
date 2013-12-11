@@ -11,10 +11,10 @@ public class StartMenu extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.start_menu);
 	}
-	
-	public void start(View v){
-	    Intent intent = new Intent(this, MazeGame.class);
-	    startActivity(intent);
+
+	public void start(View v) {
+		Intent intent = new Intent(this, MazeGame.class);
+		startActivity(intent);
 	}
 
 }
