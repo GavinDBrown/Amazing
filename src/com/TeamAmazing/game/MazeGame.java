@@ -1,6 +1,7 @@
 package com.TeamAmazing.game;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -12,13 +13,12 @@ import android.view.View.OnClickListener;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.TeamAmazing.drawing.GameBoard;
 import com.TeamAmazing.game.Maze.Cell;
 import com.TeamAmazing.game.Maze.Wall;
 
-public class Main extends Activity implements OnClickListener {
+public class MazeGame extends Activity implements OnClickListener {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
 	private static final float TOUCH_FACTOR = .10f;
 	private static final float FRICTION = .05f;
@@ -37,41 +37,50 @@ public class Main extends Activity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		setContentView(R.layout.maze_game);
+	    ActionBar actionBar = getActionBar();
+	    actionBar.setDisplayHomeAsUpEnabled(true);
 		((Button) findViewById(R.id.the_button)).setOnClickListener(this);
 		initGfx();
 	}
 
 	synchronized public void initGfx() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
-		ViewTreeObserver vto = gb.getViewTreeObserver();
-		vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+		// Check if the View has been measured.
+		if (gb.getWidth() == 0 || gb.getHeight() == 0) {
+			ViewTreeObserver vto = gb.getViewTreeObserver();
+			vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 
-			@Override
-			@SuppressLint("NewApi")
-			@SuppressWarnings("deprecation")
-			public void onGlobalLayout() {
-				// Initialize stuff that is dependent on the view already having
-				// been measured.
-				gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-				Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
-				// startPos.x = startPos.x * (GameBoard.CELL_WIDTH +
-				// GameBoard.WALL_WIDTH)
-				// + GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_WIDTH / 2;
-				// startPos.y = startPos.y * (GameBoard.CELL_HEIGHT +
-				// GameBoard.WALL_WIDTH)
-				// + GameBoard.BOUNDARY_WIDTH + GameBoard.CELL_HEIGHT / 2;
-				gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
+				// This only runs when the view layout is calculated, so
+				// pressing
+				// the reset button doesn't correctly redraw the maze
+				// immediately.
+				@Override
+				@SuppressLint("NewApi")
+				@SuppressWarnings("deprecation")
+				public void onGlobalLayout() {
+					// Initialize stuff that is dependent on the view already
+					// having
+					// been measured.
+					gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
+					Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
+					gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
 
-				ViewTreeObserver obs = gb.getViewTreeObserver();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					obs.removeOnGlobalLayoutListener(this);
-				} else {
-					obs.removeGlobalOnLayoutListener(this);
+					// Remove this ViewTreeObserver
+					ViewTreeObserver obs = gb.getViewTreeObserver();
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+						obs.removeOnGlobalLayoutListener(this);
+					} else {
+						obs.removeGlobalOnLayoutListener(this);
+					}
 				}
-			}
 
-		});
+			});
+		} else {
+			gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
+			Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
+			gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
+		}
 		gb.resetStarField();
 		resetSprite2Velocity();
 		((Button) findViewById(R.id.the_button)).setEnabled(true);
@@ -146,7 +155,6 @@ public class Main extends Activity implements OnClickListener {
 		}
 	}
 
-	// TODO add boundary checking for the walls.
 	/**
 	 * Update the position of the objects on the gameboard.
 	 */
@@ -179,6 +187,7 @@ public class Main extends Activity implements OnClickListener {
 			resetGame();
 		}
 	}
+
 	// TODO update to use pixel perfect collision detection
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
 		for (Wall w : ((GameBoard) findViewById(R.id.the_canvas)).maze.getWalls()) {
@@ -195,10 +204,9 @@ public class Main extends Activity implements OnClickListener {
 			// Take a steps along the yVel vector, making decisions as we go.
 			if (vel.y > 0) {
 				if (sprite2.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2
-						|| wallsIntersects(
-								sprite2.x - gb.getSprite2Width() / 2,
+						|| wallsIntersects(sprite2.x - gb.getSprite2Width() / 2,
 								sprite2.y + 1 - gb.getSprite2Height() / 2,
-								sprite2.x + gb.getSprite2Width() / 2, 
+								sprite2.x + gb.getSprite2Width() / 2,
 								sprite2.y + 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y -= 1;
@@ -211,10 +219,9 @@ public class Main extends Activity implements OnClickListener {
 				vel.y--;
 			} else {
 				if (sprite2.y - 1 < gb.getSprite2Height() / 2
-						|| wallsIntersects(
-								sprite2.x - gb.getSprite2Width() / 2,
+						|| wallsIntersects(sprite2.x - gb.getSprite2Width() / 2,
 								sprite2.y - 1 - gb.getSprite2Height() / 2,
-								sprite2.x + gb.getSprite2Width() / 2, 
+								sprite2.x + gb.getSprite2Width() / 2,
 								sprite2.y - 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y += 1;
@@ -237,10 +244,9 @@ public class Main extends Activity implements OnClickListener {
 			// Take a steps along the xVel vector, making decisions as we go.
 			if (vel.x > 0) {
 				if (sprite2.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2
-						|| wallsIntersects(
-								sprite2.x +1- gb.getSprite2Width() / 2,
-								sprite2.y  - gb.getSprite2Height() / 2,
-								sprite2.x + 1+gb.getSprite2Width() / 2, 
+						|| wallsIntersects(sprite2.x + 1 - gb.getSprite2Width() / 2,
+								sprite2.y - gb.getSprite2Height() / 2,
+								sprite2.x + 1 + gb.getSprite2Width() / 2,
 								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.x -= 1;
@@ -253,10 +259,9 @@ public class Main extends Activity implements OnClickListener {
 				vel.x--;
 			} else {
 				if (sprite2.x - 1 < gb.getSprite2Width() / 2
-						|| wallsIntersects(
-								sprite2.x -1- gb.getSprite2Width() / 2,
-								sprite2.y  - gb.getSprite2Height() / 2,
-								sprite2.x -1+ gb.getSprite2Width() / 2, 
+						|| wallsIntersects(sprite2.x - 1 - gb.getSprite2Width() / 2,
+								sprite2.y - gb.getSprite2Height() / 2,
+								sprite2.x - 1 + gb.getSprite2Width() / 2,
 								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.x += 1;
@@ -286,18 +291,6 @@ public class Main extends Activity implements OnClickListener {
 
 			// Update position with boundary checking
 			updatePosition();
-
-			// Display Velocity and Friction information
-			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
-					+ Math.pow(sprite2YVelocity, 2));
-			((TextView) findViewById(R.id.the_label)).setText("Velocity ("
-					+ String.format("%.2f", sprite2XVelocity) + ","
-					+ String.format("%.2f", sprite2YVelocity) + ")");
-			((TextView) findViewById(R.id.the_other_label)).setText("Friction ("
-					+ String.format("%.2f", xFriction) + "," + String.format("%.2f", yFriction)
-					+ ")");
-			((TextView) findViewById(R.id.the_third_label)).setText("Speed ("
-					+ String.format("%.2f", speed) + ")");
 
 			// Redraw the canvas
 			((GameBoard) findViewById(R.id.the_canvas)).invalidate();

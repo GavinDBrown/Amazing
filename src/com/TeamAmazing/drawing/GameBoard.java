@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.TeamAmazing.game.Main;
+import com.TeamAmazing.game.MazeGame;
 import com.TeamAmazing.game.Maze;
 import com.TeamAmazing.game.R;
 import com.TeamAmazing.game.Maze.Wall;
@@ -148,7 +148,7 @@ public class GameBoard extends View {
 		// Draw the end cell.
 		p.setColor(Color.RED);
 		// TODO Calculate the end cell's Rect once and save the information.
-		canvas.drawRect(Main.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
+		canvas.drawRect(MazeGame.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
 
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {

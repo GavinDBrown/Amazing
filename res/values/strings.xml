@@ -1,7 +1,7 @@
 <resources>
 
     <string name="app_name">Amazing</string>
-    <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">Amazing</string>
+    <string name="reset_maze">Reset</string>
+    <string name="start">Start</string>
 
 </resources>
