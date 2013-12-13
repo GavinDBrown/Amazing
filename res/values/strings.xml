@@ -2,7 +2,7 @@
 
     <string name="app_name">Amazing</string>
     <string name="reset_maze">Reset</string>
-    <string name="start_perfect_maze">Perfect Maze</string>
-    <string name="start_dfs_maze">DFS Maze</string>
+    <string name="start_kruskals_maze">Kruskal\'s algorithm</string>
+    <string name="start_recursive_backtracker_maze">Recursive Backtracker algorithm</string>
 
 </resources>

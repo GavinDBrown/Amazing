@@ -15,12 +15,13 @@ public class StartMenu extends Activity {
 		setContentView(R.layout.start_menu);
 	}
 
-	public void startPerfectMaze(View v) {
+	public void startKruskalsMaze(View v) {
 		Intent intent = new Intent(this, MazeGame.class);
 		intent.putExtra(MAZE_TYPE, PERFECT_MAZE);
 		startActivity(intent);
 	}
-	public void startOtherMaze(View v) {
+	//Recursive backtracker
+	public void startRecursiveBacktrackerMaze(View v) {
 		Intent intent = new Intent(this, MazeGame.class);
 		intent.putExtra(MAZE_TYPE, DFS_MAZE);
 		startActivity(intent);

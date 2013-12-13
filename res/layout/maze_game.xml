@@ -4,7 +4,7 @@
     android:orientation="vertical" >
 
     <com.TeamAmazing.drawing.GameBoard
-        android:id="@+id/the_canvas"
+        android:id="@+id/gameboard"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 

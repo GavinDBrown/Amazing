@@ -75,7 +75,7 @@ public class MazeGame extends Activity {
 	}
 
 	synchronized public void initGfx() {
-		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		// Check if the View has been measured.
 		if (gb.getWidth() == 0 || gb.getHeight() == 0) {
 			ViewTreeObserver vto = gb.getViewTreeObserver();
@@ -114,7 +114,7 @@ public class MazeGame extends Activity {
 		gb.resetStarField();
 		resetSprite2Velocity();
 		frame.removeCallbacksAndMessages(frameUpdate);
-		((GameBoard) findViewById(R.id.the_canvas)).invalidate();
+		gb.invalidate();
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
 	}
 
@@ -142,7 +142,7 @@ public class MazeGame extends Activity {
 	 * Update the velocity of objects on the gameboard.
 	 */
 	public void updateVelocity() {
-		GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		if (gb.isAccelerating()) {
 			float xTouch = gb.getXTouch();
 			float yTouch = gb.getYTouch();
@@ -177,7 +177,7 @@ public class MazeGame extends Activity {
 	 * Update the position of the objects on the gameboard.
 	 */
 	public void updatePosition() {
-		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		Point vel = new Point(Math.round(sprite2XVelocity), Math.round(sprite2YVelocity));
 		while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
 			if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
@@ -208,7 +208,7 @@ public class MazeGame extends Activity {
 
 	// TODO update to use pixel perfect collision detection
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
-		for (Wall w : ((GameBoard) findViewById(R.id.the_canvas)).maze.getWalls()) {
+		for (Wall w : ((GameBoard) findViewById(R.id.gameboard)).maze.getWalls()) {
 			if (w.getBounds().intersects(left, top, right, bottom))
 				return true;
 		}
@@ -216,7 +216,7 @@ public class MazeGame extends Activity {
 	}
 
 	private void takeNStepsInYDirection(Point vel, int n) {
-		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		Point sprite2 = gb.getSpite2();
 		while (n > 0) {
 			// Take a steps along the yVel vector, making decisions as we go.
@@ -256,7 +256,7 @@ public class MazeGame extends Activity {
 	}
 
 	private void takeNStepsInXDirection(Point vel, int n) {
-		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		Point sprite2 = gb.getSpite2();
 		while (n > 0) {
 			// Take a steps along the xVel vector, making decisions as we go.
@@ -311,7 +311,7 @@ public class MazeGame extends Activity {
 			updatePosition();
 
 			// Redraw the canvas
-			((GameBoard) findViewById(R.id.the_canvas)).invalidate();
+			((GameBoard) findViewById(R.id.gameboard)).invalidate();
 
 			// Loop, after FRAME_DELAY milliseconds.
 			frame.postDelayed(frameUpdate, FRAME_DELAY);
