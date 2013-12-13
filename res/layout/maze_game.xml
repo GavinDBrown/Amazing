@@ -6,7 +6,6 @@
     <com.TeamAmazing.drawing.GameBoard
         android:id="@+id/the_canvas"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_margin="20dip" />
+        android:layout_height="fill_parent" />
 
 </LinearLayout>

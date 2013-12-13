@@ -3,6 +3,7 @@ package com.TeamAmazing.game;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
@@ -18,7 +19,9 @@ import com.TeamAmazing.drawing.GameBoard;
 import com.TeamAmazing.game.Maze.Cell;
 import com.TeamAmazing.game.Maze.Wall;
 
-public class MazeGame extends Activity  {
+public class MazeGame extends Activity {
+	private int mazeType;
+
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
 	private static final float TOUCH_FACTOR = .10f;
 	private static final float FRICTION = .05f;
@@ -40,27 +43,37 @@ public class MazeGame extends Activity  {
 		setContentView(R.layout.maze_game);
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
+		// Get the message from the intent
+		Intent intent = getIntent();
+		this.mazeType = intent.getIntExtra(StartMenu.MAZE_TYPE, StartMenu.PERFECT_MAZE);
 		initGfx();
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    // Inflate the menu items for use in the action bar
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.maze_game_activity_actions, menu);
-	    return super.onCreateOptionsMenu(menu);
+		// Inflate the menu items for use in the action bar
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.maze_game_activity_actions, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle presses on the action bar items
-	    switch (item.getItemId()) {
-	        case R.id.reset_maze:
-	            resetGame();
-	            return true;
-	        default:
-	            return super.onOptionsItemSelected(item);
-	    }
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+		case R.id.reset_maze:
+			resetGame();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
+
+	private void resetGame() {
+		frame.removeCallbacksAndMessages(null);
+		initGfx();
+	}
+
 	synchronized public void initGfx() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.the_canvas));
 		// Check if the View has been measured.
@@ -113,12 +126,6 @@ public class MazeGame extends Activity  {
 				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH,
 				(cell.getCoords().y + 1) * (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
 						+ GameBoard.BOUNDARY_WIDTH);
-	}
-
-
-	private void resetGame() {
-		frame.removeCallbacksAndMessages(null);
-		initGfx();
 	}
 
 	/**
@@ -481,7 +488,15 @@ public class MazeGame extends Activity  {
 				/ (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH),
 				(canvasHeight - 2 * GameBoard.BOUNDARY_WIDTH)
 						/ (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH));
-		maze.makePerfectMaze();
+		switch (mazeType) {
+		case StartMenu.PERFECT_MAZE:
+			maze.makePerfectMaze();
+			break;
+		case StartMenu.DFS_MAZE:
+			maze.makeDFSMaze(); 
+			break;
+		}
+
 		// Set the start and finish cells.
 		maze.getCells()[0][0].setType(Maze.START_CELL);
 		maze.getCells()[maze.getWidth() - 1][maze.getHeight() - 1].setType(Maze.END_CELL);

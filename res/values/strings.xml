@@ -2,6 +2,7 @@
 
     <string name="app_name">Amazing</string>
     <string name="reset_maze">Reset</string>
-    <string name="start">Start</string>
+    <string name="start_perfect_maze">Perfect Maze</string>
+    <string name="start_dfs_maze">DFS Maze</string>
 
 </resources>
