@@ -127,9 +127,6 @@ public class GameBoard extends View {
 		if (starField == null) {
 			initializeStars(canvas.getWidth(), canvas.getHeight());
 		}
-//		if (maze == null){
-//			initializeMaze();
-//		}
 
 		p.setColor(Color.CYAN);
 		p.setAlpha(starAlpha += starFade);

@@ -81,10 +81,6 @@ public class MazeGame extends Activity {
 			ViewTreeObserver vto = gb.getViewTreeObserver();
 			vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 
-				// This only runs when the view layout is calculated, so
-				// pressing
-				// the reset button doesn't correctly redraw the maze
-				// immediately.
 				@Override
 				@SuppressLint("NewApi")
 				@SuppressWarnings("deprecation")
@@ -493,7 +489,7 @@ public class MazeGame extends Activity {
 			maze.makePerfectMaze();
 			break;
 		case StartMenu.DFS_MAZE:
-			maze.makeDFSMaze(); 
+			maze.makeDFSMaze();
 			break;
 		}
 
