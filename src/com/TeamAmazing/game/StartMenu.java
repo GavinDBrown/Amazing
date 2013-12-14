@@ -15,7 +15,9 @@ import com.TeamAmazing.drawing.StartMenuBackground;
 public class StartMenu extends Activity {
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
-	private static final int FRAME_DELAY = 100;
+	private static final int FRAME_DELAY = 50;
+	private static final int NUM_MAX_GENERATIONS = 200;
+	private int numCurrentGenerations = 0;
 	private static final int RESTART_DELAY = 5000;
 	public final static int PERFECT_MAZE = 0;
 	public final static int DFS_MAZE = 1;
@@ -65,14 +67,16 @@ public class StartMenu extends Activity {
 			final StartMenuBackground smb = ((StartMenuBackground) findViewById(R.id.start_menu_background));
 			frame.removeCallbacksAndMessages(frameUpdate);
 
-			if (smb.restarting) {
+			if (smb.restarting || numCurrentGenerations > NUM_MAX_GENERATIONS) {
 				smb.restarting = false;
+				numCurrentGenerations = 0;
 				smb.initializeCells();
 				frame.postDelayed(frameUpdate, FRAME_DELAY+RESTART_DELAY);
 			} else {
 
 				// Compute the next generation
 				smb.nextGeneration();
+				numCurrentGenerations++;
 
 				// Redraw the canvas
 				smb.invalidate();

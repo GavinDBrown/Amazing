@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.TeamAmazing.Maze.Maze;
+import com.TeamAmazing.Maze.Maze.Wall;
 import com.TeamAmazing.game.MazeGame;
-import com.TeamAmazing.game.Maze;
 import com.TeamAmazing.game.R;
-import com.TeamAmazing.game.Maze.Wall;
 
 import android.content.Context;
 import android.graphics.Bitmap;

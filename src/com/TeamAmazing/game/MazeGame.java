@@ -15,9 +15,10 @@ import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
+import com.TeamAmazing.Maze.Maze;
+import com.TeamAmazing.Maze.Maze.Cell;
+import com.TeamAmazing.Maze.Maze.Wall;
 import com.TeamAmazing.drawing.GameBoard;
-import com.TeamAmazing.game.Maze.Cell;
-import com.TeamAmazing.game.Maze.Wall;
 
 public class MazeGame extends Activity {
 	private int mazeType;

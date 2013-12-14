@@ -1,4 +1,4 @@
-package com.TeamAmazing.game;
+package com.TeamAmazing.Maze;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

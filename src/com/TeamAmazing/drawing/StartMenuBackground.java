@@ -17,20 +17,31 @@ public class StartMenuBackground extends View {
 	public boolean restarting = false;
 	private Paint p;
 	Random rand = new Random();
-	private int[][] cells;
-	private ArrayDeque<int[][]> previousConfigs;
-	// The width and height of the grid of cells. NOT the width and height of
-	// the canvas.
+	private byte[][] cells;
+	private ArrayDeque<byte[][]> previousConfigs;
+	private static final int NUM_OF_CONFIGS = 6;
 	private static int GridWidth = 0;
 	private static int GridHeight = 0;
 	// The width and height of maze cells in pixels.
-	public static final int CELL_WIDTH = 20;
-	public static final int CELL_HEIGHT = 20;
+	public static final int CELL_WIDTH = 10;
+	public static final int CELL_HEIGHT = 10;
+	// The number of alive neighbors a cell must have to live between
+	// generations.
+	private static Set<Integer> ruleToLive = new HashSet<Integer>();
+	// The number of alive neighbors a cell must have to be born.
+	private Set<Integer> ruleToBeBorn = new HashSet<Integer>();
+	private byte[][] nextGeneration;
 
 	public StartMenuBackground(Context context, AttributeSet aSet) {
 		super(context, aSet);
 		p = new Paint();
-		previousConfigs = new ArrayDeque<int[][]>(4);
+		ruleToLive.add(1);
+		ruleToLive.add(2);
+		ruleToLive.add(3);
+		ruleToLive.add(4);
+		// ruleToLive.add(5);
+		ruleToBeBorn.add(3);
+		previousConfigs = new ArrayDeque<byte[][]>(NUM_OF_CONFIGS);
 	}
 
 	@Override
@@ -62,69 +73,56 @@ public class StartMenuBackground extends View {
 	public void initializeCells() {
 		GridWidth = this.getWidth() / CELL_WIDTH;
 		GridHeight = this.getHeight() / CELL_HEIGHT;
-		cells = new int[GridWidth][GridHeight];
+		cells = new byte[GridWidth][GridHeight];
 		// TODO Respond appropriately when GridWidth or GridHeight is less than
 		// 10.
-		int horzOffset = GridWidth / 2 - 5;
-		int vertOffset = GridHeight / 2 - 5;
-		// start with 20 to 30 cells
+		// Create 20 to 30 random starting cells.
 		int numOfStartingCells = rand.nextInt(10) + 20;
-		int randXOffset, randYOffset;
+		int randHorzOffset, randVertOffset;
 		while (numOfStartingCells > 0) {
-			randXOffset = rand.nextInt(10);
-			randYOffset = rand.nextInt(10);
-			cells[horzOffset + randXOffset][vertOffset + randYOffset] = 1;
+			randHorzOffset = rand.nextInt(10) + (GridWidth / 2 - 5);
+			randVertOffset = rand.nextInt(10) + (GridHeight / 2 - 5);
+			cells[randHorzOffset][randVertOffset] = 1;
 			numOfStartingCells--;
 		}
 	}
 
 	public void nextGeneration() {
-		int[][] nextGeneration = new int[GridWidth][GridHeight];
-		// The number of alive neighbors a cell must have to live between
-		// generations.
-		Set<Integer> ruleToLive = new HashSet<Integer>();
-		ruleToLive.add(1);
-		ruleToLive.add(2);
-		ruleToLive.add(3);
-		ruleToLive.add(4);
-		// ruleToLive.add(5);
-		// The number of alive neighbors a cell must have to be born.
-		Set<Integer> ruleToBeBorn = new HashSet<Integer>();
-		ruleToBeBorn.add(3);
+		nextGeneration = new byte[GridWidth][GridHeight];
 		for (int x = 0; x < cells.length; x++) {
 			for (int y = 0; y < cells[x].length; y++) {
-				if (cells[x][y] == 1) {
+				if (cells[x][y] == (byte) 1) {
 					// cell is alive, check to see if it will remain alive.
 					if (!ruleToLive.contains(numOfAliveNeighborsAt(x, y))) {
 						// kill the cell
-						nextGeneration[x][y] = 0;
+						nextGeneration[x][y] = (byte) 0;
 					} else {
 						// let it live
-						nextGeneration[x][y] = 1;
+						nextGeneration[x][y] = (byte) 1;
 					}
 				} else {
 					// cell is dead, check it see if it should be born.
 					if (ruleToBeBorn.contains(numOfAliveNeighborsAt(x, y))) {
 						// Bring the cell to life.
-						nextGeneration[x][y] = 1;
+						nextGeneration[x][y] = (byte) 1;
 					} else {
 						// leave it dead
-						nextGeneration[x][y] = 0;
+						nextGeneration[x][y] = (byte) 0;
 					}
 				}
 			}
 		}
-		// Restart if the nextGeneration is the same as any of the past 3
-		// previous ones.
-		while (previousConfigs.size() > 3)
+		// Restart if the nextGeneration is the same as any of the past
+		// NUM_OF_CONFIGS previous ones.
+		while (previousConfigs.size() > NUM_OF_CONFIGS - 1)
 			previousConfigs.removeFirst();
 		previousConfigs.addLast(cells);
-		for (int[][] config : previousConfigs) {
-			if (Arrays.deepEquals(nextGeneration, config)) {
-				restarting = true;
-				return;
-			}
-		}
+//		for (byte[][] config : previousConfigs) {
+//			if (Arrays.deepEquals(nextGeneration, config)) {
+//				restarting = true;
+//				return;
+//			}
+//		}
 		cells = nextGeneration;
 	}
 
@@ -132,35 +130,35 @@ public class StartMenuBackground extends View {
 		int result = 0;
 		if (x > 0) {
 			// add the cell to the left.
-			result += cells[x - 1][y];
+			result += (int) cells[x - 1][y];
 			if (y > 0) {
 				// add the top left cell.
-				result += cells[x - 1][y - 1];
+				result += (int) cells[x - 1][y - 1];
 			}
 			if (y < cells[x].length - 1) {
 				// add the cell to the bottom left.
-				result += cells[x - 1][y + 1];
+				result += (int) cells[x - 1][y + 1];
 			}
 		}
 		if (x < cells.length - 1) {
 			// add the cell to the right
-			result += cells[x + 1][y];
+			result += (int) cells[x + 1][y];
 			if (y > 0) {
 				// add the top right cell.
-				result += cells[x + 1][y - 1];
+				result += (int) cells[x + 1][y - 1];
 			}
 			if (y < cells[x].length - 1) {
 				// add the cell to the bottom right.
-				result += cells[x + 1][y + 1];
+				result += (int) cells[x + 1][y + 1];
 			}
 		}
 		if (y > 0) {
 			// add the top cell
-			result += cells[x][y - 1];
+			result += (int) cells[x][y - 1];
 		}
 		if (y < cells[x].length - 1) {
 			// add the bottom cell
-			result += cells[x][y + 1];
+			result += (int) cells[x][y + 1];
 		}
 		return result;
 	}
