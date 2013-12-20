@@ -1,5 +1,7 @@
 package com.TeamAmazing.game;
 
+// TODO add code for onResume, onStop, onPause etc...
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -10,6 +12,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
+import com.TeamAmazing.Maze.GameOfLife;
 import com.TeamAmazing.drawing.StartMenuBackground;
 
 public class StartMenu extends Activity {
@@ -17,18 +20,22 @@ public class StartMenu extends Activity {
 	// The delay in milliseconds between frame updates
 	private static final int FRAME_DELAY = 50;
 	private static final int NUM_MAX_GENERATIONS = 200;
+	private static final GameOfLife GAME = new GameOfLife();
 	private int numCurrentGenerations = 0;
-	private static final int RESTART_DELAY = 5000;
+	private static final int RESTART_DELAY = 9000;
 	public final static int PERFECT_MAZE = 0;
 	public final static int DFS_MAZE = 1;
 	public final static String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
 
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.start_menu);
 		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
 		// Check if the View has been measured.
+		// TODO use a more sophisticated method for checking if the view has
+		// been measured.
 		if (smb.getWidth() == 0 || smb.getHeight() == 0) {
 			ViewTreeObserver vto = smb.getViewTreeObserver();
 			vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
@@ -39,7 +46,7 @@ public class StartMenu extends Activity {
 				public void onGlobalLayout() {
 					// Initialize stuff that is dependent on the view already
 					// having been measured.
-					smb.initializeCells();
+					initializeGameOfLife();
 
 					// Remove this ViewTreeObserver
 					ViewTreeObserver obs = smb.getViewTreeObserver();
@@ -53,7 +60,7 @@ public class StartMenu extends Activity {
 			});
 		} else {
 			// initialize
-			smb.initializeCells();
+			initializeGameOfLife();
 		}
 
 		frame.removeCallbacksAndMessages(frameUpdate);
@@ -61,24 +68,32 @@ public class StartMenu extends Activity {
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
 	}
 
+	private void initializeGameOfLife(){
+		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
+		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
+		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
+		GAME.initializeCells(width, height);
+		smb.setBoard(GAME.getCurrentBoard());		
+	}
+
+
 	private Runnable frameUpdate = new Runnable() {
 		@Override
 		synchronized public void run() {
 			final StartMenuBackground smb = ((StartMenuBackground) findViewById(R.id.start_menu_background));
 			frame.removeCallbacksAndMessages(frameUpdate);
 
-			if (smb.restarting || numCurrentGenerations > NUM_MAX_GENERATIONS) {
-				smb.restarting = false;
+			if (numCurrentGenerations > NUM_MAX_GENERATIONS) {
 				numCurrentGenerations = 0;
-				smb.initializeCells();
-				frame.postDelayed(frameUpdate, FRAME_DELAY+RESTART_DELAY);
+				initializeGameOfLife();
+				frame.postDelayed(frameUpdate, FRAME_DELAY + RESTART_DELAY);
 			} else {
-
 				// Compute the next generation
-				smb.nextGeneration();
+				GAME.nextGeneration();
 				numCurrentGenerations++;
 
 				// Redraw the canvas
+				smb.setBoard(GAME.getCurrentBoard());		
 				smb.invalidate();
 
 				// Loop, after FRAME_DELAY milliseconds.

@@ -144,6 +144,7 @@ public class GameBoard extends View {
 		
 		// Draw the end cell.
 		p.setColor(Color.RED);
+		p.setAlpha(150);
 		// TODO Calculate the end cell's Rect once and save the information.
 		canvas.drawRect(MazeGame.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
 
