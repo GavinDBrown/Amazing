@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -15,8 +16,8 @@ public class StartMenuBackground extends View {
 	private byte[][] board;
 
 	// The width and height of maze cells in pixels.
-	public static final int CELL_WIDTH = 20;
-	public static final int CELL_HEIGHT = 20;
+	public static final int CELL_WIDTH = 10;
+	public static final int CELL_HEIGHT = 10;
 
 	public StartMenuBackground(Context context, AttributeSet aSet) {
 		super(context, aSet);
@@ -26,14 +27,16 @@ public class StartMenuBackground extends View {
 	public void setBoard(byte[][] newBoard) {
 		this.board = newBoard;
 	}
+	
+	public Rect getRectOf(int x, int y){
+		return new Rect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
+				* CELL_WIDTH, (y + 1) * CELL_HEIGHT);
+	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
 		p.setStyle(Paint.Style.FILL);
 		p.setAlpha(255);
-		p.setColor(Color.WHITE);
-		canvas.drawRect(0, 0, getWidth(), getHeight(), p);
-
 
 		for (int x = 0; x < board.length; x++) {
 			for (int y = 0; y < board[x].length; y++) {

@@ -2,6 +2,9 @@ package com.TeamAmazing.game;
 
 // TODO add code for onResume, onStop, onPause etc...
 
+import java.util.Iterator;
+import java.util.List;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -27,7 +30,6 @@ public class StartMenu extends Activity {
 	public final static int DFS_MAZE = 1;
 	public final static String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
 
-	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -68,15 +70,14 @@ public class StartMenu extends Activity {
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
 	}
 
-	private void initializeGameOfLife(){
+	private void initializeGameOfLife() {
 		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
 		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
 		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
-		maxGenerations = (int) Math.max(2.5*width, 2.5*height);
+		maxGenerations = (int) Math.max(2.5 * width, 2.5 * height);
 		gameOfLife.initializeCells(width, height);
-		smb.setBoard(gameOfLife.getCurrentBoard());		
+		smb.setBoard(gameOfLife.getCurrentBoard());
 	}
-
 
 	private Runnable frameUpdate = new Runnable() {
 		@Override
@@ -87,15 +88,25 @@ public class StartMenu extends Activity {
 			if (numCurrentGenerations > maxGenerations) {
 				numCurrentGenerations = 0;
 				initializeGameOfLife();
-				frame.postDelayed(frameUpdate, FRAME_DELAY + RESTART_DELAY);
+				smb.invalidate();
+				frame.postDelayed(frameUpdate, FRAME_DELAY);
 			} else {
 				// Compute the next generation
 				gameOfLife.nextGeneration();
 				numCurrentGenerations++;
 
 				// Redraw the canvas
-				smb.setBoard(gameOfLife.getCurrentBoard());		
-				smb.invalidate();
+				smb.setBoard(gameOfLife.getCurrentBoard());
+				// TODO this is hacky at best
+				List<Integer> cl = gameOfLife.getChangeList();
+				for (Iterator<Integer> it = cl.iterator(); it.hasNext();) {
+					int x, y = 0;
+					x = it.next();
+					if (it.hasNext())
+						y = it.next();
+					smb.invalidate(smb.getRectOf(x, y));
+				}
+				// smb.invalidate();
 
 				// Loop, after FRAME_DELAY milliseconds.
 				frame.postDelayed(frameUpdate, FRAME_DELAY);

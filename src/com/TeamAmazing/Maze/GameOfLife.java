@@ -1,6 +1,8 @@
 package com.TeamAmazing.Maze;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -8,9 +10,10 @@ public class GameOfLife {
 
 	// The number of alive neighbors a cell must have to live between
 	// generations.
-	private static Set<Byte> ruleToLive = new HashSet<Byte>();
+	private Set<Byte> ruleToLive = new HashSet<Byte>();
 	// The number of alive neighbors a cell must have to be born.
-	private static Set<Byte> ruleToBeBorn = new HashSet<Byte>();
+	private Set<Byte> ruleToBeBorn = new HashSet<Byte>();
+	private List<Integer> changeList = new ArrayList<Integer>();
 	private final int NUM_OF_BOARDS = 2;
 	private byte[][][] boards;
 	private int currentBoard = 0;
@@ -34,9 +37,6 @@ public class GameOfLife {
 
 	public void initializeCells(int width, int height) {
 		boards = new byte[NUM_OF_BOARDS][width][height];
-
-
-		
 		// Create 20 to 30 random starting cells.
 		int numOfStartingCells = rand.nextInt(10) + 20;
 		int randHorzOffset, randVertOffset;
@@ -46,6 +46,8 @@ public class GameOfLife {
 			if ((boards[currentBoard][randHorzOffset][randVertOffset] & ALIVE_MASK) == 0) {
 				// cell is dead, make it alive
 				makeAlive(randHorzOffset, randVertOffset, currentBoard);
+//				changeList.add(randHorzOffset);
+//				changeList.add(randVertOffset);
 			}
 			numOfStartingCells--;
 		}
@@ -120,6 +122,7 @@ public class GameOfLife {
 	}
 
 	public void nextGeneration() {
+		changeList.clear();
 		int nextBoard = (currentBoard + 1) % NUM_OF_BOARDS;
 		// copy over the currentBoard into the next one.
 		for (int x = 0; x < boards[currentBoard].length; x++) {
@@ -137,6 +140,8 @@ public class GameOfLife {
 							& NEIGHBORS_MASK))) {
 						// kill the cell in the next generation
 						kill(x, y, nextBoard);
+						changeList.add(x);
+						changeList.add(y);
 					}
 				} else {
 					// cell is dead
@@ -144,11 +149,17 @@ public class GameOfLife {
 					if (ruleToBeBorn.contains((byte)(boards[currentBoard][x][y]
 							& NEIGHBORS_MASK))) {
 						makeAlive(x, y, nextBoard);
+						changeList.add(x);
+						changeList.add(y);
 					}
 
 				}
 			}
 		}
 		currentBoard = (currentBoard + 1) % NUM_OF_BOARDS;
+	}
+	
+	public List<Integer> getChangeList(){
+		return changeList;
 	}
 }
