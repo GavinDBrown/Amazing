@@ -35,16 +35,14 @@ public class GameOfLife {
 	public void initializeCells(int width, int height) {
 		boards = new byte[NUM_OF_BOARDS][width][height];
 
-		// TODO fail gracefully when GridWidth or GridHeight is less than
-		// 10.
+
+		
 		// Create 20 to 30 random starting cells.
-		// TODO set maxGenerations to be a multiple of GridHeight/GridWeight
-//		int numOfStartingCells = rand.nextInt(10) + 20;
-		int numOfStartingCells = 2;
+		int numOfStartingCells = rand.nextInt(10) + 20;
 		int randHorzOffset, randVertOffset;
 		while (numOfStartingCells > 0) {
-			randHorzOffset = rand.nextInt(10) + (width / 2 - 5);
-			randVertOffset = rand.nextInt(10) + (height / 2 - 5);
+			randHorzOffset = (rand.nextInt(10) + (width / 2 - 5))%width;
+			randVertOffset = (rand.nextInt(10) + (height / 2 - 5))%height;
 			if ((boards[currentBoard][randHorzOffset][randVertOffset] & ALIVE_MASK) == 0) {
 				// cell is dead, make it alive
 				makeAlive(randHorzOffset, randVertOffset, currentBoard);
@@ -56,7 +54,7 @@ public class GameOfLife {
 	// a cell should never have more than 8 neighbors so bit 4 should never
 	// carry into bit 5, which is the cell state bit.
 	private void makeAlive(int x, int y, int boardIndex) {
-		boards[currentBoard][x][y] |= ALIVE_MASK;
+		boards[boardIndex][x][y] |= ALIVE_MASK;
 		// update the neighbors
 		boards[boardIndex][(x + 1) % boards[boardIndex].length][y] += 1;
 		boards[boardIndex][(x + 1) % boards[boardIndex].length][(y + 1)
@@ -77,7 +75,7 @@ public class GameOfLife {
 	}
 
 	private void kill(int x, int y, int boardIndex) {
-		boards[currentBoard][x][y] &= ~ALIVE_MASK;
+		boards[boardIndex][x][y] &= ~ALIVE_MASK;
 		// update the neighbors
 		if ((boards[boardIndex][(x + 1) % boards[boardIndex].length][y] & NEIGHBORS_MASK) > 0) {
 			boards[boardIndex][(x + 1) % boards[boardIndex].length][y] -= 1;
@@ -123,53 +121,34 @@ public class GameOfLife {
 
 	public void nextGeneration() {
 		int nextBoard = (currentBoard + 1) % NUM_OF_BOARDS;
-		// copy over the current board into the next one.
+		// copy over the currentBoard into the next one.
 		for (int x = 0; x < boards[currentBoard].length; x++) {
 			for (int y = 0; y < boards[currentBoard][x].length; y++) {
 				boards[nextBoard][x][y] = boards[currentBoard][x][y];
 			}
 		}
+		// Update the next board based off the state of the current board.
 		for (int x = 0; x < boards[currentBoard].length; x++) {
 			for (int y = 0; y < boards[currentBoard][x].length; y++) {
 				if ((boards[currentBoard][x][y] & ALIVE_MASK) != 0) {
 					// cell is alive
 					// check if it should die.
-					if (!ruleToLive.contains(boards[currentBoard][x][y]
-							& NEIGHBORS_MASK)) {
+					if (!ruleToLive.contains((byte)(boards[currentBoard][x][y]
+							& NEIGHBORS_MASK))) {
 						// kill the cell in the next generation
 						kill(x, y, nextBoard);
 					}
 				} else {
 					// cell is dead
 					// check if it should be born
-					if (ruleToBeBorn.contains(boards[currentBoard][x][y]
-							& NEIGHBORS_MASK)) {
+					if (ruleToBeBorn.contains((byte)(boards[currentBoard][x][y]
+							& NEIGHBORS_MASK))) {
 						makeAlive(x, y, nextBoard);
 					}
 
 				}
 			}
 		}
-		// Some random stuff
-		if ((boards[nextBoard][1][1] & ALIVE_MASK) == 0){
-			// cell is dead, make it alive.
-			makeAlive(1,1,nextBoard);
-			// then kill it
-			kill(1,1,nextBoard);
-		}
-		
-		
-		currentBoard = nextBoard;
+		currentBoard = (currentBoard + 1) % NUM_OF_BOARDS;
 	}
-
-	// TODO determine if this is something I want to implement
-	// Restart if the nextGeneration is the same as any of the past
-	// NUM_OF_CONFIGS previous ones.
-	// for (int i = 1; i < NUM_OF_CONFIGS; i++) {
-	// if (Arrays.deepEquals(board,
-	// boards[(currentBoard + 1) % NUM_OF_CONFIGS])) {
-	// restarting = true;
-	// }
-	// }
-	// currentBoard = nextBoard;
 }

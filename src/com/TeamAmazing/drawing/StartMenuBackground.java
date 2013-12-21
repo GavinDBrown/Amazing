@@ -34,11 +34,17 @@ public class StartMenuBackground extends View {
 		p.setColor(Color.WHITE);
 		canvas.drawRect(0, 0, getWidth(), getHeight(), p);
 
-		// draw the black cells
+
 		for (int x = 0; x < board.length; x++) {
 			for (int y = 0; y < board[x].length; y++) {
 				if ((board[x][y] & GameOfLife.ALIVE_MASK) != 0) {
+					// draw black cell
 					p.setColor(Color.BLACK);
+					canvas.drawRect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
+							* CELL_WIDTH, (y + 1) * CELL_HEIGHT, p);
+				} else {
+					// draw white cell
+					p.setColor(Color.WHITE);
 					canvas.drawRect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
 							* CELL_WIDTH, (y + 1) * CELL_HEIGHT, p);
 				}

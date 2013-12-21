@@ -19,8 +19,8 @@ public class StartMenu extends Activity {
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
 	private static final int FRAME_DELAY = 50;
-	private static final int NUM_MAX_GENERATIONS = 200;
-	private static final GameOfLife GAME = new GameOfLife();
+	private int maxGenerations;
+	private final GameOfLife gameOfLife = new GameOfLife();
 	private int numCurrentGenerations = 0;
 	private static final int RESTART_DELAY = 9000;
 	public final static int PERFECT_MAZE = 0;
@@ -72,8 +72,9 @@ public class StartMenu extends Activity {
 		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
 		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
 		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
-		GAME.initializeCells(width, height);
-		smb.setBoard(GAME.getCurrentBoard());		
+		maxGenerations = (int) Math.max(2.5*width, 2.5*height);
+		gameOfLife.initializeCells(width, height);
+		smb.setBoard(gameOfLife.getCurrentBoard());		
 	}
 
 
@@ -83,17 +84,17 @@ public class StartMenu extends Activity {
 			final StartMenuBackground smb = ((StartMenuBackground) findViewById(R.id.start_menu_background));
 			frame.removeCallbacksAndMessages(frameUpdate);
 
-			if (numCurrentGenerations > NUM_MAX_GENERATIONS) {
+			if (numCurrentGenerations > maxGenerations) {
 				numCurrentGenerations = 0;
 				initializeGameOfLife();
 				frame.postDelayed(frameUpdate, FRAME_DELAY + RESTART_DELAY);
 			} else {
 				// Compute the next generation
-				GAME.nextGeneration();
+				gameOfLife.nextGeneration();
 				numCurrentGenerations++;
 
 				// Redraw the canvas
-				smb.setBoard(GAME.getCurrentBoard());		
+				smb.setBoard(gameOfLife.getCurrentBoard());		
 				smb.invalidate();
 
 				// Loop, after FRAME_DELAY milliseconds.
