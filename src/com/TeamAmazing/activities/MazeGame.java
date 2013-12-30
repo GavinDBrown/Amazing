@@ -1,4 +1,4 @@
-package com.TeamAmazing.game;
+package com.TeamAmazing.activities;
 
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
@@ -19,6 +19,7 @@ import com.TeamAmazing.Maze.Maze;
 import com.TeamAmazing.Maze.Maze.Cell;
 import com.TeamAmazing.Maze.Maze.Wall;
 import com.TeamAmazing.drawing.GameBoard;
+import com.TeamAmazing.game.R;
 
 public class MazeGame extends Activity {
 	private int mazeType;

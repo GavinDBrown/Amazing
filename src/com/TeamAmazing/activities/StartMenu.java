@@ -1,4 +1,4 @@
-package com.TeamAmazing.game;
+package com.TeamAmazing.activities;
 
 // TODO add code for onResume, onStop, onPause etc...
 
@@ -17,6 +17,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 import com.TeamAmazing.Maze.GameOfLife;
 import com.TeamAmazing.drawing.StartMenuBackground;
+import com.TeamAmazing.game.R;
 
 public class StartMenu extends Activity {
 	private Handler frame = new Handler();
@@ -25,7 +26,7 @@ public class StartMenu extends Activity {
 	private int maxGenerations;
 	private final GameOfLife gameOfLife = new GameOfLife();
 	private int numCurrentGenerations = 0;
-	private static final int RESTART_DELAY = 9000;
+//	private static final int RESTART_DELAY = 9000;
 	public final static int PERFECT_MAZE = 0;
 	public final static int DFS_MAZE = 1;
 	public final static String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";

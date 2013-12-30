@@ -6,7 +6,7 @@ import java.util.Random;
 
 import com.TeamAmazing.Maze.Maze;
 import com.TeamAmazing.Maze.Maze.Wall;
-import com.TeamAmazing.game.MazeGame;
+import com.TeamAmazing.activities.MazeGame;
 import com.TeamAmazing.game.R;
 
 import android.content.Context;
