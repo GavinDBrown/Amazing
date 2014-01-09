@@ -50,6 +50,28 @@ public class MazeGame extends Activity {
 		this.mazeType = intent.getIntExtra(StartMenu.MAZE_TYPE, StartMenu.PERFECT_MAZE);
 		initGfx();
 	}
+//	@Override
+//	public void onPause() {
+//	    super.onPause();   
+//	    
+//	}
+//	@Override
+//	public Object onRetainNonConfigurationInstance(){
+//		
+//		return ((GameBoard) findViewById(R.id.gameboard)).maze;
+//	}
+	
+//	 @Override
+//	    protected void onSaveInstanceState(Bundle outState) {
+//	        super.onSaveInstanceState(outState);
+//	        
+//	        // save the maze
+////	        final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+////	        gb.maze
+////	        outState.pu
+////	        outState.putBooleanArray("mydata", myData);
+//	    }
+//	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

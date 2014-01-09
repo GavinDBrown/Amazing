@@ -2,9 +2,6 @@ package com.TeamAmazing.activities;
 
 // TODO add code for onResume, onStop, onPause etc...
 
-import java.util.Iterator;
-import java.util.List;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -77,7 +74,7 @@ public class StartMenu extends Activity {
 		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
 		maxGenerations = (int) Math.max(2.5 * width, 2.5 * height);
 		gameOfLife.initializeCells(width, height);
-		smb.setBoard(gameOfLife.getCurrentBoard());
+		smb.setBoard(gameOfLife.getBoard());
 	}
 
 	private Runnable frameUpdate = new Runnable() {
@@ -93,21 +90,12 @@ public class StartMenu extends Activity {
 				frame.postDelayed(frameUpdate, FRAME_DELAY);
 			} else {
 				// Compute the next generation
-				gameOfLife.nextGeneration();
+				int[] bounds = gameOfLife.nextGeneration();
 				numCurrentGenerations++;
 
 				// Redraw the canvas
-				smb.setBoard(gameOfLife.getCurrentBoard());
-				// TODO this is hacky at best
-				List<Integer> cl = gameOfLife.getChangeList();
-				for (Iterator<Integer> it = cl.iterator(); it.hasNext();) {
-					int x, y = 0;
-					x = it.next();
-					if (it.hasNext())
-						y = it.next();
-					smb.invalidate(smb.getRectOf(x, y));
-				}
-				// smb.invalidate();
+				smb.setBoard(gameOfLife.getBoard());
+				smb.invalidateAreaOf(bounds);
 
 				// Loop, after FRAME_DELAY milliseconds.
 				frame.postDelayed(frameUpdate, FRAME_DELAY);

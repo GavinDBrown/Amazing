@@ -27,10 +27,10 @@ public class StartMenuBackground extends View {
 	public void setBoard(byte[][] newBoard) {
 		this.board = newBoard;
 	}
-	
-	public Rect getRectOf(int x, int y){
-		return new Rect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
-				* CELL_WIDTH, (y + 1) * CELL_HEIGHT);
+
+	public Rect getRectOf(int x, int y) {
+		return new Rect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1) * CELL_WIDTH,
+				(y + 1) * CELL_HEIGHT);
 	}
 
 	@Override
@@ -56,7 +56,18 @@ public class StartMenuBackground extends View {
 
 	}
 
-	// TODO Make the buttons fully opaque. This should be done in the XML files,
-	// just not sure how ATM.
+	/**
+	 * 
+	 * Invalidates the part of the view specified by the cells described in bounds.
+	 * 
+	 * @param bounds
+	 *            The bounds of the area to invalidate in the order: bottom,
+	 *            left, right, top.
+	 */
+	public void invalidateAreaOf(int[] bounds) {
+		Rect r = getRectOf(bounds[1], bounds[3]);
+		r.union(getRectOf(bounds[2], bounds[0]));
+		invalidate(r);
 
+	}
 }

@@ -1,8 +1,12 @@
 package com.TeamAmazing.Maze;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -13,10 +17,10 @@ public class GameOfLife {
 	private Set<Byte> ruleToLive = new HashSet<Byte>();
 	// The number of alive neighbors a cell must have to be born.
 	private Set<Byte> ruleToBeBorn = new HashSet<Byte>();
-	private List<Integer> changeList = new ArrayList<Integer>();
-	private final int NUM_OF_BOARDS = 2;
-	private byte[][][] boards;
-	private int currentBoard = 0;
+	private Map<Long, Boolean> changeList = new HashMap<Long, Boolean>();
+	private Map<Long, Boolean> nextChangeList = new HashMap<Long, Boolean>();
+	// private List<Integer> nextChangeList = new ArrayList<Integer>();
+	private byte[][] board;
 	Random rand = new Random();
 	public static final byte ALIVE_MASK = 16;
 	private static final byte NEIGHBORS_MASK = 15;
@@ -31,23 +35,25 @@ public class GameOfLife {
 		ruleToBeBorn.add((byte) 3);
 	}
 
-	public byte[][] getCurrentBoard() {
-		return boards[currentBoard];
+	public byte[][] getBoard() {
+		return board;
 	}
 
 	public void initializeCells(int width, int height) {
-		boards = new byte[NUM_OF_BOARDS][width][height];
+		board = new byte[width][height];
+		changeList.clear();
 		// Create 20 to 30 random starting cells.
 		int numOfStartingCells = rand.nextInt(10) + 20;
 		int randHorzOffset, randVertOffset;
 		while (numOfStartingCells > 0) {
-			randHorzOffset = (rand.nextInt(10) + (width / 2 - 5))%width;
-			randVertOffset = (rand.nextInt(10) + (height / 2 - 5))%height;
-			if ((boards[currentBoard][randHorzOffset][randVertOffset] & ALIVE_MASK) == 0) {
+			randHorzOffset = (rand.nextInt(10) + (width / 2 - 5)) % width;
+			randVertOffset = (rand.nextInt(10) + (height / 2 - 5)) % height;
+			if ((board[randHorzOffset][randVertOffset] & ALIVE_MASK) == 0) {
 				// cell is dead, make it alive
-				makeAlive(randHorzOffset, randVertOffset, currentBoard);
-//				changeList.add(randHorzOffset);
-//				changeList.add(randVertOffset);
+				// makeAlive(randHorzOffset, randVertOffset);
+				long loc = (long) randHorzOffset << 32 | randVertOffset
+						& 0xFFFFFFFFL;
+				changeList.put(loc, true);
 			}
 			numOfStartingCells--;
 		}
@@ -55,111 +61,142 @@ public class GameOfLife {
 
 	// a cell should never have more than 8 neighbors so bit 4 should never
 	// carry into bit 5, which is the cell state bit.
-	private void makeAlive(int x, int y, int boardIndex) {
-		boards[boardIndex][x][y] |= ALIVE_MASK;
+	private void makeAlive(int x, int y) {
+		board[x][y] |= ALIVE_MASK;
 		// update the neighbors
-		boards[boardIndex][(x + 1) % boards[boardIndex].length][y] += 1;
-		boards[boardIndex][(x + 1) % boards[boardIndex].length][(y + 1)
-				% boards[boardIndex][0].length] += 1;
-		boards[boardIndex][(x + 1) % boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] += 1;
-		boards[boardIndex][x][(y + 1) % boards[boardIndex][0].length] += 1;
-		boards[boardIndex][x][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] += 1;
-		boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][y] += 1;
-		boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][(y + 1)
-				% boards[boardIndex][0].length] += 1;
-		boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] += 1;
+		board[(x + 1) % board.length][y] += 1;
+		board[(x + 1) % board.length][(y + 1) % board[0].length] += 1;
+		board[(x + 1) % board.length][(y - 1 + board[0].length)
+				% board[0].length] += 1;
+		board[x][(y + 1) % board[0].length] += 1;
+		board[x][(y - 1 + board[0].length) % board[0].length] += 1;
+		board[(x - 1 + board.length) % board.length][y] += 1;
+		board[(x - 1 + board.length) % board.length][(y + 1) % board[0].length] += 1;
+		board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
+				% board[0].length] += 1;
 	}
 
-	private void kill(int x, int y, int boardIndex) {
-		boards[boardIndex][x][y] &= ~ALIVE_MASK;
+	private void kill(int x, int y) {
+		board[x][y] &= ~ALIVE_MASK;
 		// update the neighbors
-		if ((boards[boardIndex][(x + 1) % boards[boardIndex].length][y] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x + 1) % boards[boardIndex].length][y] -= 1;
+		if ((board[(x + 1) % board.length][y] & NEIGHBORS_MASK) > 0) {
+			board[(x + 1) % board.length][y] -= 1;
 		}
-		if ((boards[boardIndex][(x + 1) % boards[boardIndex].length][(y + 1)
-				% boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x + 1) % boards[boardIndex].length][(y + 1)
-					% boards[boardIndex][0].length] -= 1;
+		if ((board[(x + 1) % board.length][(y + 1) % board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[(x + 1) % board.length][(y + 1) % board[0].length] -= 1;
 		}
-		if ((boards[boardIndex][(x + 1) % boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x + 1) % boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-					% boards[boardIndex][0].length] -= 1;
+		if ((board[(x + 1) % board.length][(y - 1 + board[0].length)
+				% board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[(x + 1) % board.length][(y - 1 + board[0].length)
+					% board[0].length] -= 1;
 		}
-		if ((boards[boardIndex][x][(y + 1) % boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][x][(y + 1) % boards[boardIndex][0].length] -= 1;
+		if ((board[x][(y + 1) % board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[x][(y + 1) % board[0].length] -= 1;
 		}
-		if ((boards[boardIndex][x][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][x][(y - 1 + boards[boardIndex][0].length)
-					% boards[boardIndex][0].length] -= 1;
+		if ((board[x][(y - 1 + board[0].length) % board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[x][(y - 1 + board[0].length) % board[0].length] -= 1;
 		}
-		if ((boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][y] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x - 1 + boards[boardIndex].length)
-					% boards[boardIndex].length][y] -= 1;
+		if ((board[(x - 1 + board.length) % board.length][y] & NEIGHBORS_MASK) > 0) {
+			board[(x - 1 + board.length) % board.length][y] -= 1;
 		}
-		if ((boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][(y + 1)
-				% boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x - 1 + boards[boardIndex].length)
-					% boards[boardIndex].length][(y + 1)
-					% boards[boardIndex][0].length] -= 1;
+		if ((board[(x - 1 + board.length) % board.length][(y + 1)
+				% board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[(x - 1 + board.length) % board.length][(y + 1)
+					% board[0].length] -= 1;
 		}
-		if ((boards[boardIndex][(x - 1 + boards[boardIndex].length)
-				% boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-				% boards[boardIndex][0].length] & NEIGHBORS_MASK) > 0) {
-			boards[boardIndex][(x - 1 + boards[boardIndex].length)
-					% boards[boardIndex].length][(y - 1 + boards[boardIndex][0].length)
-					% boards[boardIndex][0].length] -= 1;
+		if ((board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
+				% board[0].length] & NEIGHBORS_MASK) > 0) {
+			board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
+					% board[0].length] -= 1;
 		}
 	}
 
-	public void nextGeneration() {
-		changeList.clear();
-		int nextBoard = (currentBoard + 1) % NUM_OF_BOARDS;
-		// copy over the currentBoard into the next one.
-		for (int x = 0; x < boards[currentBoard].length; x++) {
-			for (int y = 0; y < boards[currentBoard][x].length; y++) {
-				boards[nextBoard][x][y] = boards[currentBoard][x][y];
+	/**
+	 * Computes the next generation in the game of life. Uses a list of changes
+	 * so not every cell needs to be checked. Also computes the bounds of the
+	 * area changed.
+	 * 
+	 * @return An array containing the bounds of the area changed in the order:
+	 *         bottom, left, right, top.
+	 */
+	public int[] nextGeneration() {
+		int bottom = 0;
+		int left = board.length;
+		int right = 0;
+		int top = board[0].length;
+		// make changes in the changeList
+		for (Entry<Long, Boolean> entry : changeList.entrySet()) {
+			int x = (int) (entry.getKey().longValue() >> 32);
+			int y = (int) entry.getKey().longValue();
+			if (x < left)
+				left = x;
+			if (x > right)
+				right = x;
+			if (y < top)
+				top = y;
+			if (y > bottom)
+				bottom = y;
+			boolean state = entry.getValue();
+			if (state) {
+				makeAlive(x, y);
+			} else {
+				kill(x, y);
 			}
 		}
-		// Update the next board based off the state of the current board.
-		for (int x = 0; x < boards[currentBoard].length; x++) {
-			for (int y = 0; y < boards[currentBoard][x].length; y++) {
-				if ((boards[currentBoard][x][y] & ALIVE_MASK) != 0) {
+
+		// compute next changes
+		// check each cell and their neighbors.
+		for (Entry<Long, Boolean> entry : changeList.entrySet()) {
+			int x, y;
+			int[] neighbors = getNeighborsWith((int) (entry.getKey()
+					.longValue() >> 32), (int) entry.getKey().longValue());
+			for (int i = 0; i + 1 < neighbors.length; i += 2) {
+				x = neighbors[i];
+				y = neighbors[i + 1];
+				if ((board[x][y] & ALIVE_MASK) != 0) {
 					// cell is alive
 					// check if it should die.
-					if (!ruleToLive.contains((byte)(boards[currentBoard][x][y]
-							& NEIGHBORS_MASK))) {
+					if (!ruleToLive
+							.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
 						// kill the cell in the next generation
-						kill(x, y, nextBoard);
-						changeList.add(x);
-						changeList.add(y);
+						nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL,
+								false);
 					}
 				} else {
 					// cell is dead
 					// check if it should be born
-					if (ruleToBeBorn.contains((byte)(boards[currentBoard][x][y]
-							& NEIGHBORS_MASK))) {
-						makeAlive(x, y, nextBoard);
-						changeList.add(x);
-						changeList.add(y);
+					if (ruleToBeBorn
+							.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
+						// make the cell become alive in the next generation
+						nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL,
+								true);
 					}
-
 				}
 			}
 		}
-		currentBoard = (currentBoard + 1) % NUM_OF_BOARDS;
+		// swap the changeLists
+		Map<Long, Boolean> temp = changeList;
+		changeList = nextChangeList;
+		nextChangeList = temp;
+		nextChangeList.clear();
+
+		// return the bounding size of the changes made
+		return new int[] { bottom, left, right, top };
 	}
-	
-	public List<Integer> getChangeList(){
-		return changeList;
+
+	private int[] getNeighborsWith(int x, int y) {
+		return new int[] { x, y, (x + 1) % board.length, y,
+				(x + 1) % board.length, (y + 1) % board[0].length,
+				(x + 1) % board.length,
+				(y - 1 + board[0].length) % board[0].length, x,
+				(y + 1) % board[0].length, x,
+				(y - 1 + board[0].length) % board[0].length,
+				(x - 1 + board.length) % board.length, y,
+				(x - 1 + board.length) % board.length,
+				(y + 1) % board[0].length,
+				(x - 1 + board.length) % board.length,
+				(y - 1 + board[0].length) % board[0].length
+
+		};
 	}
 }
