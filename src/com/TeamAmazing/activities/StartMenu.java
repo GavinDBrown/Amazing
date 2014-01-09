@@ -19,7 +19,7 @@ import com.TeamAmazing.game.R;
 public class StartMenu extends Activity {
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
-	private static final int FRAME_DELAY = 50;
+	private static final int FRAME_DELAY = 100;
 	private int maxGenerations;
 	private final GameOfLife gameOfLife = new GameOfLife();
 	private int numCurrentGenerations = 0;

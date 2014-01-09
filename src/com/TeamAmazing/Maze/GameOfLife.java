@@ -1,10 +1,7 @@
 package com.TeamAmazing.Maze;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -147,32 +144,21 @@ public class GameOfLife {
 		// compute next changes
 		// check each cell and their neighbors.
 		for (Entry<Long, Boolean> entry : changeList.entrySet()) {
-			int x, y;
-			int[] neighbors = getNeighborsWith((int) (entry.getKey()
-					.longValue() >> 32), (int) entry.getKey().longValue());
-			for (int i = 0; i + 1 < neighbors.length; i += 2) {
-				x = neighbors[i];
-				y = neighbors[i + 1];
-				if ((board[x][y] & ALIVE_MASK) != 0) {
-					// cell is alive
-					// check if it should die.
-					if (!ruleToLive
-							.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
-						// kill the cell in the next generation
-						nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL,
-								false);
-					}
-				} else {
-					// cell is dead
-					// check if it should be born
-					if (ruleToBeBorn
-							.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
-						// make the cell become alive in the next generation
-						nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL,
-								true);
-					}
-				}
-			}
+			int x = (int) (entry.getKey().longValue() >> 32);
+			int y = (int) entry.getKey().longValue();
+			checkCell(x, y);
+			checkCell((x + 1) % board.length, y);
+			checkCell((x + 1) % board.length, (y + 1) % board[0].length);
+			checkCell((x + 1) % board.length, (y - 1 + board[0].length)
+					% board[0].length);
+			checkCell(x, (y + 1) % board[0].length);
+			checkCell(x, (y - 1 + board[0].length) % board[0].length);
+			checkCell((x - 1 + board.length) % board.length, y);
+			checkCell((x - 1 + board.length) % board.length, (y + 1)
+					% board[0].length);
+			checkCell((x - 1 + board.length) % board.length,
+					(y - 1 + board[0].length) % board[0].length);
+
 		}
 		// swap the changeLists
 		Map<Long, Boolean> temp = changeList;
@@ -184,19 +170,21 @@ public class GameOfLife {
 		return new int[] { bottom, left, right, top };
 	}
 
-	private int[] getNeighborsWith(int x, int y) {
-		return new int[] { x, y, (x + 1) % board.length, y,
-				(x + 1) % board.length, (y + 1) % board[0].length,
-				(x + 1) % board.length,
-				(y - 1 + board[0].length) % board[0].length, x,
-				(y + 1) % board[0].length, x,
-				(y - 1 + board[0].length) % board[0].length,
-				(x - 1 + board.length) % board.length, y,
-				(x - 1 + board.length) % board.length,
-				(y + 1) % board[0].length,
-				(x - 1 + board.length) % board.length,
-				(y - 1 + board[0].length) % board[0].length
-
-		};
+	private void checkCell(int x, int y) {
+		if ((board[x][y] & ALIVE_MASK) != 0) {
+			// cell is alive
+			// check if it should die.
+			if (!ruleToLive.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
+				// kill the cell in the next generation
+				nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL, false);
+			}
+		} else {
+			// cell is dead
+			// check if it should be born
+			if (ruleToBeBorn.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
+				// make the cell become alive in the next generation
+				nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL, true);
+			}
+		}
 	}
 }
