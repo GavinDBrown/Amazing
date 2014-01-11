@@ -1,7 +1,6 @@
 package com.TeamAmazing.activities;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
@@ -9,6 +8,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -43,35 +43,36 @@ public class MazeGame extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.maze_game);
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
 		// Get the message from the intent
 		Intent intent = getIntent();
-		this.mazeType = intent.getIntExtra(StartMenu.MAZE_TYPE, StartMenu.PERFECT_MAZE);
+		this.mazeType = intent.getIntExtra(StartMenu.MAZE_TYPE,
+				StartMenu.PERFECT_MAZE);
 		initGfx();
 	}
-//	@Override
-//	public void onPause() {
-//	    super.onPause();   
-//	    
-//	}
-//	@Override
-//	public Object onRetainNonConfigurationInstance(){
-//		
-//		return ((GameBoard) findViewById(R.id.gameboard)).maze;
-//	}
-	
-//	 @Override
-//	    protected void onSaveInstanceState(Bundle outState) {
-//	        super.onSaveInstanceState(outState);
-//	        
-//	        // save the maze
-////	        final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
-////	        gb.maze
-////	        outState.pu
-////	        outState.putBooleanArray("mydata", myData);
-//	    }
-//	
+
+	// @Override
+	// public void onPause() {
+	// super.onPause();
+	//
+	// }
+	// @Override
+	// public Object onRetainNonConfigurationInstance(){
+	//
+	// return ((GameBoard) findViewById(R.id.gameboard)).maze;
+	// }
+
+	// @Override
+	// protected void onSaveInstanceState(Bundle outState) {
+	// super.onSaveInstanceState(outState);
+	//
+	// // save the maze
+	// // final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+	// // gb.maze
+	// // outState.pu
+	// // outState.putBooleanArray("mydata", myData);
+	// }
+	//
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -87,6 +88,14 @@ public class MazeGame extends Activity {
 		switch (item.getItemId()) {
 		case R.id.reset_maze:
 			resetGame();
+			return true;
+		case android.R.id.home:
+			// This ensures that the parent activity is recreated with any
+			// information it may have saved.
+			Intent intent = NavUtils.getParentActivityIntent(this);
+			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+					| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+			NavUtils.navigateUpTo(this, intent);
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -113,8 +122,10 @@ public class MazeGame extends Activity {
 					// having
 					// been measured.
 					gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-					Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
-					gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
+					Rect startCellRect = calculateCellRect(gb.maze
+							.getCell(Maze.START_CELL));
+					gb.setSprite2(startCellRect.centerX(),
+							startCellRect.centerY());
 
 					// Remove this ViewTreeObserver
 					ViewTreeObserver obs = gb.getViewTreeObserver();
@@ -128,7 +139,8 @@ public class MazeGame extends Activity {
 			});
 		} else {
 			gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-			Rect startCellRect = calculateCellRect(gb.maze.getCell(Maze.START_CELL));
+			Rect startCellRect = calculateCellRect(gb.maze
+					.getCell(Maze.START_CELL));
 			gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
 		}
 		gb.resetStarField();
@@ -139,12 +151,16 @@ public class MazeGame extends Activity {
 	}
 
 	public static Rect calculateCellRect(Cell cell) {
-		return new Rect(cell.getCoords().x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
-				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
-				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+		return new Rect(cell.getCoords().x
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH,
+				cell.getCoords().y
+						* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+						+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH,
+				(cell.getCoords().x + 1)
+						* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+						+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
+						* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
 						+ GameBoard.BOUNDARY_WIDTH);
 	}
 
@@ -168,12 +184,14 @@ public class MazeGame extends Activity {
 			float yTouch = gb.getYTouch();
 			Point sprite2 = gb.getSpite2();
 			sprite2XVelocity = TOUCH_FACTOR
-					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC * sprite2XVelocity));
+					* (xTouch - sprite2.x + Math.round(PREVIOUS_VELOCITY_FAC
+							* sprite2XVelocity));
 			sprite2YVelocity = TOUCH_FACTOR
-					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC * sprite2YVelocity));
+					* (yTouch - sprite2.y + Math.round(PREVIOUS_VELOCITY_FAC
+							* sprite2YVelocity));
 			// Enforce max speed;
-			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(sprite2XVelocity, 2)
-					+ Math.pow(sprite2YVelocity, 2)));
+			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
+					sprite2XVelocity, 2) + Math.pow(sprite2YVelocity, 2)));
 			if (accSpeed > MAX_SPEED + 1) {
 				sprite2XVelocity = sprite2XVelocity * MAX_SPEED / accSpeed;
 				sprite2YVelocity = sprite2YVelocity * MAX_SPEED / accSpeed;
@@ -183,10 +201,18 @@ public class MazeGame extends Activity {
 			float speed = (float) Math.sqrt(Math.pow(sprite2XVelocity, 2)
 					+ Math.pow(sprite2YVelocity, 2));
 			if ((Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity)) > 0) {
-				xFriction = speed * FRICTION * -1 * sprite2XVelocity
-						/ (Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity));
-				yFriction = speed * FRICTION * -1 * sprite2YVelocity
-						/ (Math.abs(sprite2XVelocity) + Math.abs(sprite2YVelocity));
+				xFriction = speed
+						* FRICTION
+						* -1
+						* sprite2XVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
+				yFriction = speed
+						* FRICTION
+						* -1
+						* sprite2YVelocity
+						/ (Math.abs(sprite2XVelocity) + Math
+								.abs(sprite2YVelocity));
 			}
 			sprite2XVelocity = sprite2XVelocity + xFriction;
 			sprite2YVelocity = sprite2YVelocity + yFriction;
@@ -198,7 +224,8 @@ public class MazeGame extends Activity {
 	 */
 	public void updatePosition() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
-		Point vel = new Point(Math.round(sprite2XVelocity), Math.round(sprite2YVelocity));
+		Point vel = new Point(Math.round(sprite2XVelocity),
+				Math.round(sprite2YVelocity));
 		while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
 			if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
 				takeNStepsInXDirection(vel, Math.abs(vel.x / vel.y));
@@ -219,8 +246,8 @@ public class MazeGame extends Activity {
 		// Check if we are in the end cell.
 		// TODO NOTE, having the check here means that if we bounce into and out
 		// of the cell in one frame that it won't count.
-		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(gb.getSpite2().x,
-				gb.getSpite2().y)) {
+		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(
+				gb.getSpite2().x, gb.getSpite2().y)) {
 			// Sprite is inside the end cell.
 			resetGame();
 		}
@@ -228,7 +255,8 @@ public class MazeGame extends Activity {
 
 	// TODO update to use pixel perfect collision detection
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
-		for (Wall w : ((GameBoard) findViewById(R.id.gameboard)).maze.getWalls()) {
+		for (Wall w : ((GameBoard) findViewById(R.id.gameboard)).maze
+				.getWalls()) {
 			if (w.getBounds().intersects(left, top, right, bottom))
 				return true;
 		}
@@ -242,10 +270,11 @@ public class MazeGame extends Activity {
 			// Take a steps along the yVel vector, making decisions as we go.
 			if (vel.y > 0) {
 				if (sprite2.y + 1 > gb.getHeight() - gb.getSprite2Height() / 2
-						|| wallsIntersects(sprite2.x - gb.getSprite2Width() / 2,
-								sprite2.y + 1 - gb.getSprite2Height() / 2,
-								sprite2.x + gb.getSprite2Width() / 2,
-								sprite2.y + 1 + gb.getSprite2Height() / 2)) {
+						|| wallsIntersects(
+								sprite2.x - gb.getSprite2Width() / 2, sprite2.y
+										+ 1 - gb.getSprite2Height() / 2,
+								sprite2.x + gb.getSprite2Width() / 2, sprite2.y
+										+ 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y -= 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -257,10 +286,11 @@ public class MazeGame extends Activity {
 				vel.y--;
 			} else {
 				if (sprite2.y - 1 < gb.getSprite2Height() / 2
-						|| wallsIntersects(sprite2.x - gb.getSprite2Width() / 2,
-								sprite2.y - 1 - gb.getSprite2Height() / 2,
-								sprite2.x + gb.getSprite2Width() / 2,
-								sprite2.y - 1 + gb.getSprite2Height() / 2)) {
+						|| wallsIntersects(
+								sprite2.x - gb.getSprite2Width() / 2, sprite2.y
+										- 1 - gb.getSprite2Height() / 2,
+								sprite2.x + gb.getSprite2Width() / 2, sprite2.y
+										- 1 + gb.getSprite2Height() / 2)) {
 					// Rebound
 					sprite2.y += 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -282,8 +312,8 @@ public class MazeGame extends Activity {
 			// Take a steps along the xVel vector, making decisions as we go.
 			if (vel.x > 0) {
 				if (sprite2.x + 1 > gb.getWidth() - gb.getSprite2Width() / 2
-						|| wallsIntersects(sprite2.x + 1 - gb.getSprite2Width() / 2,
-								sprite2.y - gb.getSprite2Height() / 2,
+						|| wallsIntersects(sprite2.x + 1 - gb.getSprite2Width()
+								/ 2, sprite2.y - gb.getSprite2Height() / 2,
 								sprite2.x + 1 + gb.getSprite2Width() / 2,
 								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
@@ -297,8 +327,8 @@ public class MazeGame extends Activity {
 				vel.x--;
 			} else {
 				if (sprite2.x - 1 < gb.getSprite2Width() / 2
-						|| wallsIntersects(sprite2.x - 1 - gb.getSprite2Width() / 2,
-								sprite2.y - gb.getSprite2Height() / 2,
+						|| wallsIntersects(sprite2.x - 1 - gb.getSprite2Width()
+								/ 2, sprite2.y - gb.getSprite2Height() / 2,
 								sprite2.x - 1 + gb.getSprite2Width() / 2,
 								sprite2.y + gb.getSprite2Height() / 2)) {
 					// Rebound
@@ -350,14 +380,15 @@ public class MazeGame extends Activity {
 	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
 		// Horizontal wall
 		wall.setBounds(new Rect((cell.getCoords().x)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, (cell
-				.getCoords().y)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y)
 				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
 				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
-				+ GameBoard.WALL_WIDTH, cell.getCoords().y
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
-				+ GameBoard.BOUNDARY_WIDTH));
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH + GameBoard.WALL_WIDTH, cell
+				.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH));
 	}
 
 	/**
@@ -371,14 +402,15 @@ public class MazeGame extends Activity {
 	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
 		// Horizontal wall
 		wall.setBounds(new Rect((cell.getCoords().x)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, (cell
-				.getCoords().y + 1)
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
 				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
 				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
-				+ GameBoard.WALL_WIDTH, (cell.getCoords().y + 1)
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
-				+ GameBoard.BOUNDARY_WIDTH));
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH + GameBoard.WALL_WIDTH, (cell
+				.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH));
 	}
 
 	/**
@@ -390,14 +422,16 @@ public class MazeGame extends Activity {
 	 *            The cell that has a wall to the left of it.
 	 */
 	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect(cell.getCoords().x * (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
-				+ GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, cell
-				.getCoords().x
+		wall.setBounds(new Rect(cell.getCoords().x
 				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
-				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
-				+ GameBoard.WALL_WIDTH));
+				+ GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, cell.getCoords().x
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, (cell
+				.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH + GameBoard.WALL_WIDTH));
 	}
 
 	/**
@@ -410,14 +444,15 @@ public class MazeGame extends Activity {
 	 */
 	private void setWallBoundsRightCell(Wall wall, Cell cell) {
 		wall.setBounds(new Rect((cell.getCoords().x + 1)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH, cell
-				.getCoords().y
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH, cell.getCoords().y
 				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
 				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH) + GameBoard.WALL_WIDTH
-				+ GameBoard.BOUNDARY_WIDTH, (cell.getCoords().y + 1)
-				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH) + GameBoard.BOUNDARY_WIDTH
-				+ GameBoard.WALL_WIDTH));
+				* (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH)
+				+ GameBoard.WALL_WIDTH + GameBoard.BOUNDARY_WIDTH, (cell
+				.getCoords().y + 1)
+				* (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH)
+				+ GameBoard.BOUNDARY_WIDTH + GameBoard.WALL_WIDTH));
 	}
 
 	/**
@@ -435,8 +470,8 @@ public class MazeGame extends Activity {
 	 * @param mazeHeight
 	 *            How many cells are in one column of the maze.
 	 */
-	private void setWallBoundsBoundaryCell(Wall wall, Cell cell, boolean[] corners, int mazeWidth,
-			int mazeHeight) {
+	private void setWallBoundsBoundaryCell(Wall wall, Cell cell,
+			boolean[] corners, int mazeWidth, int mazeHeight) {
 		if (cell.getCoords().x == 0) {
 			// TopLeft, TopRight, BottomLeft, BottomRight
 			if (cell.getCoords().y == 0 && !corners[0]) {
@@ -519,7 +554,8 @@ public class MazeGame extends Activity {
 
 		// Set the start and finish cells.
 		maze.getCells()[0][0].setType(Maze.START_CELL);
-		maze.getCells()[maze.getWidth() - 1][maze.getHeight() - 1].setType(Maze.END_CELL);
+		maze.getCells()[maze.getWidth() - 1][maze.getHeight() - 1]
+				.setType(Maze.END_CELL);
 		// Each corner will have two indistinguishable walls that need have
 		// different orientations so set a boolean flag for each corner.
 		// topLeft, topRight, bottomLeft, bottomRight
@@ -540,11 +576,13 @@ public class MazeGame extends Activity {
 			} else {
 				// Cells on the boundary
 				if (cell1 != null) {
-					setWallBoundsBoundaryCell(w, cell1, corners, maze.getWidth(), maze.getHeight());
+					setWallBoundsBoundaryCell(w, cell1, corners,
+							maze.getWidth(), maze.getHeight());
 				} else {
 					// The first cell of a wall should never be null, but
 					// this is included for future usability.
-					setWallBoundsBoundaryCell(w, cell2, corners, maze.getWidth(), maze.getHeight());
+					setWallBoundsBoundaryCell(w, cell2, corners,
+							maze.getWidth(), maze.getHeight());
 				}
 
 			}

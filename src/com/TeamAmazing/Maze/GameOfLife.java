@@ -7,7 +7,10 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-public class GameOfLife {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class GameOfLife implements Parcelable {
 
 	// The number of alive neighbors a cell must have to live between
 	// generations.
@@ -16,13 +19,14 @@ public class GameOfLife {
 	private Set<Byte> ruleToBeBorn = new HashSet<Byte>();
 	private Map<Long, Boolean> changeList = new HashMap<Long, Boolean>();
 	private Map<Long, Boolean> nextChangeList = new HashMap<Long, Boolean>();
-	// private List<Integer> nextChangeList = new ArrayList<Integer>();
 	private byte[][] board;
-	Random rand = new Random();
 	public static final byte ALIVE_MASK = 16;
 	private static final byte NEIGHBORS_MASK = 15;
 
 	public GameOfLife() {
+		setRules();
+	}
+	private void setRules(){
 		// The rules
 		ruleToLive.add((byte) 1);
 		ruleToLive.add((byte) 2);
@@ -37,10 +41,11 @@ public class GameOfLife {
 	}
 
 	public void initializeCells(int width, int height) {
+		Random rand = new Random();
 		board = new byte[width][height];
 		changeList.clear();
 		// Create 20 to 30 random starting cells.
-		int numOfStartingCells = rand.nextInt(10) + 20;
+		int numOfStartingCells = rand.nextInt(11) + 20;
 		int randHorzOffset, randVertOffset;
 		while (numOfStartingCells > 0) {
 			randHorzOffset = (rand.nextInt(10) + (width / 2 - 5)) % width;
@@ -187,4 +192,56 @@ public class GameOfLife {
 			}
 		}
 	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeSerializable(board);
+//		out.writeArray(board);
+		out.writeInt(changeList.size());
+		for (Long key : changeList.keySet()) {
+			out.writeLong(key);
+			out.writeByte((byte) (changeList.get(key) ? 1 : 0));
+		}
+	}
+
+	private void readFromParcel(Parcel in) {
+		//TODO
+		board = (byte[][]) in.readSerializable();
+//		board = (byte[][]) in.readArray(Byte[].class.getClassLoader());
+		int size = in.readInt();
+		for (int i = 0; i < size; i++) {
+			Long key = in.readLong();
+			Boolean value = in.readByte() != 0;
+			changeList.put(key, value);
+		}
+	}
+
+	/**
+	 * Constructor to use when re-constructing object from a parcel
+	 * 
+	 * @param in
+	 *            a parcel from which to read this object
+	 */
+	public GameOfLife(Parcel in) {
+		setRules();
+		readFromParcel(in);
+	}
+	
+	public static final Parcelable.Creator<GameOfLife> CREATOR =
+			new Parcelable.Creator<GameOfLife>() {
+				public GameOfLife createFromParcel(Parcel in) {
+					return new GameOfLife(in);
+				}
+
+				public GameOfLife[] newArray(int size) {
+					return new GameOfLife[size];
+				}
+	};
+	
+	
 }

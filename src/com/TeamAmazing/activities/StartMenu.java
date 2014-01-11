@@ -19,53 +19,148 @@ import com.TeamAmazing.game.R;
 public class StartMenu extends Activity {
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
-	private static final int FRAME_DELAY = 100;
+	private static final int FRAME_DELAY = 50;
 	private int maxGenerations;
-	private final GameOfLife gameOfLife = new GameOfLife();
 	private int numCurrentGenerations = 0;
-//	private static final int RESTART_DELAY = 9000;
-	public final static int PERFECT_MAZE = 0;
-	public final static int DFS_MAZE = 1;
-	public final static String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
+	private GameOfLife gameOfLife;
 
+	public static final int PERFECT_MAZE = 0;
+	public static final int DFS_MAZE = 1;
+	public static final String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
+	private static final String GAME_OF_LIFE_ID = "gameoflife";
+	private static final String NUM_CURRENT_GENERATIONS_ID = "numcurrentgenerations";
+	private static final String MAX_GENERATIONS_ID = "maxgenerations";
+
+	/**
+	 * Sets the content view. Checks the savedInstanceState and restores from
+	 * there if possible. If there is no savedInstanceState creates a new
+	 * GameOfLife, initializes it, and points the view at it.
+	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.start_menu);
 		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
-		// Check if the View has been measured.
-		// TODO use a more sophisticated method for checking if the view has
-		// been measured.
-		if (smb.getWidth() == 0 || smb.getHeight() == 0) {
-			ViewTreeObserver vto = smb.getViewTreeObserver();
-			vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 
-				@Override
-				@SuppressLint("NewApi")
-				@SuppressWarnings("deprecation")
-				public void onGlobalLayout() {
-					// Initialize stuff that is dependent on the view already
-					// having been measured.
-					initializeGameOfLife();
+		if (savedInstanceState != null) {
+			// restore from savedInstanceState
+			gameOfLife = (GameOfLife) savedInstanceState
+					.getParcelable(GAME_OF_LIFE_ID);
+			numCurrentGenerations = savedInstanceState
+					.getInt(NUM_CURRENT_GENERATIONS_ID);
+			maxGenerations = savedInstanceState.getInt(MAX_GENERATIONS_ID);
 
-					// Remove this ViewTreeObserver
-					ViewTreeObserver obs = smb.getViewTreeObserver();
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-						obs.removeOnGlobalLayoutListener(this);
-					} else {
-						obs.removeGlobalOnLayoutListener(this);
+			// TODO rotate the game if the phone was rotated
+			// TODO use a more sophisticated method for checking if the view has
+			// been measured.
+			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
+				ViewTreeObserver vto = smb.getViewTreeObserver();
+				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+
+					@Override
+					@SuppressLint("NewApi")
+					@SuppressWarnings("deprecation")
+					public void onGlobalLayout() {
+						// Do stuff that requires the view to be measured
+						rotateBoard();
+						// Remove this ViewTreeObserver
+						ViewTreeObserver obs = smb.getViewTreeObserver();
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+							obs.removeOnGlobalLayoutListener(this);
+						} else {
+							obs.removeGlobalOnLayoutListener(this);
+						}
 					}
-				}
 
-			});
+				});
+			} else {
+				// The view has already been measured
+				rotateBoard();
+			}
+			smb.setBoard(gameOfLife.getBoard());
 		} else {
-			// initialize
-			initializeGameOfLife();
-		}
+			// This is a new incarnation of the activity.
+			gameOfLife = new GameOfLife();
+			// Check if the View has been measured.
+			// TODO use a more sophisticated method for checking if the view has
+			// been measured.
+			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
+				ViewTreeObserver vto = smb.getViewTreeObserver();
+				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 
-		frame.removeCallbacksAndMessages(frameUpdate);
-		smb.invalidate();
+					@Override
+					@SuppressLint("NewApi")
+					@SuppressWarnings("deprecation")
+					public void onGlobalLayout() {
+						// Do stuff that requires the view to be measured
+						initializeGameOfLife();
+
+						// Remove this ViewTreeObserver
+						ViewTreeObserver obs = smb.getViewTreeObserver();
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+							obs.removeOnGlobalLayoutListener(this);
+						} else {
+							obs.removeGlobalOnLayoutListener(this);
+						}
+					}
+
+				});
+			} else {
+				// The view has already been measured
+				initializeGameOfLife();
+			}
+		}
+	}
+
+	private void rotateBoard() {
+		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
+		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
+		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
+		byte[][] oldBoard = gameOfLife.getBoard();
+		if (width != oldBoard.length || height != oldBoard[0].length) {
+			// the board needs to be rotated but for now create a new one.
+			gameOfLife = new GameOfLife();
+			initializeGameOfLife();
+
+			// The below doesn't work because the new width and height are not
+			// just the old width and height switched.
+			// byte[][] newBoard = new byte[width][height];
+			// for (int i = 0; i<newBoard.length; i++){
+			// for (int j=0; j<newBoard[0].length; j++){
+			// newBoard[i][j] = oldBoard[j][i];
+			// }
+			// }
+
+		}
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+
+		frame.removeCallbacksAndMessages(null);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		outState.putParcelable(GAME_OF_LIFE_ID, gameOfLife);
+		outState.putInt(NUM_CURRENT_GENERATIONS_ID, numCurrentGenerations);
+		outState.putInt(MAX_GENERATIONS_ID, maxGenerations);
 	}
 
 	private void initializeGameOfLife() {
