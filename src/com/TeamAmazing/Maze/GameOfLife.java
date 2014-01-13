@@ -210,7 +210,7 @@ public class GameOfLife implements Parcelable {
 	}
 
 	private void readFromParcel(Parcel in) {
-		//TODO
+		//TODO Do not use serializable because it's slow.
 		board = (byte[][]) in.readSerializable();
 //		board = (byte[][]) in.readArray(Byte[].class.getClassLoader());
 		int size = in.readInt();

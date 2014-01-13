@@ -4,11 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.TeamAmazing.Maze.Maze;
-import com.TeamAmazing.Maze.Maze.Wall;
-import com.TeamAmazing.activities.MazeGame;
-import com.TeamAmazing.game.R;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,11 +16,17 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.TeamAmazing.Maze.Cell;
+import com.TeamAmazing.Maze.Maze;
+import com.TeamAmazing.Maze.Wall;
+import com.TeamAmazing.activities.MazeGame;
+import com.TeamAmazing.game.R;
+
 public class GameBoard extends View {
 
 	private Paint p;
 	private List<Point> starField = null;
-	public Maze maze = null;
+	private Maze maze = null;
 	private int starAlpha = 80;
 	private int starFade = 2;
 	private Rect sprite2Bounds = new Rect(0, 0, 0, 0);
@@ -34,6 +35,7 @@ public class GameBoard extends View {
 	private boolean isAccelerating = false;
 	private float xTouch;
 	private float yTouch;
+	private Rect endRect;
 
 	private static final int NUM_OF_STARS = 25;
 	// The width of a maze cell in pixels.
@@ -46,51 +48,59 @@ public class GameBoard extends View {
 	private static final int SPRITE_HEIGHT = 13;
 
 	// Getters and setters.
-	synchronized public void setSprite2(int x, int y) {
+	public Maze getMaze() {
+		return maze;
+	}
+
+	public void setMaze(Maze m) {
+		this.maze = m;
+	}
+
+	public void setSprite2(int x, int y) {
 		sprite2 = new Point(x, y);
 	}
 
-	synchronized public void setSprite2(Point p) {
+	public void setSprite2(Point p) {
 		sprite2 = p;
 	}
 
-	synchronized public int getSprite2X() {
+	public int getSprite2X() {
 		return sprite2.x;
 	}
 
-	synchronized public int getSprite2Y() {
+	public int getSprite2Y() {
 		return sprite2.y;
 	}
 
-	synchronized public int getSprite2Width() {
+	public int getSprite2Width() {
 		return sprite2Bounds.width();
 	}
 
-	synchronized public int getSprite2Height() {
+	public int getSprite2Height() {
 		return sprite2Bounds.height();
 	}
 
-	synchronized public Point getSpite2() {
+	public Point getSpite2() {
 		return sprite2;
 	}
 
-	synchronized public void resetStarField() {
+	public void resetStarField() {
 		starField = null;
 	}
 
-	synchronized public boolean isAccelerating() {
+	public boolean isAccelerating() {
 		return isAccelerating;
 	}
 
-	synchronized public void resetMaze() {
+	public void resetMaze() {
 		maze = null;
 	}
 
-	synchronized public float getYTouch() {
+	public float getYTouch() {
 		return yTouch;
 	}
 
-	synchronized public float getXTouch() {
+	public float getXTouch() {
 		return xTouch;
 	}
 
@@ -101,8 +111,8 @@ public class GameBoard extends View {
 		sprite2 = new Point(-1, -1);
 		// Define a matrix so we can rotate the asteroid
 		bm2 = Bitmap.createScaledBitmap(
-				BitmapFactory.decodeResource(getResources(), R.drawable.ufo), SPRITE_WIDTH,
-				SPRITE_HEIGHT, false);
+				BitmapFactory.decodeResource(getResources(), R.drawable.ufo),
+				SPRITE_WIDTH, SPRITE_HEIGHT, false);
 		sprite2Bounds = new Rect(0, 0, bm2.getWidth(), bm2.getHeight());
 	}
 
@@ -141,12 +151,15 @@ public class GameBoard extends View {
 		for (Wall w : maze.getWalls()) {
 			canvas.drawRect(w.getBounds(), p);
 		}
-		
+
 		// Draw the end cell.
 		p.setColor(Color.RED);
 		p.setAlpha(150);
-		// TODO Calculate the end cell's Rect once and save the information.
-		canvas.drawRect(MazeGame.calculateCellRect(maze.getCell(Maze.END_CELL)),p);
+		if (endRect == null){
+			endRect = MazeGame.calculateCellRect(maze.getCell(Cell.END_CELL));
+		}
+		canvas.drawRect(
+				endRect, p);
 
 		// Check if the sprite has been initialized with a start position.
 		if (!(sprite2.x < 0)) {
@@ -155,7 +168,7 @@ public class GameBoard extends View {
 					sprite2.y - sprite2Bounds.height() / 2, null);
 		}
 	}
-	
+
 	@Override
 	synchronized public boolean onTouchEvent(MotionEvent ev) {
 		switch (ev.getAction()) {
@@ -175,4 +188,5 @@ public class GameBoard extends View {
 		}
 		return true;
 	}
+
 }

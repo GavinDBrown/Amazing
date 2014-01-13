@@ -1,7 +1,5 @@
 package com.TeamAmazing.activities;
 
-// TODO add code for onResume, onStop, onPause etc...
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -51,8 +49,6 @@ public class StartMenu extends Activity {
 			maxGenerations = savedInstanceState.getInt(MAX_GENERATIONS_ID);
 
 			// TODO rotate the game if the phone was rotated
-			// TODO use a more sophisticated method for checking if the view has
-			// been measured.
 			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
 				ViewTreeObserver vto = smb.getViewTreeObserver();
 				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
@@ -82,8 +78,6 @@ public class StartMenu extends Activity {
 			// This is a new incarnation of the activity.
 			gameOfLife = new GameOfLife();
 			// Check if the View has been measured.
-			// TODO use a more sophisticated method for checking if the view has
-			// been measured.
 			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
 				ViewTreeObserver vto = smb.getViewTreeObserver();
 				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
@@ -144,7 +138,8 @@ public class StartMenu extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-
+		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
+		smb.invalidate();
 		frame.postDelayed(frameUpdate, FRAME_DELAY);
 	}
 
@@ -200,6 +195,7 @@ public class StartMenu extends Activity {
 
 	// Kruskal's algorithm
 	public void startKruskalsMaze(View v) {
+		frame.removeCallbacksAndMessages(frameUpdate);
 		Intent intent = new Intent(this, MazeGame.class);
 		intent.putExtra(MAZE_TYPE, PERFECT_MAZE);
 		startActivity(intent);
@@ -207,6 +203,7 @@ public class StartMenu extends Activity {
 
 	// Recursive backtracker algorithm
 	public void startRecursiveBacktrackerMaze(View v) {
+		frame.removeCallbacksAndMessages(frameUpdate);
 		Intent intent = new Intent(this, MazeGame.class);
 		intent.putExtra(MAZE_TYPE, DFS_MAZE);
 		startActivity(intent);

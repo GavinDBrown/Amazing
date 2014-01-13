@@ -15,9 +15,9 @@ import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
+import com.TeamAmazing.Maze.Cell;
 import com.TeamAmazing.Maze.Maze;
-import com.TeamAmazing.Maze.Maze.Cell;
-import com.TeamAmazing.Maze.Maze.Wall;
+import com.TeamAmazing.Maze.Wall;
 import com.TeamAmazing.drawing.GameBoard;
 import com.TeamAmazing.game.R;
 
@@ -27,12 +27,18 @@ public class MazeGame extends Activity {
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
 	private static final float TOUCH_FACTOR = .10f;
 	private static final float FRICTION = .05f;
+	private static final String SPRITE_2_X_VELOCITY_ID = "sprite2xvelocity";
 	private float sprite2XVelocity = 0;
+	private static final String SPRITE_2_Y_VELOCITY_ID = "sprite2yvelocity";
 	private float sprite2YVelocity = 0;
+	private static final String X_FRICTION_ID = "xfriction";
 	private float xFriction = 0;
+	private static final String Y_FRICTION_ID = "yfriction";
 	private float yFriction = 0;
 	private static final int MAX_SPEED = 10;
 	private static final float REBOUND_FAC = .5f;
+	private static final String SPRITE2_ID = "sprite2";
+	private static final String MAZE_ID = "maze";
 
 	private Handler frame = new Handler();
 	// The delay in milliseconds between frame updates
@@ -48,31 +54,52 @@ public class MazeGame extends Activity {
 		Intent intent = getIntent();
 		this.mazeType = intent.getIntExtra(StartMenu.MAZE_TYPE,
 				StartMenu.PERFECT_MAZE);
-		initGfx();
+		if (savedInstanceState == null) {
+			initGfx();
+		} else {
+			final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+			sprite2XVelocity = savedInstanceState
+					.getFloat(SPRITE_2_X_VELOCITY_ID);
+			sprite2YVelocity = savedInstanceState
+					.getFloat(SPRITE_2_Y_VELOCITY_ID);
+			xFriction = savedInstanceState.getFloat(X_FRICTION_ID);
+			yFriction = savedInstanceState.getFloat(Y_FRICTION_ID);
+			gb.setSprite2((Point) savedInstanceState.getParcelable(SPRITE2_ID));
+			gb.setMaze((Maze) savedInstanceState.getParcelable(MAZE_ID));
+		}
 	}
 
-	// @Override
-	// public void onPause() {
-	// super.onPause();
-	//
-	// }
-	// @Override
-	// public Object onRetainNonConfigurationInstance(){
-	//
-	// return ((GameBoard) findViewById(R.id.gameboard)).maze;
-	// }
+	@Override
+	public void onPause() {
+		super.onPause();
 
-	// @Override
-	// protected void onSaveInstanceState(Bundle outState) {
-	// super.onSaveInstanceState(outState);
-	//
-	// // save the maze
-	// // final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
-	// // gb.maze
-	// // outState.pu
-	// // outState.putBooleanArray("mydata", myData);
-	// }
-	//
+		frame.removeCallbacksAndMessages(null);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		frame.postDelayed(frameUpdate, FRAME_DELAY);
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+		outState.putFloat(SPRITE_2_X_VELOCITY_ID, sprite2XVelocity);
+		outState.putFloat(SPRITE_2_Y_VELOCITY_ID, sprite2YVelocity);
+		outState.putFloat(X_FRICTION_ID, xFriction);
+		outState.putFloat(Y_FRICTION_ID, yFriction);
+		outState.putParcelable(SPRITE2_ID, gb.getSpite2());
+		outState.putParcelable(MAZE_ID, gb.getMaze());
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -107,7 +134,7 @@ public class MazeGame extends Activity {
 		initGfx();
 	}
 
-	synchronized public void initGfx() {
+	public void initGfx() {
 		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		// Check if the View has been measured.
 		if (gb.getWidth() == 0 || gb.getHeight() == 0) {
@@ -121,11 +148,16 @@ public class MazeGame extends Activity {
 					// Initialize stuff that is dependent on the view already
 					// having
 					// been measured.
-					gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-					Rect startCellRect = calculateCellRect(gb.maze
-							.getCell(Maze.START_CELL));
+					gb.setMaze(createMaze(gb.getWidth(), gb.getHeight()));
+					Rect startCellRect = calculateCellRect(gb.getMaze()
+							.getCell(Cell.START_CELL));
 					gb.setSprite2(startCellRect.centerX(),
 							startCellRect.centerY());
+					gb.resetStarField();
+					resetSprite2Velocity();
+					frame.removeCallbacksAndMessages(frameUpdate);
+					gb.invalidate();
+					frame.postDelayed(frameUpdate, FRAME_DELAY);
 
 					// Remove this ViewTreeObserver
 					ViewTreeObserver obs = gb.getViewTreeObserver();
@@ -138,16 +170,17 @@ public class MazeGame extends Activity {
 
 			});
 		} else {
-			gb.maze = initializeMaze(gb.getWidth(), gb.getHeight());
-			Rect startCellRect = calculateCellRect(gb.maze
-					.getCell(Maze.START_CELL));
+			gb.setMaze(createMaze(gb.getWidth(), gb.getHeight()));
+			Rect startCellRect = calculateCellRect(gb.getMaze().getCell(
+					Cell.START_CELL));
 			gb.setSprite2(startCellRect.centerX(), startCellRect.centerY());
+			gb.resetStarField();
+			resetSprite2Velocity();
+			frame.removeCallbacksAndMessages(frameUpdate);
+			gb.invalidate();
+			frame.postDelayed(frameUpdate, FRAME_DELAY);
 		}
-		gb.resetStarField();
-		resetSprite2Velocity();
-		frame.removeCallbacksAndMessages(frameUpdate);
-		gb.invalidate();
-		frame.postDelayed(frameUpdate, FRAME_DELAY);
+
 	}
 
 	public static Rect calculateCellRect(Cell cell) {
@@ -178,7 +211,7 @@ public class MazeGame extends Activity {
 	 * Update the velocity of objects on the gameboard.
 	 */
 	public void updateVelocity() {
-		GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
 		if (gb.isAccelerating()) {
 			float xTouch = gb.getXTouch();
 			float yTouch = gb.getYTouch();
@@ -244,9 +277,9 @@ public class MazeGame extends Activity {
 		}
 
 		// Check if we are in the end cell.
-		// TODO NOTE, having the check here means that if we bounce into and out
+		// NOTE, having the check here means that if we bounce into and out
 		// of the cell in one frame that it won't count.
-		if (calculateCellRect(gb.maze.getCell(Maze.END_CELL)).contains(
+		if (calculateCellRect(gb.getMaze().getCell(Cell.END_CELL)).contains(
 				gb.getSpite2().x, gb.getSpite2().y)) {
 			// Sprite is inside the end cell.
 			resetGame();
@@ -255,8 +288,8 @@ public class MazeGame extends Activity {
 
 	// TODO update to use pixel perfect collision detection
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
-		for (Wall w : ((GameBoard) findViewById(R.id.gameboard)).maze
-				.getWalls()) {
+		final GameBoard gb = ((GameBoard) findViewById(R.id.gameboard));
+		for (Wall w : gb.getMaze().getWalls()) {
 			if (w.getBounds().intersects(left, top, right, bottom))
 				return true;
 		}
@@ -353,7 +386,7 @@ public class MazeGame extends Activity {
 		@Override
 		synchronized public void run() {
 			frame.removeCallbacksAndMessages(frameUpdate);
-
+			
 			// Increase or decrease velocity based on touch information.
 			updateVelocity();
 
@@ -530,7 +563,7 @@ public class MazeGame extends Activity {
 	}
 
 	/**
-	 * Creates a Maze object and initializes it with a random perfect maze.
+	 * Creates a Maze object and initializes it.
 	 * 
 	 * @param canvasWidth
 	 *            The width of the canvas the maze is drawn on.
@@ -538,7 +571,7 @@ public class MazeGame extends Activity {
 	 *            The height of the canvas the maze is drawn on.
 	 * @return The initialized Maze object.
 	 */
-	private Maze initializeMaze(int canvasWidth, int canvasHeight) {
+	private Maze createMaze(int canvasWidth, int canvasHeight) {
 		Maze maze = new Maze((canvasWidth - 2 * GameBoard.BOUNDARY_WIDTH)
 				/ (GameBoard.CELL_WIDTH + GameBoard.WALL_WIDTH),
 				(canvasHeight - 2 * GameBoard.BOUNDARY_WIDTH)
@@ -553,9 +586,11 @@ public class MazeGame extends Activity {
 		}
 
 		// Set the start and finish cells.
-		maze.getCells()[0][0].setType(Maze.START_CELL);
-		maze.getCells()[maze.getWidth() - 1][maze.getHeight() - 1]
-				.setType(Maze.END_CELL);
+		maze.getCells()[0].setType(Cell.START_CELL);
+		maze.getCells()[maze.getWidth() * maze.getHeight() - 1]
+				.setType(Cell.END_CELL);
+
+		// Calculate the bounds for each wall.
 		// Each corner will have two indistinguishable walls that need have
 		// different orientations so set a boolean flag for each corner.
 		// topLeft, topRight, bottomLeft, bottomRight
