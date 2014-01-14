@@ -10,7 +10,7 @@ import android.view.View;
 
 import com.TeamAmazing.Maze.GameOfLife;
 
-public class StartMenuBackground extends View {
+public class GameOfLifeBackground extends View {
 	private Paint p;
 
 	private byte[][] board;
@@ -19,7 +19,7 @@ public class StartMenuBackground extends View {
 	public static final int CELL_WIDTH = 10;
 	public static final int CELL_HEIGHT = 10;
 
-	public StartMenuBackground(Context context, AttributeSet aSet) {
+	public GameOfLifeBackground(Context context, AttributeSet aSet) {
 		super(context, aSet);
 		p = new Paint();
 	}

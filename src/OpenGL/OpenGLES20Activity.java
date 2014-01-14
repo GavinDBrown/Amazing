@@ -21,7 +21,7 @@ public class OpenGLES20Activity extends Activity {
         super.onCreate(savedInstanceState);
         
 //        setContentView(R.layout.main);
-        setContentView(R.layout.start_menu);
+        setContentView(R.layout.game_of_life_background);
 //
 //        myRenderer = new MyRenderer(); // create the renderer object
 //

@@ -26,7 +26,12 @@
         </activity>
         <activity
             android:name="com.TeamAmazing.activities.MazeGame"
+            android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden"
+            android:parentActivityName="com.TeamAmazing.activities.StartMenu" >
+        </activity>
+        <activity
+            android:name="com.TeamAmazing.activities.SettingsActivity"
             android:parentActivityName="com.TeamAmazing.activities.StartMenu" >
         </activity>
     </application>

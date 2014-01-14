@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/start_menu_background"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <Button
+        android:id="@+id/start_kruskals_maze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="@dimen/button_margins"
+        android:background="@drawable/rounded_corner_box"
+        android:onClick="startKruskalsMaze"
+        android:text="@string/start_kruskals_maze" />
+
+    <Button
+        android:id="@+id/start_recursive_backtracker_maze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="@dimen/button_margins"
+        android:background="@drawable/rounded_corner_box"
+        android:onClick="startRecursiveBacktrackerMaze"
+        android:text="@string/start_recursive_backtracker_maze" />
+
+</LinearLayout>

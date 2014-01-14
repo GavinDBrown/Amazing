@@ -3,15 +3,20 @@ package com.TeamAmazing.activities;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 import com.TeamAmazing.Maze.GameOfLife;
-import com.TeamAmazing.drawing.StartMenuBackground;
+import com.TeamAmazing.drawing.GameOfLifeBackground;
 import com.TeamAmazing.game.R;
 
 public class StartMenu extends Activity {
@@ -21,7 +26,7 @@ public class StartMenu extends Activity {
 	private int maxGenerations;
 	private int numCurrentGenerations = 0;
 	private GameOfLife gameOfLife;
-
+	
 	public static final int PERFECT_MAZE = 0;
 	public static final int DFS_MAZE = 1;
 	public static final String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
@@ -37,8 +42,23 @@ public class StartMenu extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.start_menu);
-		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
+
+		SharedPreferences sharedPrefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
+
+		// Check if the game of life background is enabled
+		if (sharedPrefs.getBoolean("pref_start_background", true)) {
+			startGameOfLife(savedInstanceState);
+		} else {
+			// The game of life background is disabled
+			setContentView(R.layout.start_menu_background);
+		}
+	}
+
+	private void startGameOfLife(Bundle savedInstanceState) {
+		setContentView(R.layout.game_of_life_background);
+		final GameOfLifeBackground background = (GameOfLifeBackground) findViewById(R.id.game_of_life_background);
 
 		if (savedInstanceState != null) {
 			// restore from savedInstanceState
@@ -48,82 +68,74 @@ public class StartMenu extends Activity {
 					.getInt(NUM_CURRENT_GENERATIONS_ID);
 			maxGenerations = savedInstanceState.getInt(MAX_GENERATIONS_ID);
 
-			// TODO rotate the game if the phone was rotated
-			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
-				ViewTreeObserver vto = smb.getViewTreeObserver();
-				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
-
-					@Override
-					@SuppressLint("NewApi")
-					@SuppressWarnings("deprecation")
-					public void onGlobalLayout() {
-						// Do stuff that requires the view to be measured
-						rotateBoard();
-						// Remove this ViewTreeObserver
-						ViewTreeObserver obs = smb.getViewTreeObserver();
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-							obs.removeOnGlobalLayoutListener(this);
-						} else {
-							obs.removeGlobalOnLayoutListener(this);
-						}
-					}
-
-				});
-			} else {
-				// The view has already been measured
-				rotateBoard();
-			}
-			smb.setBoard(gameOfLife.getBoard());
+			initilizeAfterMeasure(background);
+			background.setBoard(gameOfLife.getBoard());
 		} else {
 			// This is a new incarnation of the activity.
 			gameOfLife = new GameOfLife();
-			// Check if the View has been measured.
-			if (smb.getWidth() == 0 || smb.getHeight() == 0) {
-				ViewTreeObserver vto = smb.getViewTreeObserver();
-				vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
-
-					@Override
-					@SuppressLint("NewApi")
-					@SuppressWarnings("deprecation")
-					public void onGlobalLayout() {
-						// Do stuff that requires the view to be measured
-						initializeGameOfLife();
-
-						// Remove this ViewTreeObserver
-						ViewTreeObserver obs = smb.getViewTreeObserver();
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-							obs.removeOnGlobalLayoutListener(this);
-						} else {
-							obs.removeGlobalOnLayoutListener(this);
-						}
-					}
-
-				});
-			} else {
-				// The view has already been measured
-				initializeGameOfLife();
-			}
+			initilizeAfterMeasure(background);
 		}
 	}
 
-	private void rotateBoard() {
-		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
-		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
-		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
+	private void initilizeAfterMeasure(final View background) {
+		if (background.getWidth() == 0 || background.getHeight() == 0) {
+			ViewTreeObserver vto = background.getViewTreeObserver();
+			vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+
+				@Override
+				@SuppressLint("NewApi")
+				@SuppressWarnings("deprecation")
+				public void onGlobalLayout() {
+					// Do stuff that requires the view to be measured
+					initializeGameOfLife();
+
+					// Remove this ViewTreeObserver
+					ViewTreeObserver obs = background.getViewTreeObserver();
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+						obs.removeOnGlobalLayoutListener(this);
+					} else {
+						obs.removeGlobalOnLayoutListener(this);
+					}
+				}
+
+			});
+		} else {
+			// The view has already been measured
+			initializeGameOfLife();
+		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu items for use in the action bar
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.start_menu_activity_actions, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+		case R.id.settings:
+			Intent intent = new Intent(this, SettingsActivity.class);
+			startActivity(intent);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+
+	private void checkForResize() {
+		final GameOfLifeBackground background = (GameOfLifeBackground) findViewById(R.id.game_of_life_background);
+		int width = background.getWidth() / GameOfLifeBackground.CELL_WIDTH;
+		int height = background.getHeight() / GameOfLifeBackground.CELL_HEIGHT;
 		byte[][] oldBoard = gameOfLife.getBoard();
 		if (width != oldBoard.length || height != oldBoard[0].length) {
-			// the board needs to be rotated but for now create a new one.
+			// the board needs to be resized (or rotated) but for now create a
+			// new one.
 			gameOfLife = new GameOfLife();
 			initializeGameOfLife();
-
-			// The below doesn't work because the new width and height are not
-			// just the old width and height switched.
-			// byte[][] newBoard = new byte[width][height];
-			// for (int i = 0; i<newBoard.length; i++){
-			// for (int j=0; j<newBoard[0].length; j++){
-			// newBoard[i][j] = oldBoard[j][i];
-			// }
-			// }
 
 		}
 	}
@@ -138,9 +150,23 @@ public class StartMenu extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
-		smb.invalidate();
-		frame.postDelayed(frameUpdate, FRAME_DELAY);
+
+		 SharedPreferences sharedPrefs = PreferenceManager
+		 .getDefaultSharedPreferences(this);
+
+		// Check if the game of life background is enabled
+		if (sharedPrefs.getBoolean("pref_start_background", true)) {
+			if (findViewById(R.id.game_of_life_background) == null) {
+				startGameOfLife(null);
+			}
+			final GameOfLifeBackground background = (GameOfLifeBackground) findViewById(R.id.game_of_life_background);
+			background.invalidate();
+			frame.postDelayed(frameUpdate, FRAME_DELAY);
+		} else {
+			setContentView(R.layout.start_menu_background);
+			findViewById(R.id.start_menu_background).invalidate();
+
+		}
 	}
 
 	@Override
@@ -152,31 +178,36 @@ public class StartMenu extends Activity {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-
-		outState.putParcelable(GAME_OF_LIFE_ID, gameOfLife);
-		outState.putInt(NUM_CURRENT_GENERATIONS_ID, numCurrentGenerations);
-		outState.putInt(MAX_GENERATIONS_ID, maxGenerations);
+		SharedPreferences sharedPrefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		// Check if the game of life background is enabled
+		if (sharedPrefs.getBoolean("pref_start_background", true)) {
+			outState.putParcelable(GAME_OF_LIFE_ID, gameOfLife);
+			outState.putInt(NUM_CURRENT_GENERATIONS_ID, numCurrentGenerations);
+			outState.putInt(MAX_GENERATIONS_ID, maxGenerations);
+		}
 	}
 
 	private void initializeGameOfLife() {
-		final StartMenuBackground smb = (StartMenuBackground) findViewById(R.id.start_menu_background);
-		int width = smb.getWidth() / StartMenuBackground.CELL_WIDTH;
-		int height = smb.getHeight() / StartMenuBackground.CELL_HEIGHT;
+		final GameOfLifeBackground background = (GameOfLifeBackground) findViewById(R.id.game_of_life_background);
+		int width = background.getWidth() / GameOfLifeBackground.CELL_WIDTH;
+		int height = background.getHeight() / GameOfLifeBackground.CELL_HEIGHT;
 		maxGenerations = (int) Math.max(2.5 * width, 2.5 * height);
+		numCurrentGenerations = 0;
 		gameOfLife.initializeCells(width, height);
-		smb.setBoard(gameOfLife.getBoard());
+		background.setBoard(gameOfLife.getBoard());
 	}
 
 	private Runnable frameUpdate = new Runnable() {
 		@Override
 		synchronized public void run() {
-			final StartMenuBackground smb = ((StartMenuBackground) findViewById(R.id.start_menu_background));
+			final GameOfLifeBackground background = ((GameOfLifeBackground) findViewById(R.id.game_of_life_background));
 			frame.removeCallbacksAndMessages(frameUpdate);
 
 			if (numCurrentGenerations > maxGenerations) {
 				numCurrentGenerations = 0;
 				initializeGameOfLife();
-				smb.invalidate();
+				background.invalidate();
 				frame.postDelayed(frameUpdate, FRAME_DELAY);
 			} else {
 				// Compute the next generation
@@ -184,8 +215,8 @@ public class StartMenu extends Activity {
 				numCurrentGenerations++;
 
 				// Redraw the canvas
-				smb.setBoard(gameOfLife.getBoard());
-				smb.invalidateAreaOf(bounds);
+				background.setBoard(gameOfLife.getBoard());
+				background.invalidateAreaOf(bounds);
 
 				// Loop, after FRAME_DELAY milliseconds.
 				frame.postDelayed(frameUpdate, FRAME_DELAY);
