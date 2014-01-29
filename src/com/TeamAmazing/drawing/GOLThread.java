@@ -12,7 +12,7 @@ import com.TeamAmazing.Maze.GameOfLife;
 public class GOLThread extends Thread {
 
 	/** The delay in milliseconds between frame updates */
-	private static final int FRAME_DELAY = 20;
+	private static final int FRAME_DELAY = 50;
 	private long sleepTime;
 	private long beforeTime;
 
@@ -70,10 +70,6 @@ public class GOLThread extends Thread {
 		paused = true;
 	}
 
-	public boolean isPaused() {
-		return paused;
-	}
-
 	/**
 	 * Resumes from a pause.
 	 */
@@ -103,7 +99,9 @@ public class GOLThread extends Thread {
 				} catch (InterruptedException ignore) {
 				}
 			}
+			// Check if thread was stopped while it was paused.
 			if (stopped) break;
+			
 			beforeTime = System.nanoTime();
 			Canvas c = null;
 			try {
@@ -122,7 +120,6 @@ public class GOLThread extends Thread {
 					mSurfaceHolder.unlockCanvasAndPost(c);
 				}
 			}
-			// SLEEP
 			// Sleep time. Time required to sleep to keep game consistent
 			// This starts with the specified delay time (in milliseconds)
 			// then subtracts from that the
@@ -170,8 +167,6 @@ public class GOLThread extends Thread {
 				if (mCanvasWidth > 0 && mCanvasHeight > 0) {
 					gameOfLife = new GameOfLife();
 					gameOfLife.init(mCanvasWidth, mCanvasHeight);
-
-					unpause();
 				}
 			}
 		}

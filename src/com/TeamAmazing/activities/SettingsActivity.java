@@ -8,7 +8,7 @@ import android.view.MenuItem;
 
 import com.TeamAmazing.game.R;
 
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity{
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
@@ -25,12 +25,14 @@ public class SettingsActivity extends PreferenceActivity {
 			return super.onOptionsItemSelected(item);
 		}
 	}
-	
-	 @Override
-	 protected void onCreate(Bundle savedInstanceState) {
-	 super.onCreate(savedInstanceState);
-	
-	 addPreferencesFromResource(R.xml.preferences);
-	
-	 }
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		addPreferencesFromResource(R.xml.preferences);
+
+
+	}
+
 }

@@ -23,7 +23,7 @@ public class GOLView extends SurfaceView implements SurfaceHolder.Callback {
 	}
 
 	/**
-	 * Fetches the animation thread corresponding to this LunarView.
+	 * Fetches the animation thread corresponding to this GOLView.
 	 * 
 	 * @return the animation thread
 	 */
