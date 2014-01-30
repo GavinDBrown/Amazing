@@ -22,9 +22,12 @@ public class GameOfLife implements Parcelable {
 	private Set<Byte> ruleToLive = new HashSet<Byte>();
 	// The number of alive neighbors a cell must have to be born.
 	private Set<Byte> ruleToBeBorn = new HashSet<Byte>();
-	private Map<Long, Boolean> changeList = new HashMap<Long, Boolean>();
-	private Map<Long, Boolean> nextChangeList = new HashMap<Long, Boolean>();
-	private byte[][] board;
+	private Map<Integer, Boolean> changeList = new HashMap<Integer, Boolean>();
+	private Map<Integer, Boolean> nextChangeList = new HashMap<Integer, Boolean>();
+
+	/** A board of game of life cells stored in row major order */
+	private byte[] board;
+	private int mWidth, mHeight;
 	public static final byte ALIVE_MASK = 16;
 	private static final byte NEIGHBORS_MASK = 15;
 	private int maxGenerations;
@@ -35,8 +38,11 @@ public class GameOfLife implements Parcelable {
 	public static final int CELL_HEIGHT = 10;
 
 	private Paint mPaint;
-	
-	/** The Canvas drawn upon. This way we only need to draw the changed cells instead of the entire game each iteration.*/
+
+	/**
+	 * The Canvas drawn upon. This way we only need to draw the changed cells
+	 * instead of the entire game each iteration.
+	 */
 	private Canvas myCanvas = null;
 	private Bitmap myCanvasBitmap = null;
 	private Matrix identityMatrix;
@@ -58,35 +64,37 @@ public class GameOfLife implements Parcelable {
 		ruleToBeBorn.add((byte) 3);
 	}
 
-	public byte[][] getBoard() {
+	public byte[] getBoard() {
 		return board;
 	}
 
 	public void init(int canvasWidth, int canvasHeight) {
-		myCanvasBitmap = Bitmap.createBitmap(canvasWidth, canvasHeight, Bitmap.Config.ARGB_8888);
+		myCanvasBitmap = Bitmap.createBitmap(canvasWidth, canvasHeight,
+				Bitmap.Config.ARGB_8888);
 		myCanvas = new Canvas();
 		myCanvas.setBitmap(myCanvasBitmap);
 		identityMatrix = new Matrix();
 
-		int width = canvasWidth / GameOfLife.CELL_WIDTH;
-		int height = canvasHeight / GameOfLife.CELL_HEIGHT;
-		maxGenerations = (int) Math.max(2.5 * width, 2.5 * height);
+		mWidth = canvasWidth / GameOfLife.CELL_WIDTH;
+		mHeight = canvasHeight / GameOfLife.CELL_HEIGHT;
+		maxGenerations = (int) Math.max(2.5 * mWidth, 2.5 * mHeight);
 		numCurrentGenerations = 0;
 		Random rand = new Random();
-		board = new byte[width][height];
+		board = new byte[mWidth * mHeight];
 		changeList.clear();
 		// Create 20 to 30 random starting cells.
 		int numOfStartingCells = rand.nextInt(11) + 20;
-		int randHorzOffset, randVertOffset;
+		int randHorzOffset, randVertOffset, randX, randY;
+		randX = rand.nextInt(mWidth);
+		randY = rand.nextInt(mHeight);
 		while (numOfStartingCells > 0) {
-			randHorzOffset = (width + rand.nextInt(10) + (width / 2 - 5)) % width;
-			randVertOffset = (height + rand.nextInt(10) + (height / 2 - 5)) % height;
-			if ((board[randHorzOffset][randVertOffset] & ALIVE_MASK) == 0) {
+			randHorzOffset = (mWidth + rand.nextInt(10) + randX)
+					% mWidth;
+			randVertOffset = (mHeight + rand.nextInt(10) + randY)
+					% mHeight;
+			if ((board[randVertOffset * mWidth + randHorzOffset] & ALIVE_MASK) == 0) {
 				// cell is dead, make it alive
-				// makeAlive(randHorzOffset, randVertOffset);
-				long loc = (long) randHorzOffset << 32 | randVertOffset
-						& 0xFFFFFFFFL;
-				changeList.put(loc, true);
+				changeList.put(randVertOffset * mWidth + randHorzOffset, true);
 			}
 			numOfStartingCells--;
 		}
@@ -95,52 +103,44 @@ public class GameOfLife implements Parcelable {
 	// a cell should never have more than 8 neighbors so bit 4 should never
 	// carry into bit 5, which is the cell state bit.
 	private void makeAlive(int x, int y) {
-		board[x][y] |= ALIVE_MASK;
+		board[y * mWidth + x] |= ALIVE_MASK;
 		// update the neighbors
-		board[(x + 1) % board.length][y] += 1;
-		board[(x + 1) % board.length][(y + 1) % board[0].length] += 1;
-		board[(x + 1) % board.length][(y - 1 + board[0].length)
-				% board[0].length] += 1;
-		board[x][(y + 1) % board[0].length] += 1;
-		board[x][(y - 1 + board[0].length) % board[0].length] += 1;
-		board[(x - 1 + board.length) % board.length][y] += 1;
-		board[(x - 1 + board.length) % board.length][(y + 1) % board[0].length] += 1;
-		board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
-				% board[0].length] += 1;
+		board[y * mWidth + ((x + 1) % mWidth)] += 1;
+		board[((y + 1) % mHeight) * mWidth + ((x + 1) % mWidth)] += 1;
+		board[((y - 1 + mHeight) % mHeight) * mWidth + ((x + 1) % mWidth)] += 1;
+		board[((y + 1) % mHeight) * mWidth + x] += 1;		
+		board[((y - 1 + mHeight) % mHeight) * mWidth + x] += 1;		
+		board[y * mWidth + ((x - 1 + mWidth) % mWidth)] += 1;		
+		board[((y + 1) % mHeight) * mWidth + ((x - 1 + mWidth) % mWidth)] += 1;
+		board[((y - 1 + mHeight) % mHeight) * mWidth +((x - 1 + mWidth) % mWidth)] += 1;
 	}
 
 	private void kill(int x, int y) {
-		board[x][y] &= ~ALIVE_MASK;
+		board[y * mWidth + x] &= ~ALIVE_MASK;
 		// update the neighbors
-		if ((board[(x + 1) % board.length][y] & NEIGHBORS_MASK) > 0) {
-			board[(x + 1) % board.length][y] -= 1;
+		if ((board[y * mWidth + ((x + 1) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[y * mWidth + ((x + 1) % mWidth)] -= 1;
 		}
-		if ((board[(x + 1) % board.length][(y + 1) % board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[(x + 1) % board.length][(y + 1) % board[0].length] -= 1;
+		if ((board[((y + 1) % mHeight) * mWidth + ((x + 1) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[((y + 1) % mHeight) * mWidth + ((x + 1) % mWidth)] -= 1;
 		}
-		if ((board[(x + 1) % board.length][(y - 1 + board[0].length)
-				% board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[(x + 1) % board.length][(y - 1 + board[0].length)
-					% board[0].length] -= 1;
+		if ((board[((y - 1 + mHeight) % mHeight) * mWidth + ((x + 1) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[((y - 1 + mHeight) % mHeight) * mWidth + ((x + 1) % mWidth)] -= 1;
 		}
-		if ((board[x][(y + 1) % board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[x][(y + 1) % board[0].length] -= 1;
+		if ((board[((y + 1) % mHeight) * mWidth + x] & NEIGHBORS_MASK) > 0) {
+			board[((y + 1) % mHeight) * mWidth + x] -= 1;
 		}
-		if ((board[x][(y - 1 + board[0].length) % board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[x][(y - 1 + board[0].length) % board[0].length] -= 1;
+		if ((board[((y - 1 + mHeight) % mHeight) * mWidth + x] & NEIGHBORS_MASK) > 0) {
+			board[((y - 1 + mHeight) % mHeight) * mWidth + x] -= 1;
 		}
-		if ((board[(x - 1 + board.length) % board.length][y] & NEIGHBORS_MASK) > 0) {
-			board[(x - 1 + board.length) % board.length][y] -= 1;
+		if ((board[y * mWidth + ((x - 1 + mWidth) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[y * mWidth + ((x - 1 + mWidth) % mWidth)] -= 1;
 		}
-		if ((board[(x - 1 + board.length) % board.length][(y + 1)
-				% board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[(x - 1 + board.length) % board.length][(y + 1)
-					% board[0].length] -= 1;
+		if ((board[((y + 1) % mHeight) * mWidth + ((x - 1 + mWidth) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[((y + 1) % mHeight) * mWidth + ((x - 1 + mWidth) % mWidth)] -= 1;
 		}
-		if ((board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
-				% board[0].length] & NEIGHBORS_MASK) > 0) {
-			board[(x - 1 + board.length) % board.length][(y - 1 + board[0].length)
-					% board[0].length] -= 1;
+		if ((board[((y - 1 + mHeight) % mHeight) * mWidth +((x - 1 + mWidth) % mWidth)] & NEIGHBORS_MASK) > 0) {
+			board[((y - 1 + mHeight) % mHeight) * mWidth +((x - 1 + mWidth) % mWidth)] -= 1;
 		}
 	}
 
@@ -150,7 +150,7 @@ public class GameOfLife implements Parcelable {
 	 * 
 	 */
 	public void drawAndUpdate(Canvas canvas) {
-	
+
 		if (canvas == null)
 			return;
 		// Check if we have exceeded the maximum number of generations
@@ -162,15 +162,16 @@ public class GameOfLife implements Parcelable {
 		// Draw a black background if this is the first generation
 		if (numCurrentGenerations == 0) {
 			mPaint.setColor(Color.BLACK);
-			myCanvas.drawRect(0, 0, myCanvas.getWidth(), myCanvas.getHeight(), mPaint);
+			myCanvas.drawRect(0, 0, myCanvas.getWidth(), myCanvas.getHeight(),
+					mPaint);
 		}
 
 		numCurrentGenerations++;
 
 		// make changes in the changeList and draw them
-		for (Entry<Long, Boolean> entry : changeList.entrySet()) {
-			int x = (int) (entry.getKey().longValue() >> 32);
-			int y = (int) entry.getKey().longValue();
+		for (Entry<Integer, Boolean> entry : changeList.entrySet()) {
+			int x = entry.getKey() % mWidth;
+			int y = entry.getKey() / mWidth;
 			boolean state = entry.getValue();
 			if (state) {
 				// make cell alive in the board
@@ -192,46 +193,27 @@ public class GameOfLife implements Parcelable {
 
 		// compute next changes
 		// check each cell in the change list and their neighbors.
-		for (Entry<Long, Boolean> entry : changeList.entrySet()) {
-			int x = (int) (entry.getKey().longValue() >> 32);
-			int y = (int) entry.getKey().longValue();
-			checkCell(x, y);
-			checkCell((x + 1) % board.length, y);
-			checkCell((x + 1) % board.length, (y + 1) % board[0].length);
-			checkCell((x + 1) % board.length, (y - 1 + board[0].length)
-					% board[0].length);
-			checkCell(x, (y + 1) % board[0].length);
-			checkCell(x, (y - 1 + board[0].length) % board[0].length);
-			checkCell((x - 1 + board.length) % board.length, y);
-			checkCell((x - 1 + board.length) % board.length, (y + 1)
-					% board[0].length);
-			checkCell((x - 1 + board.length) % board.length,
-					(y - 1 + board[0].length) % board[0].length);
+		for (Entry<Integer, Boolean> entry : changeList.entrySet()) {
+			int x = entry.getKey() % mWidth;
+			int y = entry.getKey() / mWidth;
+			checkCell(y * mWidth + x);
+			checkCell(y * mWidth + ((x + 1) % mWidth));
+			checkCell(((y + 1) % mHeight) * mWidth + ((x + 1) % mWidth));
+			checkCell(((y - 1 + mHeight) % mHeight) * mWidth + ((x + 1) % mWidth));
+			checkCell(((y + 1) % mHeight) * mWidth + x);
+			checkCell(((y - 1 + mHeight) % mHeight) * mWidth + x);
+			checkCell(y * mWidth + ((x - 1 + mWidth) % mWidth));
+			checkCell(((y + 1) % mHeight) * mWidth + ((x - 1 + mWidth) % mWidth));
+			checkCell(((y - 1 + mHeight) % mHeight) * mWidth +((x - 1 + mWidth) % mWidth));
 
 		}
 		// swap the changeLists
-		Map<Long, Boolean> temp = changeList;
+		Map<Integer, Boolean> temp = changeList;
 		changeList = nextChangeList;
 		nextChangeList = temp;
 		nextChangeList.clear();
-		
-		canvas.drawBitmap(myCanvasBitmap, identityMatrix, null);
 
-//		for (int x = 0; x < board.length; x++) {
-//			for (int y = 0; y < board[x].length; y++) {
-//				if ((board[x][y] & GameOfLife.ALIVE_MASK) != 0) {
-//					// draw alive cell
-//					mPaint.setColor(Color.WHITE);
-//					canvas.drawRect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
-//							* CELL_WIDTH, (y + 1) * CELL_HEIGHT, mPaint);
-//				} else {
-//					// draw dead cell
-//					mPaint.setColor(Color.BLACK);
-//					canvas.drawRect(x * CELL_WIDTH, y * CELL_HEIGHT, (x + 1)
-//							* CELL_WIDTH, (y + 1) * CELL_HEIGHT, mPaint);
-//				}
-//			}
-//		}
+		canvas.drawBitmap(myCanvasBitmap, identityMatrix, null);
 	}
 
 	/**
@@ -243,20 +225,20 @@ public class GameOfLife implements Parcelable {
 	 * @param y
 	 *            The y coordinate of the cell to check.
 	 */
-	private void checkCell(int x, int y) {
-		if ((board[x][y] & ALIVE_MASK) != 0) {
+	private void checkCell(int loc) {
+		if ((board[loc] & ALIVE_MASK) != 0) {
 			// cell is alive
 			// check if it should die.
-			if (!ruleToLive.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
+			if (!ruleToLive.contains((byte) (board[loc] & NEIGHBORS_MASK))) {
 				// kill the cell in the next generation
-				nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL, false);
+				nextChangeList.put(loc, false);
 			}
 		} else {
 			// cell is dead
 			// check if it should be born
-			if (ruleToBeBorn.contains((byte) (board[x][y] & NEIGHBORS_MASK))) {
+			if (ruleToBeBorn.contains((byte) (board[loc] & NEIGHBORS_MASK))) {
 				// make the cell become alive in the next generation
-				nextChangeList.put((long) x << 32 | y & 0xFFFFFFFFL, true);
+				nextChangeList.put(loc, true);
 			}
 		}
 	}
@@ -268,10 +250,10 @@ public class GameOfLife implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel out, int flags) {
-		out.writeSerializable(board);
+		out.writeByteArray(board);
 		out.writeInt(changeList.size());
-		for (Long key : changeList.keySet()) {
-			out.writeLong(key);
+		for (Integer key : changeList.keySet()) {
+			out.writeInt(key);
 			out.writeByte((byte) (changeList.get(key) ? 1 : 0));
 		}
 		out.writeInt(maxGenerations);
@@ -279,11 +261,10 @@ public class GameOfLife implements Parcelable {
 	}
 
 	private void readFromParcel(Parcel in) {
-		// TODO change board to be a row major order array.
-		board = (byte[][]) in.readSerializable();
+		in.readByteArray(board);
 		int size = in.readInt();
 		for (int i = 0; i < size; i++) {
-			Long key = in.readLong();
+			int key = in.readInt();
 			Boolean value = in.readByte() != 0;
 			changeList.put(key, value);
 		}

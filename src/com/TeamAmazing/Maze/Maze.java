@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -15,6 +16,7 @@ public class Maze implements Parcelable {
 	private int height;
 	private Cell[] cells; // An array of the cells in row major order
 	private List<Wall> walls;
+	private Random rand = new Random();
 
 	public Maze(int width, int height) {
 		this.width = width;
@@ -82,10 +84,10 @@ public class Maze implements Parcelable {
 	}
 
 	/**
-	 * Creates a perfect maze using a union-find algorithm. Also known as
-	 * Kruskal's algorithm.
+	 * Creates a maze using a union-find algorithm. Also known as Kruskal's
+	 * algorithm.
 	 */
-	public void makePerfectMaze() {
+	public void makeKruskalMaze() {
 		makeAllWalls();
 		Collections.shuffle(walls);
 		for (Iterator<Wall> it = walls.iterator(); it.hasNext();) {
@@ -103,50 +105,12 @@ public class Maze implements Parcelable {
 		}
 	}
 
-	
-	private List<Cell> getNeighborCells(Cell cell) {
-		List<Cell> neighbors = new ArrayList<Cell>(4);
-		if (cell.coordinates.x != 0) {
-			// Cell is not in the left column
-			neighbors.add(cells[cell.coordinates.y * width
-					+ (cell.coordinates.x - 1)]);
-		}
-		if (cell.coordinates.x != width - 1) {
-			// Cell is not in the right column
-			neighbors.add(cells[cell.coordinates.y * width
-					+ (cell.coordinates.x + 1)]);
-		}
-		if (cell.coordinates.y != 0) {
-			// Cell is not in the top row
-			neighbors.add(cells[(cell.coordinates.y - 1) * width
-					+ cell.coordinates.x]);
-		}
-		if (cell.coordinates.y != height - 1) {
-			// Cell is not in the bottom row
-			neighbors.add(cells[(cell.coordinates.y + 1) * width
-					+ cell.coordinates.x]);
-		}
-		return neighbors;
-	}
-	
-	
-	private Cell getRandomUnvistedNeighbor(Cell cell) {
-		List<Cell> neighbors = getNeighborCells(cell);
-		Collections.shuffle(neighbors);
-
-		for (Cell c : neighbors) {
-			if (c.isUnvisited())
-				return c;
-		}
-		return null;
-	}
-
-	// Recursive backtracker DFS algorithm
+	/** Recursive backtracker DFS algorithm */
 	public void makeDFSMaze() {
 		makeAllWalls();
 		Deque<Cell> stack = new ArrayDeque<Cell>();
 		// Make the initial cell the current cell and mark it as visited
-		Cell currentCell = cells[cells.length - 1];
+		Cell currentCell = cells[rand.nextInt(cells.length)];
 		currentCell.markVisited();
 		Cell nextCell = null;
 		int numOfUnvisitedCells = width * height - 1;
@@ -182,6 +146,42 @@ public class Maze implements Parcelable {
 				}
 			}
 		}
+	}
+
+	private List<Cell> getNeighborCells(Cell cell) {
+		List<Cell> neighbors = new ArrayList<Cell>(4);
+		if (cell.coordinates.x != 0) {
+			// Cell is not in the left column
+			neighbors.add(cells[cell.coordinates.y * width
+					+ (cell.coordinates.x - 1)]);
+		}
+		if (cell.coordinates.x != width - 1) {
+			// Cell is not in the right column
+			neighbors.add(cells[cell.coordinates.y * width
+					+ (cell.coordinates.x + 1)]);
+		}
+		if (cell.coordinates.y != 0) {
+			// Cell is not in the top row
+			neighbors.add(cells[(cell.coordinates.y - 1) * width
+					+ cell.coordinates.x]);
+		}
+		if (cell.coordinates.y != height - 1) {
+			// Cell is not in the bottom row
+			neighbors.add(cells[(cell.coordinates.y + 1) * width
+					+ cell.coordinates.x]);
+		}
+		return neighbors;
+	}
+
+	private Cell getRandomUnvistedNeighbor(Cell cell) {
+		List<Cell> neighbors = getNeighborCells(cell);
+		Collections.shuffle(neighbors);
+
+		for (Cell c : neighbors) {
+			if (c.isUnvisited())
+				return c;
+		}
+		return null;
 	}
 
 	/**

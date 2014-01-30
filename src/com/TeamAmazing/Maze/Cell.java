@@ -11,9 +11,11 @@ public class Cell implements Parcelable {
 	public static final int END_CELL = 2;
 	int id;
 	Cell ref = this;
-	// int rank is used differently in different algorithms. In Kruskal's
-	// algorithm it's used as part of a union-find data structure. In the
-	// DFS algorithm it's used to mark cells as visited or not.
+	/**
+	 * Rank is used differently in different algorithms. In Kruskal's algorithm
+	 * it's used as part of a union-find data structure. In the DFS algorithm
+	 * it's used to mark cells as visited or not.
+	 */
 	int rank = 1;
 	Point coordinates;
 	int type = REGULAR_CELL;

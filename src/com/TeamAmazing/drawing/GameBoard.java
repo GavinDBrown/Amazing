@@ -116,18 +116,18 @@ public class GameBoard extends View {
 		sprite2Bounds = new Rect(0, 0, bm2.getWidth(), bm2.getHeight());
 	}
 
-	synchronized private void initializeStars(int maxX, int maxY) {
+	private void initializeStars(int maxX, int maxY) {
 		starField = new ArrayList<Point>();
 		for (int i = 0; i < NUM_OF_STARS; i++) {
 			Random r = new Random();
-			int x = r.nextInt(maxX - 5 + 1) + 5;
-			int y = r.nextInt(maxY - 5 + 1) + 5;
+			int x = r.nextInt(maxX) + CELL_WIDTH/2;
+			int y = r.nextInt(maxY) + CELL_HEIGHT/2;
 			starField.add(new Point(x, y));
 		}
 	}
 
 	@Override
-	synchronized public void onDraw(Canvas canvas) {
+	public void onDraw(Canvas canvas) {
 		p.setStyle(Paint.Style.FILL);
 		p.setColor(Color.BLACK);
 		p.setAlpha(255);
@@ -135,7 +135,7 @@ public class GameBoard extends View {
 		canvas.drawRect(0, 0, getWidth(), getHeight(), p);
 
 		if (starField == null) {
-			initializeStars(canvas.getWidth(), canvas.getHeight());
+			initializeStars(maze.getWidth()*CELL_WIDTH, maze.getHeight()*CELL_HEIGHT);
 		}
 
 		p.setColor(Color.CYAN);
@@ -170,7 +170,7 @@ public class GameBoard extends View {
 	}
 
 	@Override
-	synchronized public boolean onTouchEvent(MotionEvent ev) {
+	public boolean onTouchEvent(MotionEvent ev) {
 		switch (ev.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			xTouch = ev.getX();

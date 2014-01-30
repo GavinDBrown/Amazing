@@ -578,7 +578,7 @@ public class MazeGame extends Activity {
 						/ (GameBoard.CELL_HEIGHT + GameBoard.WALL_WIDTH));
 		switch (mazeType) {
 		case StartMenu.PERFECT_MAZE:
-			maze.makePerfectMaze();
+			maze.makeKruskalMaze();
 			break;
 		case StartMenu.DFS_MAZE:
 			maze.makeDFSMaze();
