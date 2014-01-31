@@ -126,9 +126,13 @@ public class StartMenu extends Activity {
 	public void onPause() {
 		super.onPause();
 
-		// When the screen is locked, the app doesn't lose focus and the surface
-		// remains intact, so we need to pause here.
-		mGOLThread.pause();
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				"pref_start_background", true)) {
+			// When the screen is locked, the app doesn't lose focus and the
+			// surface
+			// remains intact, so we need to pause here.
+			mGOLThread.pause();
+		}
 	}
 
 	@Override

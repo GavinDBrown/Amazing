@@ -54,35 +54,35 @@ public class GOLThread extends Thread {
 
 	@Override
 	public void start() {
-		synchronized (mSurfaceHolder) {
+//		synchronized (mSurfaceHolder) {
 			stopped = false;
-		}
+//		}
 		super.start();
 	}
 
 	public void halt() {
-		synchronized (mSurfaceHolder) {
+//		synchronized (mSurfaceHolder) {
 			paused = true;
 			stopped = true;
-		}
+//		}
 	}
 
 	/**
 	 * Pauses the update & animation.
 	 */
 	public void pause() {
-		synchronized (mSurfaceHolder) {
+//		synchronized (mSurfaceHolder) {
 			paused = true;
-		}
+//		}
 	}
 
 	/**
 	 * Resumes from a pause.
 	 */
 	public void unpause() {
-		synchronized (mSurfaceHolder) {
+//		synchronized (mSurfaceHolder) {
 			paused = false;
-		}
+//		}
 	}
 
 	/**
