@@ -47,7 +47,7 @@ public class StartMenu extends Activity {
 		prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
 			public void onSharedPreferenceChanged(SharedPreferences prefs,
 					String key) {
-				if (prefs.getBoolean("pref_start_background", false)) {
+				if (prefs.getBoolean("pref_start_background", true)) {
 					// background is going from disabled -> enabled
 					setContentView(R.layout.game_of_life_background);
 					startGOLBackground();
@@ -98,7 +98,7 @@ public class StartMenu extends Activity {
 		super.onSaveInstanceState(outState);
 		// Check if the GOLBackground is enabled
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				"pref_start_background", false)) {
+				"pref_start_background", true)) {
 			mGOLThread.saveState(outState);
 		}
 	}
@@ -108,7 +108,7 @@ public class StartMenu extends Activity {
 		super.onRestoreInstanceState(savedInstanceState);
 		// Check if the GOLBackground is enabled
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				"pref_start_background", false))
+				"pref_start_background", true))
 			mGOLThread.restoreState(savedInstanceState);
 	}
 
@@ -116,14 +116,19 @@ public class StartMenu extends Activity {
 	public void onResume() {
 		super.onResume();
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				"pref_start_background", false)) {
+				"pref_start_background", true)) {
 			mGOLThread = mGOLView.getThread();
+			mGOLThread.unpause();
 		}
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+
+		// When the screen is locked, the app doesn't lose focus and the surface
+		// remains intact, so we need to pause here.
+		mGOLThread.pause();
 	}
 
 	@Override
@@ -138,7 +143,7 @@ public class StartMenu extends Activity {
 				.unregisterOnSharedPreferenceChangeListener(prefsListener);
 
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				"pref_start_background", false)) {
+				"pref_start_background", true)) {
 			stopGOLBackground();
 		}
 	}
