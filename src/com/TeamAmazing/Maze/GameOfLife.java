@@ -74,7 +74,7 @@ public class GameOfLife implements Parcelable {
 		ruleToLive.add((byte) 2);
 		ruleToLive.add((byte) 3);
 		ruleToLive.add((byte) 4);
-		ruleToLive.add((byte) 5);
+//		ruleToLive.add((byte) 5);
 		ruleToBeBorn.add((byte) 3);
 	}
 
@@ -165,9 +165,6 @@ public class GameOfLife implements Parcelable {
 	 * 
 	 */
 	public void drawAndUpdate(Canvas canvas) {
-
-		if (canvas == null)
-			return;
 
 		// Check if we have exceeded the maximum number of generations
 		if (emptyTimes > MAX_EMPTY_TIMES) {
@@ -260,11 +257,12 @@ public class GameOfLife implements Parcelable {
 			checkSet.add(((y - 1 + mHeight) % mHeight) * mWidth
 					+ ((x - 1 + mWidth) % mWidth));
 		}
-		
-		//check each location in the checkSet
-		for (int loc : checkSet) checkCell(loc);
+
+		// check each location in the checkSet
+		for (int loc : checkSet)
+			checkCell(loc);
 		checkSet.clear();
-		
+
 		// swap the changeLists
 		Map<Integer, Boolean> temp = changeList;
 		changeList = nextChangeList;
@@ -292,24 +290,21 @@ public class GameOfLife implements Parcelable {
 
 				// If a cell has been in nextChangeList 7 times it's likely part
 				// of an oscillator, so don't add it anymore.
-				// if ((board[loc] & TIMES_CHANGED_MASK >> 5) < 7) {
-				// board[loc] = (byte) (((((board[loc] >>> 5) &
-				// TIMES_CHANGED_MASK) + 1) << 5) + (board[loc] &
-				// ~TIMES_CHANGED_MASK));
-				nextChangeList.put(loc, false);
-				// }
+
+				if (((board[loc] >>> 5) & TIMES_CHANGED_MASK) < 7) {
+					board[loc] = (byte) (((((board[loc] >>> 5) & TIMES_CHANGED_MASK) + 1) << 5) | (board[loc] & ~(TIMES_CHANGED_MASK << 5)));
+					nextChangeList.put(loc, false);
+				}
 			}
 		} else {
 			// cell is dead
 			// check if it should be born
 			if (ruleToBeBorn.contains((byte) (board[loc] & NEIGHBORS_MASK))) {
 				// make the cell become alive in the next generation
-				// if ((board[loc] & TIMES_CHANGED_MASK >> 5) < 7) {
-				// board[loc] = (byte) (((((board[loc] >>> 5) &
-				// TIMES_CHANGED_MASK) + 1) << 5) + (board[loc] &
-				// ~TIMES_CHANGED_MASK));
-				nextChangeList.put(loc, true);
-				// }
+				if (((board[loc] >>> 5) & TIMES_CHANGED_MASK) < 7) {
+					board[loc] = (byte) (((((board[loc] >>> 5) & TIMES_CHANGED_MASK) + 1) << 5) | (board[loc] & ~(TIMES_CHANGED_MASK << 5)));
+					nextChangeList.put(loc, true);
+				}
 			}
 		}
 	}

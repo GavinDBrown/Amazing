@@ -54,16 +54,16 @@ public class GOLThread extends Thread {
 
 	@Override
 	public void start() {
-		synchronized(mSurfaceHolder){
-		stopped = false;
+		synchronized (mSurfaceHolder) {
+			stopped = false;
 		}
 		super.start();
 	}
 
 	public void halt() {
-		synchronized(mSurfaceHolder){
-		paused = true;
-		stopped = true;
+		synchronized (mSurfaceHolder) {
+			paused = true;
+			stopped = true;
 		}
 	}
 
@@ -71,8 +71,8 @@ public class GOLThread extends Thread {
 	 * Pauses the update & animation.
 	 */
 	public void pause() {
-		synchronized(mSurfaceHolder){
-		paused = true;
+		synchronized (mSurfaceHolder) {
+			paused = true;
 		}
 	}
 
@@ -80,8 +80,8 @@ public class GOLThread extends Thread {
 	 * Resumes from a pause.
 	 */
 	public void unpause() {
-		synchronized(mSurfaceHolder){
-		paused = false;
+		synchronized (mSurfaceHolder) {
+			paused = false;
 		}
 	}
 
@@ -108,17 +108,20 @@ public class GOLThread extends Thread {
 				}
 			}
 			// Check if thread was stopped while it was paused.
-			if (stopped) break;
-			
+			if (stopped)
+				break;
+
 			beforeTime = System.nanoTime();
 			Canvas c = null;
 			try {
 				c = mSurfaceHolder.lockCanvas();
-				synchronized (mSurfaceHolder) {
-					if (gameOfLife != null) {
-						gameOfLife.drawAndUpdate(c);
-					} else
-						pause();
+				if (c != null) {
+					synchronized (mSurfaceHolder) {
+						if (gameOfLife != null) {
+							gameOfLife.drawAndUpdate(c);
+						} else
+							pause();
+					}
 				}
 			} finally {
 				// do this in a finally so that if an exception is thrown
