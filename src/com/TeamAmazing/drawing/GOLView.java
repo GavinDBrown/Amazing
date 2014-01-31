@@ -37,8 +37,12 @@ public class GOLView extends SurfaceView implements SurfaceHolder.Callback {
 	 */
 	@Override
 	public void onWindowFocusChanged(boolean hasWindowFocus) {
-		if (!hasWindowFocus)
+		if (hasWindowFocus){
+			thread.unpause();
+		} else {
 			thread.pause();
+		}
+		
 	}
 
 	/** Callback invoked when the surface dimensions change. */

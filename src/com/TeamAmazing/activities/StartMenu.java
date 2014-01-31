@@ -35,7 +35,7 @@ public class StartMenu extends Activity {
 				.getDefaultSharedPreferences(this);
 
 		// Check if the game of life background is enabled
-		if (sharedPrefs.getBoolean("pref_start_background", false)) {
+		if (sharedPrefs.getBoolean("pref_start_background", true)) {
 			setContentView(R.layout.game_of_life_background);
 			startGOLBackground();
 
@@ -73,14 +73,18 @@ public class StartMenu extends Activity {
 	}
 
 	private void stopGOLBackground() {
-		mGOLThread.halt(); // stop the animation if it's valid
-		boolean retry = true;
-		while (retry) {
-			try {
-				mGOLThread.join();
-				retry = false;
-			} catch (InterruptedException e) {
+		if (mGOLThread != null) {
+			mGOLThread.halt(); // stop the animation if it's valid
+			boolean retry = true;
+			while (retry) {
+				try {
+					mGOLThread.join();
+					retry = false;
+				} catch (InterruptedException e) {
+				}
 			}
+			mGOLThread = null;
+			mGOLView = null;
 		}
 	}
 

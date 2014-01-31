@@ -110,7 +110,7 @@ public class Maze implements Parcelable {
 		makeAllWalls();
 		Deque<Cell> stack = new ArrayDeque<Cell>();
 		// Make the initial cell the current cell and mark it as visited
-		Cell currentCell = cells[rand.nextInt(cells.length)];
+		Cell currentCell = cells[cells.length/2 + rand.nextInt(cells.length/2)];
 		currentCell.markVisited();
 		Cell nextCell = null;
 		int numOfUnvisitedCells = width * height - 1;

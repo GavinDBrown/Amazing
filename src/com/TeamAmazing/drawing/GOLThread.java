@@ -12,7 +12,7 @@ import com.TeamAmazing.Maze.GameOfLife;
 public class GOLThread extends Thread {
 
 	/** The delay in milliseconds between frame updates */
-	private static final int FRAME_DELAY = 50;
+	private static final int FRAME_DELAY = 1;
 	private long sleepTime;
 	private long beforeTime;
 
@@ -54,27 +54,35 @@ public class GOLThread extends Thread {
 
 	@Override
 	public void start() {
+		synchronized(mSurfaceHolder){
 		stopped = false;
+		}
 		super.start();
 	}
 
 	public void halt() {
+		synchronized(mSurfaceHolder){
 		paused = true;
 		stopped = true;
+		}
 	}
 
 	/**
 	 * Pauses the update & animation.
 	 */
 	public void pause() {
+		synchronized(mSurfaceHolder){
 		paused = true;
+		}
 	}
 
 	/**
 	 * Resumes from a pause.
 	 */
 	public void unpause() {
+		synchronized(mSurfaceHolder){
 		paused = false;
+		}
 	}
 
 	/**

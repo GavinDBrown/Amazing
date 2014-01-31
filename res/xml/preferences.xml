@@ -4,6 +4,6 @@
         android:key="pref_start_background"
         android:title="@string/pref_start_background"
         android:summary="@string/pref_start_background_summ"
-        android:defaultValue="false" />
+        android:defaultValue="true" />
 
 </PreferenceScreen>
