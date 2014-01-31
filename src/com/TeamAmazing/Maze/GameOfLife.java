@@ -44,7 +44,7 @@ public class GameOfLife implements Parcelable {
 	private static final byte TIMES_CHANGED_MASK = (byte) 7;
 	private boolean firstTime;
 	private int emptyTimes;
-	private static final int MAX_EMPTY_TIMES = 10;
+	private static final int MAX_EMPTY_TIMES = 800;
 
 	// The width and height of maze cells in pixels.
 	public static final int CELL_WIDTH = 5;
@@ -74,7 +74,7 @@ public class GameOfLife implements Parcelable {
 		ruleToLive.add((byte) 2);
 		ruleToLive.add((byte) 3);
 		ruleToLive.add((byte) 4);
-//		ruleToLive.add((byte) 5);
+		// ruleToLive.add((byte) 5);
 		ruleToBeBorn.add((byte) 3);
 	}
 
@@ -82,6 +82,15 @@ public class GameOfLife implements Parcelable {
 		return board;
 	}
 
+	/**
+	 * Initialize this GameOfLife. Creates a new empty board and adds random
+	 * starting points to the changeList.
+	 * 
+	 * @param canvasWidth
+	 *            The width of the canvas this GameOfLife will be drawn on.
+	 * @param canvasHeight
+	 *            The height of the canvas this GameOfLife will be drawn on.
+	 */
 	public void init(int canvasWidth, int canvasHeight) {
 		myCanvasBitmap = Bitmap.createBitmap(canvasWidth, canvasHeight,
 				Bitmap.Config.ARGB_8888);
@@ -166,10 +175,14 @@ public class GameOfLife implements Parcelable {
 	 */
 	public void drawAndUpdate(Canvas canvas) {
 
+		if (canvas == null)
+			return;
+
 		// Check if we have exceeded the maximum number of generations
 		if (emptyTimes > MAX_EMPTY_TIMES) {
 			// restart
 			init(myCanvas.getWidth(), myCanvas.getHeight());
+			return;
 		}
 
 		// Draw a black background if this is the first generation

@@ -115,13 +115,13 @@ public class GOLThread extends Thread {
 			Canvas c = null;
 			try {
 				c = mSurfaceHolder.lockCanvas();
-				if (c != null) {
 					synchronized (mSurfaceHolder) {
 						if (gameOfLife != null) {
 							gameOfLife.drawAndUpdate(c);
-						} else
+						} else{
 							pause();
-					}
+						}
+					
 				}
 			} finally {
 				// do this in a finally so that if an exception is thrown
