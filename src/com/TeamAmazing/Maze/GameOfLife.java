@@ -74,7 +74,7 @@ public class GameOfLife implements Parcelable {
 		ruleToLive.add((byte) 2);
 		ruleToLive.add((byte) 3);
 		ruleToLive.add((byte) 4);
-		// ruleToLive.add((byte) 5);
+		ruleToLive.add((byte) 5);
 		ruleToBeBorn.add((byte) 3);
 	}
 

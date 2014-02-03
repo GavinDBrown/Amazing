@@ -65,7 +65,7 @@ public class StartMenu extends Activity {
 	}
 
 	private void startGOLBackground() {
-		// get handles to the GOLView and its GOLThread
+		// get handles to the GOLView and it's GOLThread
 		mGOLView = (GOLView) findViewById(R.id.game_of_life_background);
 		mGOLThread = new GOLThread(mGOLView.getHolder());
 		mGOLView.setThread(mGOLThread);
