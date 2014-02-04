@@ -117,7 +117,6 @@ public class StartMenu extends Activity {
 		super.onResume();
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 				"pref_start_background", true)) {
-			mGOLThread = mGOLView.getThread();
 			mGOLThread.unpause();
 		}
 	}

@@ -44,7 +44,9 @@ public class GameOfLife implements Parcelable {
 	private static final byte TIMES_CHANGED_MASK = (byte) 7;
 	private boolean firstTime;
 	private int emptyTimes;
-	private static final int MAX_EMPTY_TIMES = 800;
+	private static final int MAX_EMPTY_TIMES = 500;
+	private static final int MAX_CELLS_TO_MAKE_ALIVE = 10;
+
 
 	// The width and height of maze cells in pixels.
 	public static final int CELL_WIDTH = 5;
@@ -195,9 +197,14 @@ public class GameOfLife implements Parcelable {
 
 		if (changeList.isEmpty()) {
 			emptyTimes++;
+			int cellsMadeAlive = 0;
 			// look for unfilled spots and start a couple of cells there.
+			OuterLoop:
 			for (int loc = 0; loc < board.length; loc++) {
 				if ((board[loc] & ALIVE_MASK) == 0) {
+					if (cellsMadeAlive >= MAX_CELLS_TO_MAKE_ALIVE){
+						break OuterLoop;
+					}
 					int x = loc % mWidth;
 					int y = loc / mWidth;
 					// cell is dead check to see if all it's neighbors are dead
@@ -217,8 +224,10 @@ public class GameOfLife implements Parcelable {
 									+ ((x - 1 + mWidth) % mWidth)] & ALIVE_MASK) == 0)) {
 						// all of the neighbors are dead
 						// give this cell a chance to come alive.
-						if (rand.nextInt(8) == 0)
+						if (rand.nextInt(8) == 0){
 							changeList.put(loc, true);
+							cellsMadeAlive++;
+						}
 					}
 
 				}

@@ -46,7 +46,7 @@ public class GOLThread extends Thread {
 	 */
 	private volatile boolean stopped = true;
 
-	private volatile boolean paused = false;
+	private volatile boolean paused = true;
 
 	public GOLThread(SurfaceHolder surfaceHolder) {
 		mSurfaceHolder = surfaceHolder;
@@ -56,7 +56,6 @@ public class GOLThread extends Thread {
 	public void start() {
 		synchronized (mSurfaceHolder) {
 			stopped = false;
-			mSurfaceHolder.notify();
 		}
 		super.start();
 	}
@@ -135,11 +134,17 @@ public class GOLThread extends Thread {
 			Canvas c = null;
 			try {
 				c = mSurfaceHolder.lockCanvas();
-				synchronized (GOLLock) {
-					if (gameOfLife != null) {
-						gameOfLife.drawAndUpdate(c);
-					} else {
-						pause();
+				if (c == null) {
+					// Pause here so that our calls do not get throttled by the
+					// OS for calling lockCanvas too often.
+					pause();
+				} else {
+					synchronized (GOLLock) {
+						if (gameOfLife != null) {
+							gameOfLife.drawAndUpdate(c);
+						} else {
+							pause();
+						}
 					}
 				}
 			} finally {
@@ -162,6 +167,7 @@ public class GOLThread extends Thread {
 				// actual sleep code
 				if (sleepTime > 0 && !stopped && !paused) {
 					synchronized (mSurfaceHolder) {
+						// Note: Spurious wakeups are okay here.
 						mSurfaceHolder.wait(sleepTime);
 					}
 				}
