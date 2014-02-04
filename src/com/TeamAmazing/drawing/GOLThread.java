@@ -48,6 +48,11 @@ public class GOLThread extends Thread {
 
 	private volatile boolean paused = true;
 
+	private volatile boolean restarting = true;
+
+	/** Time to wait after a game of life animation finishes. */
+	private final long RESTART_DELAY = 5000L;
+
 	public GOLThread(SurfaceHolder surfaceHolder) {
 		mSurfaceHolder = surfaceHolder;
 	}
@@ -126,6 +131,18 @@ public class GOLThread extends Thread {
 				} catch (InterruptedException ignore) {
 				}
 			}
+			while (restarting && !stopped) {
+				try {
+					synchronized (mSurfaceHolder) {
+						mSurfaceHolder.wait(RESTART_DELAY);
+						restarting = false;
+					}
+
+				} catch (InterruptedException ignore) {
+				}
+
+			}
+
 			// Check if thread was stopped while it was paused.
 			if (stopped)
 				break AnimationLoop;
@@ -189,10 +206,16 @@ public class GOLThread extends Thread {
 				mCanvasHeight = height;
 				// reset the GOL
 				if (mCanvasWidth > 0 && mCanvasHeight > 0) {
-					gameOfLife = new GameOfLife();
+					gameOfLife = new GameOfLife(this);
 					gameOfLife.init(mCanvasWidth, mCanvasHeight);
 				}
 			}
+		}
+	}
+
+	public void GOLRestarting() {
+		synchronized (mSurfaceHolder) {
+			restarting = true;
 		}
 	}
 }

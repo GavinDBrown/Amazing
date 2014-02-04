@@ -16,6 +16,8 @@ import android.graphics.Paint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.TeamAmazing.drawing.GOLThread;
+
 @SuppressLint("UseSparseArrays")
 public class GameOfLife implements Parcelable {
 
@@ -44,15 +46,17 @@ public class GameOfLife implements Parcelable {
 	private static final byte TIMES_CHANGED_MASK = (byte) 7;
 	private boolean firstTime;
 	private int emptyTimes;
-	private static final int MAX_EMPTY_TIMES = 500;
+	private static final int MAX_EMPTY_TIMES = 10;
 	private static final int MAX_CELLS_TO_MAKE_ALIVE = 10;
 
-
 	// The width and height of maze cells in pixels.
-	public static final int CELL_WIDTH = 5;
-	public static final int CELL_HEIGHT = 5;
-
+	public static final int CELL_WIDTH = 4;
+	public static final int CELL_HEIGHT = 4;
+	
 	private Paint mPaint;
+	
+	// Handle to the thread running this GOL
+	private GOLThread mThread;
 
 	/**
 	 * The Canvas drawn upon. This way we only need to draw the changed cells
@@ -62,7 +66,8 @@ public class GameOfLife implements Parcelable {
 	private Bitmap myCanvasBitmap = null;
 	private Matrix identityMatrix;
 
-	public GameOfLife() {
+	public GameOfLife(GOLThread t) {
+		mThread = t;
 		rand = new Random();
 		mPaint = new Paint();
 		mPaint.setAlpha(255);
@@ -182,7 +187,8 @@ public class GameOfLife implements Parcelable {
 
 		// Check if we have exceeded the maximum number of generations
 		if (emptyTimes > MAX_EMPTY_TIMES) {
-			// restart
+			// restart after a delay;
+			mThread.GOLRestarting();
 			init(myCanvas.getWidth(), myCanvas.getHeight());
 			return;
 		}
@@ -198,12 +204,14 @@ public class GameOfLife implements Parcelable {
 		if (changeList.isEmpty()) {
 			emptyTimes++;
 			int cellsMadeAlive = 0;
-			// look for unfilled spots and start a couple of cells there.
-			OuterLoop:
-			for (int loc = 0; loc < board.length; loc++) {
+			// Look for unfilled spots and start a couple of cells there.
+			int offset = rand.nextInt(board.length);
+			int loc;
+			for (int i = 0; i < board.length; i++) {
+				loc = (i + offset) % board.length;
 				if ((board[loc] & ALIVE_MASK) == 0) {
-					if (cellsMadeAlive >= MAX_CELLS_TO_MAKE_ALIVE){
-						break OuterLoop;
+					if (cellsMadeAlive >= MAX_CELLS_TO_MAKE_ALIVE) {
+						break;
 					}
 					int x = loc % mWidth;
 					int y = loc / mWidth;
@@ -224,7 +232,7 @@ public class GameOfLife implements Parcelable {
 									+ ((x - 1 + mWidth) % mWidth)] & ALIVE_MASK) == 0)) {
 						// all of the neighbors are dead
 						// give this cell a chance to come alive.
-						if (rand.nextInt(8) == 0){
+						if (rand.nextInt(2) == 0) {
 							changeList.put(loc, true);
 							cellsMadeAlive++;
 						}
