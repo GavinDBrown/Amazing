@@ -4,7 +4,7 @@
     android:layout_height="fill_parent"
     android:gravity="center_horizontal" >
 
-    <com.TeamAmazing.drawing.GOLView
+    <com.TeamAmazing.drawing.GOLSurfaceView
         android:id="@+id/game_of_life_background"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />

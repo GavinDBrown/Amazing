@@ -11,7 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.TeamAmazing.drawing.GOLThread;
-import com.TeamAmazing.drawing.GOLView;
+import com.TeamAmazing.drawing.GOLSurfaceView;
 import com.TeamAmazing.game.R;
 
 public class StartMenu extends Activity {
@@ -24,7 +24,7 @@ public class StartMenu extends Activity {
 	private GOLThread mGOLThread;
 
 	/** A handle to the View in which the background is running. */
-	private GOLView mGOLView;
+	private GOLSurfaceView mGOLView;
 
 	private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
 
@@ -66,7 +66,7 @@ public class StartMenu extends Activity {
 
 	private void startGOLBackground() {
 		// get handles to the GOLView and it's GOLThread
-		mGOLView = (GOLView) findViewById(R.id.game_of_life_background);
+		mGOLView = (GOLSurfaceView) findViewById(R.id.game_of_life_background);
 		mGOLThread = new GOLThread(mGOLView.getHolder());
 		mGOLView.setThread(mGOLThread);
 		mGOLThread.start();

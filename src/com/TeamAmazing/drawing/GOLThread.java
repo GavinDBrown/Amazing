@@ -11,7 +11,7 @@ import com.TeamAmazing.Maze.GameOfLife;
 
 public class GOLThread extends Thread {
 
-	/** The delay in milliseconds between frame updates */
+	/** The minimum delay in milliseconds between frame updates */
 	private static final int FRAME_DELAY = 20;
 	private long sleepTime;
 	private long beforeTime;

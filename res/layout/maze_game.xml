@@ -3,8 +3,8 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <com.TeamAmazing.drawing.GameBoard
-        android:id="@+id/gameboard"
+    <com.TeamAmazing.drawing.MazeSurfaceView
+        android:id="@+id/maze_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 

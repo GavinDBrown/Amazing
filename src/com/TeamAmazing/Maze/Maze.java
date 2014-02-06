@@ -11,6 +11,8 @@ import java.util.Random;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.TeamAmazing.activities.StartMenu;
+
 public class Maze implements Parcelable {
 	private int width;
 	private int height;
@@ -18,7 +20,7 @@ public class Maze implements Parcelable {
 	private List<Wall> walls;
 	private Random rand = new Random();
 
-	public Maze(int width, int height) {
+	public Maze(int width, int height, int mazeType) {
 		this.width = width;
 		this.height = height;
 		int id = 0;
@@ -27,6 +29,85 @@ public class Maze implements Parcelable {
 			for (int j = 0; j < height; j++) {
 				cells[j * width + i] = new Cell(id, i, j);
 				id++;
+			}
+		}
+		switch (mazeType) {
+		case StartMenu.PERFECT_MAZE:
+			makeKruskalMaze();
+			break;
+		case StartMenu.DFS_MAZE:
+			makeDFSMaze();
+			break;
+		}
+
+		// Set the start and finish cells.
+		cells[0].setType(Cell.START_CELL);
+		cells[cells.length - 1]
+				.setType(Cell.END_CELL);
+	}
+
+	/**
+	 * Creates a maze using a union-find algorithm. Also known as Kruskal's
+	 * algorithm.
+	 */
+	public void makeKruskalMaze() {
+		makeAllWalls();
+		Collections.shuffle(walls);
+		for (Iterator<Wall> it = walls.iterator(); it.hasNext();) {
+			Wall w = it.next();
+			// Avoid the walls on the boundary
+			if (w.getV1() != null && w.getV2() != null) {
+				if (find(w.getV1()).ref.id != find(w.getV2()).ref.id) {
+					// The two cells the wall is between are not connected
+					// by a path, so delete the wall and union the cell's
+					// partitions.
+					union(w.getV1(), w.getV2());
+					it.remove();
+				}
+			}
+		}
+	}
+
+	/** Recursive backtracker DFS algorithm */
+	public void makeDFSMaze() {
+		makeAllWalls();
+		Deque<Cell> stack = new ArrayDeque<Cell>();
+		// Make the initial cell the current cell and mark it as visited
+		Cell currentCell = cells[cells.length / 2
+				+ rand.nextInt(cells.length / 2)];
+		currentCell.markVisited();
+		Cell nextCell = null;
+		int numOfUnvisitedCells = width * height - 1;
+		// While there are unvisited cells
+		while (numOfUnvisitedCells > 0) {
+			// If the current cell has any neighbors which have not been visited
+			// Choose randomly one of the unvisited neighbors
+			nextCell = getRandomUnvistedNeighbor(currentCell);
+			if (nextCell != null) {
+				// Push the current cell to the stack
+				stack.addFirst(currentCell);
+				// Remove the wall between the current cell and the chosen cell
+				walls.remove(new Wall(currentCell, nextCell));
+				// Make the chosen cell the current cell and mark it as visited
+				currentCell = nextCell;
+				currentCell.markVisited();
+				numOfUnvisitedCells--;
+			} else if (!stack.isEmpty()) {
+				// Pop a cell from the stack and make it the current cell
+				currentCell = stack.removeFirst();
+			} else {
+				// Pick a unvisited cell, make it the current cell and mark it
+				// as
+				// visited
+				for (Cell c : cells) {
+					if (c.isUnvisited()) {
+						currentCell = c;
+						currentCell.markVisited();
+						numOfUnvisitedCells--;
+						break;
+					}
+
+				}
 			}
 		}
 	}
@@ -81,71 +162,6 @@ public class Maze implements Parcelable {
 			return node.ref;
 		} else
 			return node;
-	}
-
-	/**
-	 * Creates a maze using a union-find algorithm. Also known as Kruskal's
-	 * algorithm.
-	 */
-	public void makeKruskalMaze() {
-		makeAllWalls();
-		Collections.shuffle(walls);
-		for (Iterator<Wall> it = walls.iterator(); it.hasNext();) {
-			Wall w = it.next();
-			// Avoid the walls on the boundary
-			if (w.getV1() != null && w.getV2() != null) {
-				if (find(w.getV1()).ref.id != find(w.getV2()).ref.id) {
-					// The two cells the wall is between are not connected
-					// by a path, so delete the wall and union the cell's
-					// partitions.
-					union(w.getV1(), w.getV2());
-					it.remove();
-				}
-			}
-		}
-	}
-
-	/** Recursive backtracker DFS algorithm */
-	public void makeDFSMaze() {
-		makeAllWalls();
-		Deque<Cell> stack = new ArrayDeque<Cell>();
-		// Make the initial cell the current cell and mark it as visited
-		Cell currentCell = cells[cells.length/2 + rand.nextInt(cells.length/2)];
-		currentCell.markVisited();
-		Cell nextCell = null;
-		int numOfUnvisitedCells = width * height - 1;
-		// While there are unvisited cells
-		while (numOfUnvisitedCells > 0) {
-			// If the current cell has any neighbors which have not been visited
-			// Choose randomly one of the unvisited neighbors
-			nextCell = getRandomUnvistedNeighbor(currentCell);
-			if (nextCell != null) {
-				// Push the current cell to the stack
-				stack.addFirst(currentCell);
-				// Remove the wall between the current cell and the chosen cell
-				walls.remove(new Wall(currentCell, nextCell));
-				// Make the chosen cell the current cell and mark it as visited
-				currentCell = nextCell;
-				currentCell.markVisited();
-				numOfUnvisitedCells--;
-			} else if (!stack.isEmpty()) {
-				// Pop a cell from the stack and make it the current cell
-				currentCell = stack.removeFirst();
-			} else {
-				// Pick a unvisited cell, make it the current cell and mark it
-				// as
-				// visited
-				for (Cell c : cells) {
-					if (c.isUnvisited()) {
-						currentCell = c;
-						currentCell.markVisited();
-						numOfUnvisitedCells--;
-						break;
-					}
-
-				}
-			}
-		}
 	}
 
 	private List<Cell> getNeighborCells(Cell cell) {
@@ -229,7 +245,7 @@ public class Maze implements Parcelable {
 	 */
 	public List<Wall> getWalls() {
 		return walls;
-	}
+	}	
 
 	@Override
 	public int describeContents() {
