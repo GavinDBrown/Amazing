@@ -31,12 +31,12 @@ public class MazeThread extends Thread {
 	public static final int CELL_HEIGHT = 60;
 	public static final int WALL_WIDTH = 5;
 	public static final int BOUNDARY_WIDTH = 20;
-	private static final int UFO_WIDTH = 25;
-	private static final int UFO_HEIGHT = 13;
+	private static final int UFO_WIDTH = 35;
+	private static final int UFO_HEIGHT = 18;
 
 	// ufo variables
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
-	private static final float TOUCH_FACTOR = .10f;
+	private static final float TOUCH_FACTOR = .05f;
 	private static final float FRICTION = .05f;
 	private static final String UFO_X_VELOCITY_ID = "ufoxvelocity";
 	private float ufoXVelocity = 0;
@@ -67,9 +67,9 @@ public class MazeThread extends Thread {
 	private SurfaceHolder mSurfaceHolder;
 
 	/**
-	 * Used to signal the thread whether it should be running or not.
-	 * Passing true allows the thread to run; passing false will shut it
-	 * down if it's already running.
+	 * Used to signal the thread whether it should be running or not. Passing
+	 * true allows the thread to run; passing false will shut it down if it's
+	 * already running.
 	 */
 	private volatile boolean stopped = true;
 
@@ -256,8 +256,8 @@ public class MazeThread extends Thread {
 		canvas.drawRect(endRect, p);
 
 		// Draw the ufo.
-		canvas.drawBitmap(ufoBM, ufo.x - UFO_WIDTH / 2, ufo.y - UFO_HEIGHT
-				/ 2, null);
+		canvas.drawBitmap(ufoBM, ufo.x - UFO_WIDTH / 2, ufo.y - UFO_HEIGHT / 2,
+				null);
 
 	}
 
@@ -423,8 +423,8 @@ public class MazeThread extends Thread {
 					* (yTouch - ufo.y + Math.round(PREVIOUS_VELOCITY_FAC
 							* ufoYVelocity));
 			// Enforce max speed;
-			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(
-					ufoXVelocity, 2) + Math.pow(ufoYVelocity, 2)));
+			int accSpeed = (int) Math.round(Math.sqrt(Math.pow(ufoXVelocity, 2)
+					+ Math.pow(ufoYVelocity, 2)));
 			if (accSpeed > MAX_SPEED + 1) {
 				ufoXVelocity = ufoXVelocity * MAX_SPEED / accSpeed;
 				ufoYVelocity = ufoYVelocity * MAX_SPEED / accSpeed;
@@ -444,11 +444,22 @@ public class MazeThread extends Thread {
 		}
 	}
 
-	// TODO update to use pixel perfect collision detection
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
 		for (Wall w : maze.getWalls()) {
-			if (w.getBounds().intersects(left, top, right, bottom))
-				return true;
+			if (w.getBounds().intersects(left, top, right, bottom)) {
+				// get the bounds of the intersection
+				Rect intersection = new Rect();
+				intersection.setIntersect(w.getBounds(), new Rect(left, top,
+						right, bottom));
+				for (int x = intersection.left; x < intersection.right; x++) {
+					for (int y = intersection.top; y < intersection.bottom; y++) {
+						if (ufoBM.getPixel(x-left, y-top) == Color.TRANSPARENT) {
+							return true;
+						}
+					}
+				}
+
+			}
 		}
 		return false;
 	}
@@ -460,8 +471,8 @@ public class MazeThread extends Thread {
 			if (vel.y > 0) {
 				if (ufo.y + 1 > mCanvasHeight - UFO_HEIGHT / 2
 						|| wallsIntersects(ufo.x - UFO_WIDTH / 2, ufo.y + 1
-								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2,
-								ufo.y + 1 + UFO_HEIGHT / 2)) {
+								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2, ufo.y
+								+ 1 + UFO_HEIGHT / 2)) {
 					// Rebound
 					ufo.y -= 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -474,8 +485,8 @@ public class MazeThread extends Thread {
 			} else {
 				if (ufo.y - 1 < UFO_HEIGHT / 2
 						|| wallsIntersects(ufo.x - UFO_WIDTH / 2, ufo.y - 1
-								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2,
-								ufo.y - 1 + UFO_HEIGHT / 2)) {
+								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2, ufo.y
+								- 1 + UFO_HEIGHT / 2)) {
 					// Rebound
 					ufo.y += 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -497,9 +508,8 @@ public class MazeThread extends Thread {
 			if (vel.x > 0) {
 				if (ufo.x + 1 > mCanvasWidth - UFO_WIDTH / 2
 						|| wallsIntersects(ufo.x + 1 - UFO_WIDTH / 2, ufo.y
-								- UFO_HEIGHT / 2,
-								ufo.x + 1 + UFO_WIDTH / 2, ufo.y
-										+ UFO_HEIGHT / 2)) {
+								- UFO_HEIGHT / 2, ufo.x + 1 + UFO_WIDTH / 2,
+								ufo.y + UFO_HEIGHT / 2)) {
 					// Rebound
 					ufo.x -= 1;
 					vel.x *= -1 * REBOUND_FAC;
@@ -512,9 +522,8 @@ public class MazeThread extends Thread {
 			} else {
 				if (ufo.x - 1 < UFO_WIDTH / 2
 						|| wallsIntersects(ufo.x - 1 - UFO_WIDTH / 2, ufo.y
-								- UFO_HEIGHT / 2,
-								ufo.x - 1 + UFO_WIDTH / 2, ufo.y
-										+ UFO_HEIGHT / 2)) {
+								- UFO_HEIGHT / 2, ufo.x - 1 + UFO_WIDTH / 2,
+								ufo.y + UFO_HEIGHT / 2)) {
 					// Rebound
 					ufo.x += 1;
 					vel.x *= -1 * REBOUND_FAC;
@@ -538,14 +547,13 @@ public class MazeThread extends Thread {
 	 *            The cell that has a wall to the left of it.
 	 */
 	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect(cell.getCoords().x
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, cell
-				.getCoords().y
-				* (CELL_HEIGHT + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, cell.getCoords().x
-				* (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH + WALL_WIDTH));
+		wall.setBounds(new Rect(cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH)
+				+ BOUNDARY_WIDTH, cell.getCoords().y
+				* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
+				cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
+						+ BOUNDARY_WIDTH, (cell.getCoords().y + 1)
+						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH
+						+ WALL_WIDTH));
 	}
 
 	/**
@@ -558,13 +566,13 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsRightCell(Wall wall, Cell cell) {
 		wall.setBounds(new Rect((cell.getCoords().x + 1)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, cell
-				.getCoords().y
-				* (CELL_HEIGHT + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH + WALL_WIDTH));
+				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+				cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH)
+						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+						* (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
+						+ BOUNDARY_WIDTH, (cell.getCoords().y + 1)
+						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH
+						+ WALL_WIDTH));
 	}
 
 	/**
@@ -578,13 +586,13 @@ public class MazeThread extends Thread {
 	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
 		// Horizontal wall
 		wall.setBounds(new Rect((cell.getCoords().x)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (cell
-				.getCoords().y)
-				* (CELL_HEIGHT + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH,
-				cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH)
-						+ WALL_WIDTH + BOUNDARY_WIDTH));
+				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
+				(cell.getCoords().y) * (CELL_HEIGHT + WALL_WIDTH)
+						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+						* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
+						+ WALL_WIDTH, cell.getCoords().y
+						* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
+						+ BOUNDARY_WIDTH));
 	}
 
 	/**
@@ -598,13 +606,13 @@ public class MazeThread extends Thread {
 	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
 		// Horizontal wall
 		wall.setBounds(new Rect((cell.getCoords().x)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH, (cell
-				.getCoords().y + 1)
-				* (CELL_HEIGHT + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH + WALL_WIDTH,
+				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
 				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH)
-						+ WALL_WIDTH + BOUNDARY_WIDTH));
+						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
+						* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
+						+ WALL_WIDTH, (cell.getCoords().y + 1)
+						* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
+						+ BOUNDARY_WIDTH));
 	}
 
 	/**
@@ -615,8 +623,8 @@ public class MazeThread extends Thread {
 	 * @param cell
 	 *            　The cell that the wall is next to.
 	 * @param corners
-	 *            　Boolean flags that determine the behavior of how corner
-	 *            cell walls are drawn.
+	 *            　Boolean flags that determine the behavior of how corner cell
+	 *            walls are drawn.
 	 * @param mazeWidth
 	 *            　How many cells are in one row of the maze.
 	 * @param mazeHeight
