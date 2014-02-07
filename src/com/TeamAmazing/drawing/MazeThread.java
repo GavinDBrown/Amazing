@@ -453,7 +453,7 @@ public class MazeThread extends Thread {
 						right, bottom));
 				for (int x = intersection.left; x < intersection.right; x++) {
 					for (int y = intersection.top; y < intersection.bottom; y++) {
-						if (ufoBM.getPixel(x-left, y-top) == Color.TRANSPARENT) {
+						if (ufoBM.getPixel(x-left, y-top) != Color.TRANSPARENT) {
 							return true;
 						}
 					}
