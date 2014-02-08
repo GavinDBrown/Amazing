@@ -2,7 +2,7 @@ package com.TeamAmazing.drawing;
 
 import java.util.Random;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -11,6 +11,9 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -65,6 +68,9 @@ public class MazeThread extends Thread {
 
 	/** Handle to the surface manager object we interact with */
 	private SurfaceHolder mSurfaceHolder;
+	private Activity mActivity;
+	private Handler uiHandler;
+	private static final int MESSAGE_MAZE_COMPLETED = 1;
 
 	/**
 	 * Used to signal the thread whether it should be running or not. Passing
@@ -84,8 +90,24 @@ public class MazeThread extends Thread {
 	private int starFade = 2;
 	private Random rand;
 
-	public MazeThread(SurfaceHolder surfaceHolder, Context context) {
+	public MazeThread(SurfaceHolder surfaceHolder, Activity activity) {
 		mSurfaceHolder = surfaceHolder;
+		mActivity = activity;
+		uiHandler = new Handler(Looper.getMainLooper()) {
+			@Override
+			public void handleMessage(Message inputMessage) {
+				// Gets the image task from the incoming Message object.
+				switch ((int) inputMessage.what) {
+				case MESSAGE_MAZE_COMPLETED:
+					// display congratulatory dialog
+					MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
+					congratulationsFragment.setCancelable(false);
+					congratulationsFragment.show(mActivity.getFragmentManager(),
+							"TAG_MAZE_COMPLETED");
+					break;
+				}
+			}
+		};
 
 		p = new Paint();
 		p.setStyle(Paint.Style.FILL);
@@ -96,8 +118,8 @@ public class MazeThread extends Thread {
 		starField = new Point[NUM_OF_STARS];
 
 		ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
-				context.getResources(), R.drawable.ufo), UFO_WIDTH, UFO_HEIGHT,
-				false);
+				mActivity.getResources(), R.drawable.ufo), UFO_WIDTH,
+				UFO_HEIGHT, false);
 		ufo = new Point();
 	}
 
@@ -300,8 +322,8 @@ public class MazeThread extends Thread {
 	}
 
 	private void mazeCompleted() {
-		// TODO congratulate the user
-
+		// Send a message to the UI thread
+		uiHandler.dispatchMessage(uiHandler.obtainMessage(MESSAGE_MAZE_COMPLETED));
 		// reset graphics
 		initGFX();
 	}
@@ -453,7 +475,7 @@ public class MazeThread extends Thread {
 						right, bottom));
 				for (int x = intersection.left; x < intersection.right; x++) {
 					for (int y = intersection.top; y < intersection.bottom; y++) {
-						if (ufoBM.getPixel(x-left, y-top) != Color.TRANSPARENT) {
+						if (ufoBM.getPixel(x - left, y - top) != Color.TRANSPARENT) {
 							return true;
 						}
 					}
