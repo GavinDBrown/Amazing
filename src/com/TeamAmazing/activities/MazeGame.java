@@ -1,33 +1,43 @@
 package com.TeamAmazing.activities;
 
+import java.lang.ref.WeakReference;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.TeamAmazing.drawing.MazeCompletedDialogFragment;
+import com.TeamAmazing.drawing.MazeCompletedDialogFragment.OnDialogClosedListener;
 import com.TeamAmazing.drawing.MazeSurfaceView;
 import com.TeamAmazing.drawing.MazeThread;
 import com.TeamAmazing.game.R;
 
-public class MazeGame extends Activity {
+public class MazeGame extends Activity implements OnDialogClosedListener {
 	/** A handle to the thread that's running the maze. */
 	private MazeThread mMazeThread;
 
 	/** A handle to the View displaying the maze. */
 	private MazeSurfaceView mMazeView;
-
+	
+	private MyActivityHandler activityHandler;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
+		
+		activityHandler = new MyActivityHandler(this);
+		
 		setContentView(R.layout.maze_game);
 		// get handles to the View and start the Thread.
 		mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
-		mMazeThread = new MazeThread(mMazeView.getHolder(), this);
+		mMazeThread = new MazeThread(mMazeView.getHolder(), this, activityHandler);
 		mMazeThread.setMazeType(getIntent().getIntExtra(StartMenu.MAZE_TYPE,
 				StartMenu.PERFECT_MAZE));
 		mMazeView.setThread(mMazeThread);
@@ -108,5 +118,43 @@ public class MazeGame extends Activity {
 			return super.onOptionsItemSelected(item);
 		}
 	}
+
+	
+	@Override
+	public void onDialogClosed() {
+		mMazeThread.onDialogClosed();
+	}
+	
+	static class MyActivityHandler extends Handler {
+	    private final WeakReference<MazeGame> mActivity; 
+
+	    MyActivityHandler(MazeGame act) {
+	        mActivity = new WeakReference<MazeGame>(act);
+	    }
+	    @Override
+	    public void handleMessage(Message msg)
+	    {
+	         MazeGame act = mActivity.get();
+	         if (act != null) {
+	              act.handleMessage(msg);
+	         }
+	    }
+	}
+
+	public void handleMessage(Message msg) {
+		switch ((int) msg.what) {
+		case MazeThread.MESSAGE_MAZE_COMPLETED:
+			// display congratulatory dialog
+			MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
+			Bundle args = new Bundle();
+			args.putInt("time", msg.arg1);
+			congratulationsFragment.setArguments(args);
+			congratulationsFragment.show(
+					getFragmentManager(),
+					"TAG_MAZE_COMPLETED");
+			break;
+		}
+	}
+
 
 }

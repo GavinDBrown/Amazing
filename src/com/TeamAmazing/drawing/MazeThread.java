@@ -2,7 +2,7 @@ package com.TeamAmazing.drawing;
 
 import java.util.Random;
 
-import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -12,8 +12,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -39,7 +37,7 @@ public class MazeThread extends Thread {
 
 	// ufo variables
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
-	private static final float TOUCH_FACTOR = .05f;
+	private static final float TOUCH_FACTOR = .075f;
 	private static final float FRICTION = .05f;
 	private static final String UFO_X_VELOCITY_ID = "ufoxvelocity";
 	private float ufoXVelocity = 0;
@@ -66,20 +64,22 @@ public class MazeThread extends Thread {
 	private volatile int mCanvasHeight;
 	private volatile int mCanvasWidth;
 
-	/** Handle to the surface manager object we interact with */
+	// Handles to important objects
 	private SurfaceHolder mSurfaceHolder;
-	private Activity mActivity;
 	private Handler uiHandler;
-	private static final int MESSAGE_MAZE_COMPLETED = 1;
+
+	public static final int MESSAGE_MAZE_COMPLETED = 1;
 
 	/**
 	 * Used to signal the thread whether it should be running or not. Passing
 	 * true allows the thread to run; passing false will shut it down if it's
 	 * already running.
 	 */
-	private volatile boolean stopped = true;
-
-	private volatile boolean paused = true;
+	private volatile int mState = STATE_STOPPED;
+	private static final int STATE_STOPPED = 0;
+	private static final int STATE_RUNNING = 1;
+	private static final int STATE_PAUSED = 2;
+	private static final int STATE_WAIT_FOR_DIALOG = 3;
 
 	private Paint p;
 
@@ -90,24 +90,14 @@ public class MazeThread extends Thread {
 	private int starFade = 2;
 	private Random rand;
 
-	public MazeThread(SurfaceHolder surfaceHolder, Activity activity) {
+	// Timing variables
+	private int timeElapsed = 0;
+	private long timeStart;
+
+	public MazeThread(SurfaceHolder surfaceHolder, Context context,
+			Handler uiHandler) {
 		mSurfaceHolder = surfaceHolder;
-		mActivity = activity;
-		uiHandler = new Handler(Looper.getMainLooper()) {
-			@Override
-			public void handleMessage(Message inputMessage) {
-				// Gets the image task from the incoming Message object.
-				switch ((int) inputMessage.what) {
-				case MESSAGE_MAZE_COMPLETED:
-					// display congratulatory dialog
-					MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
-					congratulationsFragment.setCancelable(false);
-					congratulationsFragment.show(mActivity.getFragmentManager(),
-							"TAG_MAZE_COMPLETED");
-					break;
-				}
-			}
-		};
+		this.uiHandler = uiHandler;
 
 		p = new Paint();
 		p.setStyle(Paint.Style.FILL);
@@ -118,8 +108,8 @@ public class MazeThread extends Thread {
 		starField = new Point[NUM_OF_STARS];
 
 		ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
-				mActivity.getResources(), R.drawable.ufo), UFO_WIDTH,
-				UFO_HEIGHT, false);
+				context.getResources(), R.drawable.ufo), UFO_WIDTH, UFO_HEIGHT,
+				false);
 		ufo = new Point();
 	}
 
@@ -130,14 +120,14 @@ public class MazeThread extends Thread {
 	@Override
 	public void start() {
 		synchronized (mSurfaceHolder) {
-			stopped = false;
+			mState = STATE_RUNNING;
 		}
 		super.start();
 	}
 
 	public void halt() {
 		synchronized (mSurfaceHolder) {
-			stopped = true;
+			mState = STATE_STOPPED;
 			mSurfaceHolder.notify();
 		}
 	}
@@ -147,7 +137,8 @@ public class MazeThread extends Thread {
 	 */
 	public void pause() {
 		synchronized (mSurfaceHolder) {
-			paused = true;
+			if (mState == STATE_RUNNING)
+				mState = STATE_PAUSED;
 		}
 	}
 
@@ -156,7 +147,8 @@ public class MazeThread extends Thread {
 	 */
 	public void unpause() {
 		synchronized (mSurfaceHolder) {
-			paused = false;
+			if (mState == STATE_PAUSED)
+				mState = STATE_RUNNING;
 			mSurfaceHolder.notify();
 		}
 	}
@@ -201,8 +193,8 @@ public class MazeThread extends Thread {
 
 	@Override
 	public void run() {
-		AnimationLoop: while (!stopped) {
-			while (paused && !stopped) {
+		AnimationLoop: while (mState != STATE_STOPPED) {
+			while (mState == STATE_PAUSED || mState == STATE_WAIT_FOR_DIALOG) {
 				try {
 					synchronized (mSurfaceHolder) {
 						mSurfaceHolder.wait();
@@ -213,8 +205,10 @@ public class MazeThread extends Thread {
 			}
 
 			// Check if thread was stopped while it was paused.
-			if (stopped)
+			if (mState == STATE_STOPPED)
 				break AnimationLoop;
+
+			timeStart = System.currentTimeMillis();
 
 			Canvas c = null;
 			try {
@@ -248,6 +242,10 @@ public class MazeThread extends Thread {
 					mSurfaceHolder.unlockCanvasAndPost(c);
 				}
 			}
+
+			timeElapsed = timeElapsed
+					+ (int) (System.currentTimeMillis() - timeStart);
+			
 		}
 	}
 
@@ -323,9 +321,20 @@ public class MazeThread extends Thread {
 
 	private void mazeCompleted() {
 		// Send a message to the UI thread
-		uiHandler.dispatchMessage(uiHandler.obtainMessage(MESSAGE_MAZE_COMPLETED));
-		// reset graphics
+		uiHandler.dispatchMessage(uiHandler.obtainMessage(
+				MESSAGE_MAZE_COMPLETED, timeElapsed, 0, this));
+		synchronized (mSurfaceHolder){
+			mState = STATE_WAIT_FOR_DIALOG;
+		}
+	}
+
+	/** Called from UI thread */
+	public void onDialogClosed() {
 		initGFX();
+		synchronized (mSurfaceHolder) {
+			mState = STATE_RUNNING;
+			mSurfaceHolder.notify();
+		}
 	}
 
 	/**
@@ -390,6 +399,10 @@ public class MazeThread extends Thread {
 			yFriction = 0;
 			ufo.x = startRect.centerX();
 			ufo.y = startRect.centerY();
+
+			// start timing
+			timeElapsed = 0;
+			timeStart = System.currentTimeMillis();
 
 		}
 	}
@@ -467,22 +480,23 @@ public class MazeThread extends Thread {
 	}
 
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
-		for (Wall w : maze.getWalls()) {
-			if (w.getBounds().intersects(left, top, right, bottom)) {
-				// get the bounds of the intersection
-				Rect intersection = new Rect();
-				intersection.setIntersect(w.getBounds(), new Rect(left, top,
-						right, bottom));
-				for (int x = intersection.left; x < intersection.right; x++) {
-					for (int y = intersection.top; y < intersection.bottom; y++) {
-						if (ufoBM.getPixel(x - left, y - top) != Color.TRANSPARENT) {
-							return true;
-						}
-					}
-				}
-
-			}
-		}
+		// TODO uncomment below
+		// for (Wall w : maze.getWalls()) {
+		// if (w.getBounds().intersects(left, top, right, bottom)) {
+		// // get the bounds of the intersection
+		// Rect intersection = new Rect();
+		// intersection.setIntersect(w.getBounds(), new Rect(left, top,
+		// right, bottom));
+		// for (int x = intersection.left; x < intersection.right; x++) {
+		// for (int y = intersection.top; y < intersection.bottom; y++) {
+		// if (ufoBM.getPixel(x - left, y - top) != Color.TRANSPARENT) {
+		// return true;
+		// }
+		// }
+		// }
+		//
+		// }
+		// }
 		return false;
 	}
 
