@@ -1,4 +1,10 @@
  <menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/maze_timer"
+        android:actionViewClass="android.widget.TextView"
+        android:showAsAction="ifRoom"
+        android:title="@string/maze_timer"/>
+    
     <item android:id="@+id/reset_maze"
           android:icon="@drawable/ic_action_replay"
           android:title="@string/reset_maze"

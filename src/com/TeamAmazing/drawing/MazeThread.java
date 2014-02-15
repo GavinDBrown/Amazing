@@ -69,6 +69,7 @@ public class MazeThread extends Thread {
 	private Handler uiHandler;
 
 	public static final int MESSAGE_MAZE_COMPLETED = 1;
+	public static final int MESSAGE_UPDATE_TIMER = 2;
 
 	/**
 	 * Used to signal the thread whether it should be running or not. Passing
@@ -245,7 +246,9 @@ public class MazeThread extends Thread {
 
 			timeElapsed = timeElapsed
 					+ (int) (System.currentTimeMillis() - timeStart);
-			
+			uiHandler.dispatchMessage(uiHandler.obtainMessage(
+					MESSAGE_UPDATE_TIMER, timeElapsed, 0, null));
+
 		}
 	}
 
@@ -322,8 +325,8 @@ public class MazeThread extends Thread {
 	private void mazeCompleted() {
 		// Send a message to the UI thread
 		uiHandler.dispatchMessage(uiHandler.obtainMessage(
-				MESSAGE_MAZE_COMPLETED, timeElapsed, 0, this));
-		synchronized (mSurfaceHolder){
+				MESSAGE_MAZE_COMPLETED, timeElapsed, 0, null));
+		synchronized (mSurfaceHolder) {
 			mState = STATE_WAIT_FOR_DIALOG;
 		}
 	}

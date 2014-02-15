@@ -11,6 +11,7 @@ import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.TeamAmazing.drawing.MazeCompletedDialogFragment;
 import com.TeamAmazing.drawing.MazeCompletedDialogFragment.OnDialogClosedListener;
@@ -24,20 +25,25 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 
 	/** A handle to the View displaying the maze. */
 	private MazeSurfaceView mMazeView;
-	
+
 	private MyActivityHandler activityHandler;
+
+	private Menu mOptionsMenu;
+
+	private String timerText = "";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
-		
+
 		activityHandler = new MyActivityHandler(this);
-		
+
 		setContentView(R.layout.maze_game);
 		// get handles to the View and start the Thread.
 		mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
-		mMazeThread = new MazeThread(mMazeView.getHolder(), this, activityHandler);
+		mMazeThread = new MazeThread(mMazeView.getHolder(), this,
+				activityHandler);
 		mMazeThread.setMazeType(getIntent().getIntExtra(StartMenu.MAZE_TYPE,
 				StartMenu.PERFECT_MAZE));
 		mMazeView.setThread(mMazeThread);
@@ -60,12 +66,12 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 	public void onStop() {
 		super.onStop();
 	}
-	
+
 	@Override
-	protected void onDestroy(){
+	protected void onDestroy() {
 		super.onDestroy();
 		if (mMazeThread != null) {
-			mMazeThread.halt(); 
+			mMazeThread.halt();
 			boolean retry = true;
 			while (retry) {
 				try {
@@ -80,11 +86,11 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 	}
 
 	@Override
-	public void onRestoreInstanceState(Bundle inState){
+	public void onRestoreInstanceState(Bundle inState) {
 		super.onRestoreInstanceState(inState);
 		mMazeThread.restoreState(inState);
 	}
-	
+
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
@@ -93,10 +99,19 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		mOptionsMenu = menu;
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.maze_game_activity_actions, menu);
 		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onPrepareOptionsMenu(final Menu menu) {
+		final MenuItem menuItem = menu.findItem(R.id.maze_timer);
+		final TextView textView = (TextView) menuItem.getActionView();
+		textView.setText(timerText);
+		return super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
@@ -119,28 +134,28 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		}
 	}
 
-	
 	@Override
 	public void onDialogClosed() {
 		mMazeThread.onDialogClosed();
 	}
-	
-	static class MyActivityHandler extends Handler {
-	    private final WeakReference<MazeGame> mActivity; 
 
-	    MyActivityHandler(MazeGame act) {
-	        mActivity = new WeakReference<MazeGame>(act);
-	    }
-	    @Override
-	    public void handleMessage(Message msg)
-	    {
-	         MazeGame act = mActivity.get();
-	         if (act != null) {
-	              act.handleMessage(msg);
-	         }
-	    }
+	static class MyActivityHandler extends Handler {
+		private final WeakReference<MazeGame> mActivity;
+
+		MyActivityHandler(MazeGame act) {
+			mActivity = new WeakReference<MazeGame>(act);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			MazeGame act = mActivity.get();
+			if (act != null) {
+				act.handleMessage(msg);
+			}
+		}
 	}
 
+	// TODO somehow this is not running on UI thread... why not?
 	public void handleMessage(Message msg) {
 		switch ((int) msg.what) {
 		case MazeThread.MESSAGE_MAZE_COMPLETED:
@@ -149,12 +164,43 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 			Bundle args = new Bundle();
 			args.putInt("time", msg.arg1);
 			congratulationsFragment.setArguments(args);
-			congratulationsFragment.show(
-					getFragmentManager(),
+			congratulationsFragment.show(getFragmentManager(),
 					"TAG_MAZE_COMPLETED");
 			break;
+		case MazeThread.MESSAGE_UPDATE_TIMER:
+			// update the timer with the supplied string
+			timerText = millisToString(msg.arg1);
+			if (mOptionsMenu != null) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+
+						onPrepareOptionsMenu(mOptionsMenu);
+
+					}
+				});
+
+			}
 		}
 	}
 
+	private String millisToString(int time) {
+		int millis = time % 1000;
+		int second = (time / 1000) % 60;
+		int minute = (time / (1000 * 60)) % 60;
+		int hour = (time / (1000 * 60 * 60)) % 24;
+		String string;
+
+		if (hour > 0) {
+			string = String.format("%d:%02d:%02d.%03d", hour, minute, second,
+					millis);
+		} else if (minute > 0) {
+			string = String.format("%d:%02d.%03d", minute, second, millis);
+		} else {
+			string = String.format("%d.%03d", second, millis);
+		}
+
+		return string;
+	}
 
 }
