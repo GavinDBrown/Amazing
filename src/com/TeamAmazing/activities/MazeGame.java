@@ -185,19 +185,19 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 	}
 
 	private String millisToString(int time) {
-		int millis = time % 1000;
+		int millis = (time % 1000) / 100;
 		int second = (time / 1000) % 60;
 		int minute = (time / (1000 * 60)) % 60;
 		int hour = (time / (1000 * 60 * 60)) % 24;
 		String string;
 
 		if (hour > 0) {
-			string = String.format("%d:%02d:%02d.%03d", hour, minute, second,
+			string = String.format("%d:%02d:%02d.%d", hour, minute, second,
 					millis);
 		} else if (minute > 0) {
-			string = String.format("%d:%02d.%03d", minute, second, millis);
+			string = String.format("%d:%02d.%d", minute, second, millis);
 		} else {
-			string = String.format("%d.%03d", second, millis);
+			string = String.format("%d.%d", second, millis);
 		}
 
 		return string;

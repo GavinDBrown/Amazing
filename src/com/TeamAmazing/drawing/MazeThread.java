@@ -244,10 +244,12 @@ public class MazeThread extends Thread {
 				}
 			}
 
-			timeElapsed = timeElapsed
-					+ (int) (System.currentTimeMillis() - timeStart);
-			uiHandler.dispatchMessage(uiHandler.obtainMessage(
-					MESSAGE_UPDATE_TIMER, timeElapsed, 0, null));
+			if (mState != STATE_WAIT_FOR_DIALOG) {
+				timeElapsed = timeElapsed
+						+ (int) (System.currentTimeMillis() - timeStart);
+				uiHandler.dispatchMessage(uiHandler.obtainMessage(
+						MESSAGE_UPDATE_TIMER, timeElapsed, 0, null));
+			}
 
 		}
 	}
@@ -483,23 +485,22 @@ public class MazeThread extends Thread {
 	}
 
 	private boolean wallsIntersects(int left, int top, int right, int bottom) {
-		// TODO uncomment below
-		// for (Wall w : maze.getWalls()) {
-		// if (w.getBounds().intersects(left, top, right, bottom)) {
-		// // get the bounds of the intersection
-		// Rect intersection = new Rect();
-		// intersection.setIntersect(w.getBounds(), new Rect(left, top,
-		// right, bottom));
-		// for (int x = intersection.left; x < intersection.right; x++) {
-		// for (int y = intersection.top; y < intersection.bottom; y++) {
-		// if (ufoBM.getPixel(x - left, y - top) != Color.TRANSPARENT) {
-		// return true;
-		// }
-		// }
-		// }
-		//
-		// }
-		// }
+		for (Wall w : maze.getWalls()) {
+			if (w.getBounds().intersects(left, top, right, bottom)) {
+				// get the bounds of the intersection
+				Rect intersection = new Rect();
+				intersection.setIntersect(w.getBounds(), new Rect(left, top,
+						right, bottom));
+				for (int x = intersection.left; x < intersection.right; x++) {
+					for (int y = intersection.top; y < intersection.bottom; y++) {
+						if (ufoBM.getPixel(x - left, y - top) != Color.TRANSPARENT) {
+							return true;
+						}
+					}
+				}
+
+			}
+		}
 		return false;
 	}
 

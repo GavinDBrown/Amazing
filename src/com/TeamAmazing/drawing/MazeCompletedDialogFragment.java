@@ -52,7 +52,7 @@ public class MazeCompletedDialogFragment extends DialogFragment {
 
 	@SuppressLint("DefaultLocale")
 	private String mMessageFormater(int time) {
-		int millis = time % 1000;
+		int millis = (time % 1000)/100; 
 		int second = (time / 1000) % 60;
 		int minute = (time / (1000 * 60)) % 60;
 		int hour = (time / (1000 * 60 * 60)) % 24;
@@ -70,7 +70,7 @@ public class MazeCompletedDialogFragment extends DialogFragment {
 							second, millis);
 		} else {
 			message = String
-					.format("Congratulations, you completed the maze in %d.%02d seconds!",
+					.format("Congratulations, you completed the maze in %d.%d seconds!",
 							second, millis);
 		}
 
