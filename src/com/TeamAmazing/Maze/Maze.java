@@ -29,8 +29,8 @@ import android.os.Parcelable;
 import com.TeamAmazing.activities.StartMenu;
 
 public class Maze implements Parcelable {
-	private int width;
-	private int height;
+	private int width; // The number of cells per row
+	private int height; // The number of cells per column
 	private Cell[] cells; // An array of the cells in row major order
 	private List<Wall> walls;
 	private Random rand = new Random();

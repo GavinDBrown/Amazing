@@ -14,7 +14,6 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 package com.TeamAmazing.activities;
 
 import java.lang.ref.WeakReference;
@@ -172,7 +171,6 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		}
 	}
 
-	// TODO somehow this is not running on UI thread... why not?
 	public void handleMessage(Message msg) {
 		switch ((int) msg.what) {
 		case MazeThread.MESSAGE_MAZE_COMPLETED:
@@ -188,6 +186,8 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 			// update the timer with the supplied string
 			timerText = millisToString(msg.arg1);
 			if (mOptionsMenu != null) {
+				// TODO somehow was not running on the UI thread without the
+				// runOnUiThread method, why?
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {

@@ -42,13 +42,19 @@ public class MazeThread extends Thread {
 	private volatile float yTouch;
 	private volatile boolean isAccelerating;
 
+	// The size of the maze
+	private static final int CELLS_PER_ROW = 12;
+	private static final int CELLS_PER_COLUMN = 15;
+
 	// Pixel sizes of objects.
-	public static final int CELL_WIDTH = 60;
-	public static final int CELL_HEIGHT = 60;
-	public static final int WALL_WIDTH = 5;
-	public static final int BOUNDARY_WIDTH = 20;
-	private static final int UFO_WIDTH = 35;
-	private static final int UFO_HEIGHT = 18;
+	public int cellWidth; // = 60;
+	public int cellHeight; // = 60;
+	public int wallWidth; // = 5;
+	public int boundaryWidth; // = 20;
+	public int boundaryHeight; // = 20;
+	private int ufoWidth; // = 35;
+	private int ufoHeight; // = 18;
+	private static final double UFO_ASPECT_RATIO = 35.0 / 18.0;
 
 	// ufo variables
 	private static final float PREVIOUS_VELOCITY_FAC = .49f;
@@ -82,6 +88,7 @@ public class MazeThread extends Thread {
 	// Handles to important objects
 	private SurfaceHolder mSurfaceHolder;
 	private Handler uiHandler;
+	private Context mContext;
 
 	public static final int MESSAGE_MAZE_COMPLETED = 1;
 	public static final int MESSAGE_UPDATE_TIMER = 2;
@@ -114,6 +121,7 @@ public class MazeThread extends Thread {
 			Handler uiHandler) {
 		mSurfaceHolder = surfaceHolder;
 		this.uiHandler = uiHandler;
+		mContext = context;
 
 		p = new Paint();
 		p.setStyle(Paint.Style.FILL);
@@ -123,9 +131,6 @@ public class MazeThread extends Thread {
 		rand = new Random();
 		starField = new Point[NUM_OF_STARS];
 
-		ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
-				context.getResources(), R.drawable.ufo), UFO_WIDTH, UFO_HEIGHT,
-				false);
 		ufo = new Point();
 	}
 
@@ -296,15 +301,15 @@ public class MazeThread extends Thread {
 		canvas.drawRect(endRect, p);
 
 		// Draw the ufo.
-		canvas.drawBitmap(ufoBM, ufo.x - UFO_WIDTH / 2, ufo.y - UFO_HEIGHT / 2,
+		canvas.drawBitmap(ufoBM, ufo.x - ufoWidth / 2, ufo.y - ufoHeight / 2,
 				null);
 
 	}
 
 	private void initializeStars() {
 		for (int i = 0; i < NUM_OF_STARS; i++) {
-			int x = rand.nextInt(mCanvasWidth) + CELL_WIDTH / 2;
-			int y = rand.nextInt(mCanvasHeight) + CELL_HEIGHT / 2;
+			int x = rand.nextInt(mCanvasWidth) + cellWidth / 2;
+			int y = rand.nextInt(mCanvasHeight) + cellHeight / 2;
 			starField[i] = (new Point(x, y));
 		}
 	}
@@ -358,19 +363,37 @@ public class MazeThread extends Thread {
 	}
 
 	/**
-	 * Creates a new maze, new starfield, and resets the ufo's velocity and
-	 * position. May be called by the UI thread and by the MazeThread.
+	 * Calculates the sizes of the maze and ufo. Creates a new maze, new
+	 * starfield, and resets the ufo's velocity and position. May be called by
+	 * the UI thread and by the MazeThread.
 	 */
 	public void initGFX() {
 		synchronized (mSurfaceHolder) {
+			// Calculate sizes
+
+			// Note there are CELLS_PER_* +1 walls in a row/column.
+			// wallWidth is calculated to be approximately 1/12th of cellWidth
+			cellWidth = (int) (mCanvasWidth / (CELLS_PER_ROW + (CELLS_PER_ROW + 1) / 12.0));
+			cellHeight = (int) (mCanvasHeight / (CELLS_PER_COLUMN + (CELLS_PER_COLUMN + 1) / 12.0));
+			wallWidth = cellWidth / 12;
+			boundaryWidth = (mCanvasWidth - cellWidth * CELLS_PER_ROW - wallWidth
+					* (CELLS_PER_ROW + 1)) / 2;
+			boundaryHeight = (mCanvasHeight - cellHeight * CELLS_PER_COLUMN - wallWidth
+					* (CELLS_PER_COLUMN + 1)) / 2;
+
+			// Calculate ufo size
+			ufoWidth = cellWidth / 2;
+			ufoHeight = (int) Math.round(ufoWidth / UFO_ASPECT_RATIO);
+			if (ufoHeight > cellHeight / 2) {
+				ufoHeight = cellHeight / 2;
+				ufoWidth = (int) Math.round(ufoHeight * UFO_ASPECT_RATIO);
+			}
+
 			// Initialize stars
 			initializeStars();
 
 			// Initialize the maze
-			maze = new Maze((mCanvasWidth - 2 * BOUNDARY_WIDTH)
-					/ (CELL_WIDTH + WALL_WIDTH),
-					(mCanvasHeight - 2 * BOUNDARY_WIDTH)
-							/ (CELL_HEIGHT + WALL_WIDTH), mazeType);
+			maze = new Maze(CELLS_PER_ROW, CELLS_PER_COLUMN, mazeType);
 			endRect = calculateCellRect(maze.getCell(Cell.END_CELL));
 			startRect = calculateCellRect(maze.getCell(Cell.START_CELL));
 
@@ -413,6 +436,9 @@ public class MazeThread extends Thread {
 			}
 
 			// Initialize the ufo
+			ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
+					mContext.getResources(), R.drawable.ufo), ufoWidth,
+					ufoHeight, false);
 			ufoXVelocity = 0;
 			ufoYVelocity = 0;
 			xFriction = 0;
@@ -524,10 +550,10 @@ public class MazeThread extends Thread {
 			// Take a steps along the yVel vector, making decisions as we
 			// go.
 			if (vel.y > 0) {
-				if (ufo.y + 1 > mCanvasHeight - UFO_HEIGHT / 2
-						|| wallsIntersects(ufo.x - UFO_WIDTH / 2, ufo.y + 1
-								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2, ufo.y
-								+ 1 + UFO_HEIGHT / 2)) {
+				if (ufo.y + 1 > mCanvasHeight - ufoHeight / 2
+						|| wallsIntersects(ufo.x - ufoWidth / 2, ufo.y + 1
+								- ufoHeight / 2, ufo.x + ufoWidth / 2, ufo.y
+								+ 1 + ufoHeight / 2)) {
 					// Rebound
 					ufo.y -= 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -538,10 +564,10 @@ public class MazeThread extends Thread {
 				}
 				vel.y--;
 			} else {
-				if (ufo.y - 1 < UFO_HEIGHT / 2
-						|| wallsIntersects(ufo.x - UFO_WIDTH / 2, ufo.y - 1
-								- UFO_HEIGHT / 2, ufo.x + UFO_WIDTH / 2, ufo.y
-								- 1 + UFO_HEIGHT / 2)) {
+				if (ufo.y - 1 < ufoHeight / 2
+						|| wallsIntersects(ufo.x - ufoWidth / 2, ufo.y - 1
+								- ufoHeight / 2, ufo.x + ufoWidth / 2, ufo.y
+								- 1 + ufoHeight / 2)) {
 					// Rebound
 					ufo.y += 1;
 					vel.y *= -1 * REBOUND_FAC;
@@ -561,10 +587,10 @@ public class MazeThread extends Thread {
 			// Take a steps along the xVel vector, making decisions as we
 			// go.
 			if (vel.x > 0) {
-				if (ufo.x + 1 > mCanvasWidth - UFO_WIDTH / 2
-						|| wallsIntersects(ufo.x + 1 - UFO_WIDTH / 2, ufo.y
-								- UFO_HEIGHT / 2, ufo.x + 1 + UFO_WIDTH / 2,
-								ufo.y + UFO_HEIGHT / 2)) {
+				if (ufo.x + 1 > mCanvasWidth - ufoWidth / 2
+						|| wallsIntersects(ufo.x + 1 - ufoWidth / 2, ufo.y
+								- ufoHeight / 2, ufo.x + 1 + ufoWidth / 2,
+								ufo.y + ufoHeight / 2)) {
 					// Rebound
 					ufo.x -= 1;
 					vel.x *= -1 * REBOUND_FAC;
@@ -575,10 +601,10 @@ public class MazeThread extends Thread {
 				}
 				vel.x--;
 			} else {
-				if (ufo.x - 1 < UFO_WIDTH / 2
-						|| wallsIntersects(ufo.x - 1 - UFO_WIDTH / 2, ufo.y
-								- UFO_HEIGHT / 2, ufo.x - 1 + UFO_WIDTH / 2,
-								ufo.y + UFO_HEIGHT / 2)) {
+				if (ufo.x - 1 < ufoWidth / 2
+						|| wallsIntersects(ufo.x - 1 - ufoWidth / 2, ufo.y
+								- ufoHeight / 2, ufo.x - 1 + ufoWidth / 2,
+								ufo.y + ufoHeight / 2)) {
 					// Rebound
 					ufo.x += 1;
 					vel.x *= -1 * REBOUND_FAC;
@@ -602,13 +628,11 @@ public class MazeThread extends Thread {
 	 *            The cell that has a wall to the left of it.
 	 */
 	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect(cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH)
-				+ BOUNDARY_WIDTH, cell.getCoords().y
-				* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH,
-				cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
-						+ BOUNDARY_WIDTH, (cell.getCoords().y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH
-						+ WALL_WIDTH));
+		wall.setBounds(new Rect(cell.getCoords().x * (cellWidth + wallWidth)
+				+ boundaryWidth, cell.getCoords().y * (cellHeight + wallWidth)
+				+ boundaryHeight, cell.getCoords().x * (cellWidth + wallWidth)
+				+ wallWidth + boundaryWidth, (cell.getCoords().y + 1)
+				* (cellHeight + wallWidth) + boundaryHeight + wallWidth));
 	}
 
 	/**
@@ -621,13 +645,11 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsRightCell(Wall wall, Cell cell) {
 		wall.setBounds(new Rect((cell.getCoords().x + 1)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				cell.getCoords().y * (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-						* (CELL_WIDTH + WALL_WIDTH) + WALL_WIDTH
-						+ BOUNDARY_WIDTH, (cell.getCoords().y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH
-						+ WALL_WIDTH));
+				* (cellWidth + wallWidth) + boundaryWidth, cell.getCoords().y
+				* (cellHeight + wallWidth) + boundaryHeight,
+				(cell.getCoords().x + 1) * (cellWidth + wallWidth) + wallWidth
+						+ boundaryWidth, (cell.getCoords().y + 1)
+						* (cellHeight + wallWidth) + boundaryHeight + wallWidth));
 	}
 
 	/**
@@ -640,14 +662,12 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
 		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				(cell.getCoords().y) * (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-						* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
-						+ WALL_WIDTH, cell.getCoords().y
-						* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
-						+ BOUNDARY_WIDTH));
+		wall.setBounds(new Rect((cell.getCoords().x) * (cellWidth + wallWidth)
+				+ boundaryWidth, (cell.getCoords().y)
+				* (cellHeight + wallWidth) + boundaryHeight,
+				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth + wallWidth, cell.getCoords().y
+						* (cellHeight + wallWidth) + wallWidth + boundaryHeight));
 	}
 
 	/**
@@ -660,14 +680,12 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
 		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x)
-				* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH,
-				(cell.getCoords().y + 1) * (CELL_HEIGHT + WALL_WIDTH)
-						+ BOUNDARY_WIDTH, (cell.getCoords().x + 1)
-						* (CELL_WIDTH + WALL_WIDTH) + BOUNDARY_WIDTH
-						+ WALL_WIDTH, (cell.getCoords().y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH
-						+ BOUNDARY_WIDTH));
+		wall.setBounds(new Rect((cell.getCoords().x) * (cellWidth + wallWidth)
+				+ boundaryWidth, (cell.getCoords().y + 1)
+				* (cellHeight + wallWidth) + boundaryHeight,
+				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth + wallWidth, (cell.getCoords().y + 1)
+						* (cellHeight + wallWidth) + wallWidth + boundaryHeight));
 	}
 
 	/**
@@ -745,11 +763,11 @@ public class MazeThread extends Thread {
 	}
 
 	private Rect calculateCellRect(Cell cell) {
-		return new Rect(cell.getCoords().x * (CELL_WIDTH + WALL_WIDTH)
-				+ WALL_WIDTH + BOUNDARY_WIDTH, cell.getCoords().y
-				* (CELL_HEIGHT + WALL_WIDTH) + WALL_WIDTH + BOUNDARY_WIDTH,
-				(cell.getCoords().x + 1) * (CELL_WIDTH + WALL_WIDTH)
-						+ BOUNDARY_WIDTH, (cell.getCoords().y + 1)
-						* (CELL_HEIGHT + WALL_WIDTH) + BOUNDARY_WIDTH);
+		return new Rect(cell.getCoords().x * (cellWidth + wallWidth)
+				+ wallWidth + boundaryWidth, cell.getCoords().y
+				* (cellHeight + wallWidth) + wallWidth + boundaryHeight,
+				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth, (cell.getCoords().y + 1)
+						* (cellHeight + wallWidth) + boundaryHeight);
 	}
 }
