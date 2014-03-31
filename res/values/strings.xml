@@ -4,6 +4,7 @@
     <string name="reset_maze">Reset</string>
     <string name="maze_timer"></string>
     <string name="start_kruskals_maze">Easy</string>
+    <string name="start_medium_maze">Medium</string>
     <string name="start_recursive_backtracker_maze">Hard</string>
     <string name="pref_start_background">Display the start menu background</string>
     <string name="pref_start_background_summ">If checked then a psudo maze created by a modification of Conway\'s Game of Life is displayed behind the start menu.</string>

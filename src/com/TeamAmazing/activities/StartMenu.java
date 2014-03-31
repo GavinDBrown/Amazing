@@ -33,6 +33,7 @@ public class StartMenu extends Activity {
 
 	public static final int PERFECT_MAZE = 0;
 	public static final int DFS_MAZE = 1;
+	public static final int MEDIUM_MAZE = 2;
 	public static final String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
 
 	/** A handle to the thread that's running the Game Of Life animation. */
@@ -201,4 +202,10 @@ public class StartMenu extends Activity {
 		startActivity(intent);
 	}
 
+	public void startMediumMaze(View v){
+		Intent intent = new Intent(this, MazeGame.class);
+		intent.putExtra(MAZE_TYPE, MEDIUM_MAZE);
+		startActivity(intent);
+	}
+	
 }

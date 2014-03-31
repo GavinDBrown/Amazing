@@ -30,3 +30,6 @@ proguard/
 .settings/org.eclipse.*
 .classpath
 
+# Keystore
+*.keystore
+
