@@ -15,6 +15,8 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.TeamAmazing.drawing;
 
+import com.TeamAmazing.game.R;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -28,7 +30,10 @@ public class MazeCompletedDialogFragment extends DialogFragment {
 
 	// Interface the container activity must implement
 	public interface OnDialogClosedListener {
-		public void onDialogClosed();
+		// public void onDialogClosed();
+		public void onReset();
+
+		public void onMenu();
 	}
 
 	@Override
@@ -45,11 +50,11 @@ public class MazeCompletedDialogFragment extends DialogFragment {
 		}
 	}
 
-	@Override
-	public void onDismiss(DialogInterface dialog) {
-		super.onDismiss(dialog);
-		mCallback.onDialogClosed();
-	}
+	// @Override
+	// public void onDismiss(DialogInterface dialog) {
+	// super.onDismiss(dialog);
+	// mCallback.onDialogClosed();
+	// }
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -60,14 +65,29 @@ public class MazeCompletedDialogFragment extends DialogFragment {
 		// Use the Builder class for convenient dialog construction
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(),
 				AlertDialog.THEME_HOLO_DARK);
+
 		builder.setMessage(message);
+
+		builder.setPositiveButton(R.string.reset,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						// User clicked reset button
+						mCallback.onReset();
+					}
+				});
+		builder.setNegativeButton(R.string.menu,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						mCallback.onMenu();
+					}
+				});
 		// Create the AlertDialog object and return it
 		return builder.create();
 	}
 
 	@SuppressLint("DefaultLocale")
 	private String mMessageFormater(int time) {
-		int millis = (time % 1000)/100; 
+		int millis = (time % 1000) / 100;
 		int second = (time / 1000) % 60;
 		int minute = (time / (1000 * 60)) % 60;
 		int hour = (time / (1000 * 60 * 60)) % 24;

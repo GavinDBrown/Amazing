@@ -354,7 +354,7 @@ public class MazeThread extends Thread {
 	}
 
 	/** Called from UI thread */
-	public void onDialogClosed() {
+	public void resetMaze() {
 		initGFX();
 		synchronized (mSurfaceHolder) {
 			mState = STATE_RUNNING;

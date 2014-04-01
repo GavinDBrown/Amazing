@@ -150,9 +150,23 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		}
 	}
 
+//	@Override
+//	public void onDialogClosed() {
+//		//mMazeThread.resetMaze();
+//	}
+	
 	@Override
-	public void onDialogClosed() {
-		mMazeThread.onDialogClosed();
+	public void onReset() {
+		mMazeThread.resetMaze();
+	}
+
+	@Override
+	public void onMenu() {
+		// Move up the backstack to the menu
+		Intent intent = NavUtils.getParentActivityIntent(this);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		NavUtils.navigateUpTo(this, intent);
 	}
 
 	static class MyActivityHandler extends Handler {
@@ -179,6 +193,7 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 			Bundle args = new Bundle();
 			args.putInt("time", msg.arg1);
 			congratulationsFragment.setArguments(args);
+			congratulationsFragment.setCancelable(false);
 			congratulationsFragment.show(getFragmentManager(),
 					"TAG_MAZE_COMPLETED");
 			break;

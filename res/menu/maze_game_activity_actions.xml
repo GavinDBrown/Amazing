@@ -7,6 +7,6 @@
     
     <item android:id="@+id/reset_maze"
           android:icon="@drawable/ic_action_replay"
-          android:title="@string/reset_maze"
+          android:title="@string/reset"
           android:showAsAction="ifRoom"/>
 </menu>
