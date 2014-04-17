@@ -8,7 +8,7 @@
 
     <Button
         android:id="@+id/start_kruskals_maze"
-        android:layout_width="wrap_content"
+        android:layout_width="100dip"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
@@ -18,7 +18,7 @@
 
     <Button
         android:id="@+id/start_medium_maze"
-        android:layout_width="wrap_content"
+        android:layout_width="100dip"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
@@ -28,7 +28,7 @@
 
     <Button
         android:id="@+id/start_recursive_backtracker_maze"
-        android:layout_width="wrap_content"
+        android:layout_width="100dip"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
