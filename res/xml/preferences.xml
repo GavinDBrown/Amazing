@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
     <CheckBoxPreference
+        android:defaultValue="true"
         android:key="pref_start_background"
-        android:title="@string/pref_start_background"
-        android:summary="@string/pref_start_background_summ"
-        android:defaultValue="true" />
+        android:summaryOff="@string/pref_start_background_summ_off"
+        android:summaryOn="@string/pref_start_background_summ_on"
+        android:title="@string/pref_start_background" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_orientation"
+        android:summaryOn="@string/pref_orientation_summ_on"
+        android:summaryOff="@string/pref_orientation_summ_off"
+        android:title="@string/pref_orientation" />
 
 </PreferenceScreen>

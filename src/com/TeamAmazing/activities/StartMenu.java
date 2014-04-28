@@ -63,15 +63,17 @@ public class StartMenu extends Activity {
 		prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
 			public void onSharedPreferenceChanged(SharedPreferences prefs,
 					String key) {
-				if (prefs.getBoolean("pref_start_background", true)) {
-					// background is going from disabled -> enabled
-					setContentView(R.layout.game_of_life_background);
-					startGOLBackground();
+				if (key.equals("pref_start_background")) {
+					if (prefs.getBoolean("pref_start_background", true)) {
+						// background is going from disabled -> enabled
+						setContentView(R.layout.game_of_life_background);
+						startGOLBackground();
 
-				} else {
-					// background is going from enabled -> disabled
-					setContentView(R.layout.start_menu_background);
-					stopGOLBackground();
+					} else {
+						// background is going from enabled -> disabled
+						setContentView(R.layout.start_menu_background);
+						stopGOLBackground();
+					}
 				}
 			}
 		};
@@ -143,9 +145,6 @@ public class StartMenu extends Activity {
 
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 				"pref_start_background", true)) {
-			// When the screen is locked, the app doesn't lose focus and the
-			// surface
-			// remains intact, so we need to pause here.
 			mGOLThread.pause();
 		}
 	}
@@ -202,10 +201,10 @@ public class StartMenu extends Activity {
 		startActivity(intent);
 	}
 
-	public void startMediumMaze(View v){
+	public void startMediumMaze(View v) {
 		Intent intent = new Intent(this, MazeGame.class);
 		intent.putExtra(MAZE_TYPE, MEDIUM_MAZE);
 		startActivity(intent);
 	}
-	
+
 }
