@@ -50,17 +50,21 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 	private Menu mOptionsMenu;
 
 	private String timerText = "";
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		if (prefs.getBoolean("pref_orientation", true)){
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-		} else {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-		}
 		
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		
+		// Set the desired orientation
+		if (prefs.getBoolean("pref_orientation", true)) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+		} else {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+		}
+
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		activityHandler = new MyActivityHandler(this);
@@ -70,10 +74,17 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
 		mMazeThread = new MazeThread(mMazeView.getHolder(), this,
 				activityHandler);
+		// TODO it seems sketchy setting the mazetype after the mazeThread is
+		// created, they should be done simultaneously.
 		mMazeThread.setMazeType(getIntent().getIntExtra(StartMenu.MAZE_TYPE,
 				StartMenu.PERFECT_MAZE));
 		mMazeView.setThread(mMazeThread);
 		mMazeThread.start();
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
 	}
 
 	@Override
@@ -145,7 +156,7 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 		case R.id.reset_maze:
-			mMazeThread.initGFX();
+			mMazeThread.resetMaze();
 			return true;
 		case android.R.id.home:
 			// This ensures that the parent activity is recreated with any
@@ -160,19 +171,18 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		}
 	}
 
-//	@Override
-//	public void onDialogClosed() {
-//		//mMazeThread.resetMaze();
-//	}
-	
 	@Override
 	public void onReset() {
 		mMazeThread.resetMaze();
 	}
 
+	/**
+	 * Called when the user clicks the "menu" button in the
+	 * mazeCompletedDialogFragment.
+	 */
 	@Override
 	public void onMenu() {
-		// Move up the backstack to the menu
+		// Move up the backstack to the start menu
 		Intent intent = NavUtils.getParentActivityIntent(this);
 		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP);

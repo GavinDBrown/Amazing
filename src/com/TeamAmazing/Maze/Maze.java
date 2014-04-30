@@ -40,9 +40,9 @@ public class Maze implements Parcelable {
 		this.height = height;
 		int id = 0;
 		this.cells = new Cell[width * height];
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				cells[j * width + i] = new Cell(id, i, j);
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				cells[i * width + j] = new Cell(id, i, j);
 				id++;
 			}
 		}
@@ -53,8 +53,12 @@ public class Maze implements Parcelable {
 		case StartMenu.DFS_MAZE:
 			makeDFSMaze();
 			break;
-		case StartMenu.MEDIUM_MAZE:
+		case StartMenu.GROWING_TREE_MAZE:
 			growingTreeAlgorithm();
+			break;
+		// TODO delete the below and make sure it's not needed.
+		default:
+			makeKruskalMaze();
 			break;
 		}
 
@@ -62,6 +66,7 @@ public class Maze implements Parcelable {
 		cells[0].setType(Cell.START_CELL);
 		cells[cells.length - 1].setType(Cell.END_CELL);
 	}
+	
 
 	/**
 	 * Creates a maze using a union-find algorithm. Also known as Kruskal's
@@ -186,31 +191,31 @@ public class Maze implements Parcelable {
 	}
 
 	private void makeAllWalls() {
-		this.walls = new ArrayList<Wall>(2 * (width + 1) * (height + 1));
-		for (int i = 0; i < width; i++) {
+		this.walls = new ArrayList<Wall>(2 * width * height + width + height);
+		for (int j = 0; j < width; j++) {
 			// Add walls on the top and bottom
-			walls.add(new Wall(cells[i], null));
-			walls.add(new Wall(cells[i + (width * (height - 1))], null));
+			walls.add(new Wall(cells[j], null));
+			walls.add(new Wall(cells[(height - 1) * width + j], null));
 		}
-		for (int j = 0; j < height; j++) {
+		for (int i = 0; i < height; i++) {
 			// Add walls on the left and right
-			walls.add(new Wall(cells[j * width], null));
-			walls.add(new Wall(cells[j * width + (width - 1)], null));
+			walls.add(new Wall(cells[i * width], null));
+			walls.add(new Wall(cells[i * width + (width - 1)], null));
 		}
 
 		// Add the walls on the inside of the maze.
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
 				// add wall to the right if there is space
-				if (i < width - 1) {
-					walls.add(new Wall(cells[j * width + i], cells[j * width
-							+ (i + 1)]));
+				if (j + 1 < width) {
+					walls.add(new Wall(cells[i * width + j], cells[i * width
+							+ (j + 1)]));
 				}
 
 				// add wall to the bottom if there is space
-				if (j < height - 1) {
-					walls.add(new Wall(cells[j * width + i], cells[(j + 1)
-							* width + i]));
+				if (i + 1 < height) {
+					walls.add(new Wall(cells[i * width + j], cells[(i + 1)
+							* width + j]));
 				}
 			}
 		}
@@ -239,25 +244,25 @@ public class Maze implements Parcelable {
 
 	private List<Cell> getNeighborCells(Cell cell) {
 		List<Cell> neighbors = new ArrayList<Cell>(4);
-		if (cell.coordinates.x != 0) {
-			// Cell is not in the left column
-			neighbors.add(cells[cell.coordinates.y * width
-					+ (cell.coordinates.x - 1)]);
-		}
-		if (cell.coordinates.x != width - 1) {
-			// Cell is not in the right column
-			neighbors.add(cells[cell.coordinates.y * width
-					+ (cell.coordinates.x + 1)]);
-		}
 		if (cell.coordinates.y != 0) {
-			// Cell is not in the top row
-			neighbors.add(cells[(cell.coordinates.y - 1) * width
-					+ cell.coordinates.x]);
+			// Cell is not in the left column
+			neighbors.add(cells[cell.coordinates.x * width
+					+ (cell.coordinates.y - 1)]);
 		}
-		if (cell.coordinates.y != height - 1) {
+		if (cell.coordinates.y != width - 1) {
+			// Cell is not in the right column
+			neighbors.add(cells[cell.coordinates.x * width
+					+ (cell.coordinates.y + 1)]);
+		}
+		if (cell.coordinates.x != 0) {
+			// Cell is not in the top row
+			neighbors.add(cells[(cell.coordinates.x - 1) * width
+					+ cell.coordinates.y]);
+		}
+		if (cell.coordinates.x != height - 1) {
 			// Cell is not in the bottom row
-			neighbors.add(cells[(cell.coordinates.y + 1) * width
-					+ cell.coordinates.x]);
+			neighbors.add(cells[(cell.coordinates.x + 1) * width
+					+ cell.coordinates.y]);
 		}
 		return neighbors;
 	}

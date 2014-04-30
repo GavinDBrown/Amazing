@@ -18,6 +18,7 @@ package com.TeamAmazing.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Menu;
@@ -25,15 +26,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.TeamAmazing.drawing.GOLThread;
 import com.TeamAmazing.drawing.GOLSurfaceView;
+import com.TeamAmazing.drawing.GOLThread;
 import com.TeamAmazing.game.R;
 
 public class StartMenu extends Activity {
 
 	public static final int PERFECT_MAZE = 0;
 	public static final int DFS_MAZE = 1;
-	public static final int MEDIUM_MAZE = 2;
+	public static final int GROWING_TREE_MAZE = 2;
 	public static final String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
 
 	/** A handle to the thread that's running the Game Of Life animation. */
@@ -47,11 +48,26 @@ public class StartMenu extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		SharedPreferences sharedPrefs = PreferenceManager
+
+		// Check if there is already a task running and if there is go to the
+		// top of that task instead of starting this activity.
+		if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
+			finish();
+			return;
+		}
+
+		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
 
+		// Set the desired orientation
+		if (prefs.getBoolean("pref_orientation", true)) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+		} else {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+		}
+
 		// Check if the game of life background is enabled
-		if (sharedPrefs.getBoolean("pref_start_background", true)) {
+		if (prefs.getBoolean("pref_start_background", true)) {
 			setContentView(R.layout.game_of_life_background);
 			startGOLBackground();
 
@@ -63,7 +79,7 @@ public class StartMenu extends Activity {
 		prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
 			public void onSharedPreferenceChanged(SharedPreferences prefs,
 					String key) {
-				if (key.equals("pref_start_background")) {
+				if ("pref_start_background".equals(key)) {
 					if (prefs.getBoolean("pref_start_background", true)) {
 						// background is going from disabled -> enabled
 						setContentView(R.layout.game_of_life_background);
@@ -78,7 +94,7 @@ public class StartMenu extends Activity {
 			}
 		};
 
-		sharedPrefs.registerOnSharedPreferenceChangeListener(prefsListener);
+		prefs.registerOnSharedPreferenceChangeListener(prefsListener);
 
 	}
 
@@ -203,7 +219,7 @@ public class StartMenu extends Activity {
 
 	public void startMediumMaze(View v) {
 		Intent intent = new Intent(this, MazeGame.class);
-		intent.putExtra(MAZE_TYPE, MEDIUM_MAZE);
+		intent.putExtra(MAZE_TYPE, GROWING_TREE_MAZE);
 		startActivity(intent);
 	}
 

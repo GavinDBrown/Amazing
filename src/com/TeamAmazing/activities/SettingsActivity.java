@@ -17,14 +17,19 @@
 package com.TeamAmazing.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
 import com.TeamAmazing.game.R;
 
-public class SettingsActivity extends PreferenceActivity{
+public class SettingsActivity extends PreferenceActivity {
+	private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
@@ -47,9 +52,45 @@ public class SettingsActivity extends PreferenceActivity{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
+		// Set the desired orientation
+		if (prefs.getBoolean("pref_orientation", true)) {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+		} else {
+			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+		}
+
 		addPreferencesFromResource(R.xml.preferences);
 
+		prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+			public void onSharedPreferenceChanged(SharedPreferences prefs,
+					String key) {
+				if ("pref_orientation".equals(key)) { // Orientation has changed
+					// Clear the activity stack and add the launch activity 
+					Intent startMenuIntent = getApplicationContext()
+							.getPackageManager().getLaunchIntentForPackage(
+									getApplicationContext().getPackageName());
+					startMenuIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+							| Intent.FLAG_ACTIVITY_CLEAR_TASK);
+					startActivity(startMenuIntent);
+					// add this activity to the activity stack and start it
+					Intent intent = getIntent();
+					finish();
+					startActivity(intent);
+				}
+			}
+		};
+		prefs.registerOnSharedPreferenceChangeListener(prefsListener);
 
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		PreferenceManager.getDefaultSharedPreferences(this)
+				.unregisterOnSharedPreferenceChangeListener(prefsListener);
 	}
 
 }

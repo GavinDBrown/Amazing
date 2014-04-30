@@ -10,8 +10,8 @@
     <string name="pref_start_background">Display the start menu background</string>
     <string name="pref_start_background_summ_off">Check to display an animation behind the start menu.</string>
     <string name="pref_start_background_summ_on">Uncheck to not display an animation behind the start menu.</string>
-    <string name="pref_orientation_summ_on">Uncheck to use landscape mode when solving mazes.</string>
-    <string name="pref_orientation_summ_off">Check to use portrait mode when solving mazes.</string>
+    <string name="pref_orientation_summ_on">Uncheck to use landscape mode.</string>
+    <string name="pref_orientation_summ_off">Check to use portrait mode.</string>
     <string name="pref_orientation">Screen Orientation</string>
     <string name="settings">Settings</string>
 

@@ -33,6 +33,7 @@ import android.view.SurfaceHolder;
 import com.TeamAmazing.Maze.Cell;
 import com.TeamAmazing.Maze.Maze;
 import com.TeamAmazing.Maze.Wall;
+import com.TeamAmazing.activities.StartMenu;
 import com.TeamAmazing.game.R;
 
 public class MazeThread extends Thread {
@@ -43,17 +44,17 @@ public class MazeThread extends Thread {
 	private volatile boolean isAccelerating;
 
 	// The size of the maze
-	private static final int CELLS_PER_ROW = 12;
-	private static final int CELLS_PER_COLUMN = 15;
+	private int cellsPerRow = 12;
+	private int cellsPerColumn = 15;
 
-	// Pixel sizes of objects.
-	public int cellWidth; // = 60;
-	public int cellHeight; // = 60;
-	public int wallWidth; // = 5;
-	public int boundaryWidth; // = 20;
-	public int boundaryHeight; // = 20;
-	private int ufoWidth; // = 35;
-	private int ufoHeight; // = 18;
+	// Pixel sizes of objects and their default values
+	public int cellWidth = 60;
+	public int cellHeight = 60;
+	public int wallWidth = 5;
+	public int boundaryWidth = 20;
+	public int boundaryHeight = 20;
+	private int ufoWidth = 35;
+	private int ufoHeight = 18;
 	private static final double UFO_ASPECT_RATIO = 35.0 / 18.0;
 
 	// ufo variables
@@ -77,7 +78,7 @@ public class MazeThread extends Thread {
 	// maze variables
 	private static final String MAZE_ID = "maze";
 	private Maze maze;
-	private volatile int mazeType;
+	private volatile int mazeType = StartMenu.PERFECT_MAZE;
 	private Rect endRect;
 	private Rect startRect;
 
@@ -93,27 +94,26 @@ public class MazeThread extends Thread {
 	public static final int MESSAGE_MAZE_COMPLETED = 1;
 	public static final int MESSAGE_UPDATE_TIMER = 2;
 
-	/**
-	 * Used to signal the thread whether it should be running or not. Passing
-	 * true allows the thread to run; passing false will shut it down if it's
-	 * already running.
-	 */
+	// Thread states
 	private volatile int mState = STATE_STOPPED;
 	private static final int STATE_STOPPED = 0;
 	private static final int STATE_RUNNING = 1;
 	private static final int STATE_PAUSED = 2;
 	private static final int STATE_WAIT_FOR_DIALOG = 3;
+	private static final int STATE_RESET_AFTER_MEASURE = 4;
 
 	private Paint p;
 
 	// star variables
 	private static final int NUM_OF_STARS = 25;
 	private Point[] starField;
+	private static final String STARFIELD_ID = "starfield";
 	private int starAlpha = 80;
 	private int starFade = 2;
 	private Random rand;
 
 	// Timing variables
+	private static final String TIME_ELAPSED_ID = "timeElapsed";
 	private int timeElapsed = 0;
 	private long timeStart;
 
@@ -132,18 +132,12 @@ public class MazeThread extends Thread {
 		starField = new Point[NUM_OF_STARS];
 
 		ufo = new Point();
+
+		resetMaze();
 	}
 
 	public void setMazeType(int mazeType) {
 		this.mazeType = mazeType;
-	}
-
-	@Override
-	public void start() {
-		synchronized (mSurfaceHolder) {
-			mState = STATE_RUNNING;
-		}
-		super.start();
 	}
 
 	public void halt() {
@@ -154,7 +148,7 @@ public class MazeThread extends Thread {
 	}
 
 	/**
-	 * Pauses the update & animation.
+	 * Pauses the update & animation if running.
 	 */
 	public void pause() {
 		synchronized (mSurfaceHolder) {
@@ -189,6 +183,8 @@ public class MazeThread extends Thread {
 				outState.putFloat(UFO_Y_VELOCITY_ID, ufoYVelocity);
 				outState.putFloat(X_FRICTION_ID, xFriction);
 				outState.putFloat(Y_FRICTION_ID, yFriction);
+				outState.putInt(TIME_ELAPSED_ID, timeElapsed);
+				outState.putParcelableArray(STARFIELD_ID, starField);
 			}
 		}
 		return outState;
@@ -203,19 +199,22 @@ public class MazeThread extends Thread {
 	 */
 	public synchronized void restoreState(Bundle savedState) {
 		synchronized (mSurfaceHolder) {
-			maze = (Maze) savedState.getParcelable(MAZE_ID);
+			maze = savedState.getParcelable(MAZE_ID);
+			mState = STATE_RUNNING;
 			ufo = savedState.getParcelable(UFO_ID);
 			ufoXVelocity = savedState.getFloat(UFO_X_VELOCITY_ID);
 			ufoYVelocity = savedState.getFloat(UFO_Y_VELOCITY_ID);
 			xFriction = savedState.getFloat(X_FRICTION_ID);
 			yFriction = savedState.getFloat(Y_FRICTION_ID);
+			timeElapsed = savedState.getInt(TIME_ELAPSED_ID);
+			starField = (Point[]) savedState.getParcelableArray(STARFIELD_ID);
 		}
 	}
 
 	@Override
 	public void run() {
-		AnimationLoop: while (mState != STATE_STOPPED) {
-			while (mState == STATE_PAUSED || mState == STATE_WAIT_FOR_DIALOG) {
+		while (mState != STATE_STOPPED) {
+			while (mState != STATE_RUNNING && mState != STATE_STOPPED) {
 				try {
 					synchronized (mSurfaceHolder) {
 						mSurfaceHolder.wait();
@@ -224,43 +223,39 @@ public class MazeThread extends Thread {
 				} catch (InterruptedException ignore) {
 				}
 			}
-
 			// Check if thread was stopped while it was paused.
 			if (mState == STATE_STOPPED)
-				break AnimationLoop;
+				break;
 
 			timeStart = System.currentTimeMillis();
 
-			Canvas c = null;
-			try {
-				c = mSurfaceHolder.lockCanvas();
-				if (c == null) {
-					// Pause here so that our calls do not get throttled for
-					// calling lockCanvas too often.
-					pause();
-				} else {
-					if (maze != null) {
-						synchronized (mSurfaceHolder) {
-							// Increase or decrease velocity based on touch
-							// information.
-							updateVelocity();
-
-							// Update position with boundary checking
-							updatePosition();
-
-							// draw to the canvas
-							mDraw(c);
-						}
-					} else {
+			synchronized (mSurfaceHolder) {
+				Canvas c = null;
+				try {
+					c = mSurfaceHolder.lockCanvas();
+					if (c == null) {
+						// Pause here so that our calls do not get throttled for
+						// calling lockCanvas() too often.
 						pause();
+					} else {
+
+						// Update velocity based on touch
+						// information.
+						updateVelocity();
+
+						// Update position with boundary checking
+						updatePosition();
+
+						// draw to the canvas
+						mDraw(c);
 					}
-				}
-			} finally {
-				// do this in a finally so that if an exception is thrown
-				// during the above, we don't leave the Surface in an
-				// inconsistent state
-				if (c != null) {
-					mSurfaceHolder.unlockCanvasAndPost(c);
+				} finally {
+					// do this in a finally so that if an exception is thrown
+					// during the above, we don't leave the Surface in an
+					// inconsistent state
+					if (c != null) {
+						mSurfaceHolder.unlockCanvasAndPost(c);
+					}
 				}
 			}
 
@@ -355,45 +350,66 @@ public class MazeThread extends Thread {
 
 	/** Called from UI thread */
 	public void resetMaze() {
-		initGFX();
 		synchronized (mSurfaceHolder) {
-			mState = STATE_RUNNING;
-			mSurfaceHolder.notify();
+			maze = new Maze(cellsPerRow, cellsPerColumn, mazeType);
+			if (mCanvasHeight != 0 && mCanvasWidth != 0) {
+				ufoXVelocity = 0;
+				ufoYVelocity = 0;
+				xFriction = 0;
+				yFriction = 0;
+				timeElapsed = 0;
+				initializeStars();
+				calculateGFXSizes();
+				ufo.x = startRect.centerX();
+				ufo.y = startRect.centerY();
+				mState = STATE_RUNNING;
+				mSurfaceHolder.notify();
+			} else {
+				mState = STATE_RESET_AFTER_MEASURE;
+			}
 		}
 	}
 
 	/**
-	 * Calculates the sizes of the maze and ufo. Creates a new maze, new
-	 * starfield, and resets the ufo's velocity and position. May be called by
-	 * the UI thread and by the MazeThread.
+	 * Calculates the pixel sizes of the maze related objects.
 	 */
-	public void initGFX() {
+	public void calculateGFXSizes() {
 		synchronized (mSurfaceHolder) {
-			// Calculate sizes
+			if (mCanvasWidth == 0 | mCanvasHeight == 0)
+				return;
 
-			// Note there are CELLS_PER_* +1 walls in a row/column.
-			// wallWidth is calculated to be approximately 1/12th of cellWidth
-			cellWidth = (int) (mCanvasWidth / (CELLS_PER_ROW + (CELLS_PER_ROW + 1) / 12.0));
-			cellHeight = (int) (mCanvasHeight / (CELLS_PER_COLUMN + (CELLS_PER_COLUMN + 1) / 12.0));
-			wallWidth = cellWidth / 12;
-			boundaryWidth = (mCanvasWidth - cellWidth * CELLS_PER_ROW - wallWidth
-					* (CELLS_PER_ROW + 1)) / 2;
-			boundaryHeight = (mCanvasHeight - cellHeight * CELLS_PER_COLUMN - wallWidth
-					* (CELLS_PER_COLUMN + 1)) / 2;
+			// Calculate pixel sizes of maze and ufo
+			// wallWidth is calculated to be approximately 1/12th of
+			// cellWidth/Height, whichever is smaller
+			cellWidth = (int) (mCanvasWidth / (cellsPerRow + (cellsPerRow + 1) / 12.0));
+			cellHeight = (int) (mCanvasHeight / (cellsPerColumn + (cellsPerColumn + 1) / 12.0));
+			wallWidth = cellWidth > cellHeight ? cellHeight / 12
+					: cellWidth / 12;
+			boundaryWidth = (mCanvasWidth - cellWidth * cellsPerRow - wallWidth
+					* (cellsPerRow + 1)) / 2;
+			boundaryHeight = (mCanvasHeight - cellHeight * cellsPerColumn - wallWidth
+					* (cellsPerColumn + 1)) / 2;
 
-			// Calculate ufo size
-			ufoWidth = cellWidth / 2;
-			ufoHeight = (int) Math.round(ufoWidth / UFO_ASPECT_RATIO);
-			if (ufoHeight > cellHeight / 2) {
-				ufoHeight = cellHeight / 2;
+			// Calculate ufo size to be approximately 2/3rds of cellWidth or
+			// cellHeight, whichever makes a smaller ufo.
+			if (2 * cellWidth / 3
+					+ (int) Math.round((2 * cellWidth / 3) / UFO_ASPECT_RATIO) < 2
+					* cellHeight
+					/ 3
+					+ (int) Math.round((2 * cellHeight / 3) * UFO_ASPECT_RATIO)) {
+				ufoWidth = 2 * cellWidth / 3;
+				ufoHeight = (int) Math.round(ufoWidth / UFO_ASPECT_RATIO);
+			} else {
+				ufoHeight = 2 * cellHeight / 3;
 				ufoWidth = (int) Math.round(ufoHeight * UFO_ASPECT_RATIO);
 			}
 
-			// Initialize stars
-			initializeStars();
+			// resize the ufo bitmap
+			ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
+					mContext.getResources(), R.drawable.ufo), ufoWidth,
+					ufoHeight, false);
 
-			// Initialize the maze
-			maze = new Maze(CELLS_PER_ROW, CELLS_PER_COLUMN, mazeType);
+			// get bounds for start and end rectangles
 			endRect = calculateCellRect(maze.getCell(Cell.END_CELL));
 			startRect = calculateCellRect(maze.getCell(Cell.START_CELL));
 
@@ -408,7 +424,7 @@ public class MazeThread extends Thread {
 				Cell cell2 = w.getV2();
 				if (cell1 != null && cell2 != null) {
 					// Cells on the inside.
-					if (cell1.getCoords().x == cell2.getCoords().x) {
+					if (cell1.getCoords().y == cell2.getCoords().y) {
 						// Vertical inside cells => horizontal wall below
 						// cell1.
 						setWallBoundsBelowCell(w, cell1);
@@ -431,26 +447,10 @@ public class MazeThread extends Thread {
 						setWallBoundsBoundaryCell(w, cell2, corners,
 								maze.getWidth(), maze.getHeight());
 					}
-
 				}
 			}
-
-			// Initialize the ufo
-			ufoBM = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
-					mContext.getResources(), R.drawable.ufo), ufoWidth,
-					ufoHeight, false);
-			ufoXVelocity = 0;
-			ufoYVelocity = 0;
-			xFriction = 0;
-			yFriction = 0;
-			ufo.x = startRect.centerX();
-			ufo.y = startRect.centerY();
-
-			// start timing
-			timeElapsed = 0;
-			timeStart = System.currentTimeMillis();
-
 		}
+		return;
 	}
 
 	/**
@@ -462,9 +462,10 @@ public class MazeThread extends Thread {
 			if (mCanvasWidth != width || mCanvasHeight != height) {
 				mCanvasWidth = width;
 				mCanvasHeight = height;
-				// reset the GOL
-				if (mCanvasWidth > 0 && mCanvasHeight > 0) {
-					initGFX();
+				calculateGFXSizes();
+				if (mCanvasWidth > 0 && mCanvasHeight > 0
+						&& mState == STATE_RESET_AFTER_MEASURE) {
+					resetMaze();
 				}
 			}
 		}
@@ -628,10 +629,10 @@ public class MazeThread extends Thread {
 	 *            The cell that has a wall to the left of it.
 	 */
 	private void setWallBoundsLeftCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect(cell.getCoords().x * (cellWidth + wallWidth)
-				+ boundaryWidth, cell.getCoords().y * (cellHeight + wallWidth)
-				+ boundaryHeight, cell.getCoords().x * (cellWidth + wallWidth)
-				+ wallWidth + boundaryWidth, (cell.getCoords().y + 1)
+		wall.setBounds(new Rect(cell.getCoords().y * (cellWidth + wallWidth)
+				+ boundaryWidth, cell.getCoords().x * (cellHeight + wallWidth)
+				+ boundaryHeight, cell.getCoords().y * (cellWidth + wallWidth)
+				+ wallWidth + boundaryWidth, (cell.getCoords().x + 1)
 				* (cellHeight + wallWidth) + boundaryHeight + wallWidth));
 	}
 
@@ -644,11 +645,11 @@ public class MazeThread extends Thread {
 	 *            The cell that has a wall to the right of it.
 	 */
 	private void setWallBoundsRightCell(Wall wall, Cell cell) {
-		wall.setBounds(new Rect((cell.getCoords().x + 1)
-				* (cellWidth + wallWidth) + boundaryWidth, cell.getCoords().y
+		wall.setBounds(new Rect((cell.getCoords().y + 1)
+				* (cellWidth + wallWidth) + boundaryWidth, cell.getCoords().x
 				* (cellHeight + wallWidth) + boundaryHeight,
-				(cell.getCoords().x + 1) * (cellWidth + wallWidth) + wallWidth
-						+ boundaryWidth, (cell.getCoords().y + 1)
+				(cell.getCoords().y + 1) * (cellWidth + wallWidth) + wallWidth
+						+ boundaryWidth, (cell.getCoords().x + 1)
 						* (cellHeight + wallWidth) + boundaryHeight + wallWidth));
 	}
 
@@ -662,11 +663,11 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsAboveCell(Wall wall, Cell cell) {
 		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x) * (cellWidth + wallWidth)
-				+ boundaryWidth, (cell.getCoords().y)
+		wall.setBounds(new Rect((cell.getCoords().y) * (cellWidth + wallWidth)
+				+ boundaryWidth, (cell.getCoords().x)
 				* (cellHeight + wallWidth) + boundaryHeight,
-				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
-						+ boundaryWidth + wallWidth, cell.getCoords().y
+				(cell.getCoords().y + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth + wallWidth, cell.getCoords().x
 						* (cellHeight + wallWidth) + wallWidth + boundaryHeight));
 	}
 
@@ -680,11 +681,11 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsBelowCell(Wall wall, Cell cell) {
 		// Horizontal wall
-		wall.setBounds(new Rect((cell.getCoords().x) * (cellWidth + wallWidth)
-				+ boundaryWidth, (cell.getCoords().y + 1)
+		wall.setBounds(new Rect((cell.getCoords().y) * (cellWidth + wallWidth)
+				+ boundaryWidth, (cell.getCoords().x + 1)
 				* (cellHeight + wallWidth) + boundaryHeight,
-				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
-						+ boundaryWidth + wallWidth, (cell.getCoords().y + 1)
+				(cell.getCoords().y + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth + wallWidth, (cell.getCoords().x + 1)
 						* (cellHeight + wallWidth) + wallWidth + boundaryHeight));
 	}
 
@@ -705,9 +706,9 @@ public class MazeThread extends Thread {
 	 */
 	private void setWallBoundsBoundaryCell(Wall wall, Cell cell,
 			boolean[] corners, int mazeWidth, int mazeHeight) {
-		if (cell.getCoords().x == 0) {
+		if (cell.getCoords().y == 0) {
 			// TopLeft, TopRight, BottomLeft, BottomRight
-			if (cell.getCoords().y == 0 && !corners[0]) {
+			if (cell.getCoords().x == 0 && !corners[0]) {
 				// Cell is on the top left => horizontal wall above
 				// it.
 				setWallBoundsAboveCell(wall, cell);
@@ -715,7 +716,7 @@ public class MazeThread extends Thread {
 				// cells at (0,0) and null will be drawn on the
 				// left.
 				corners[0] = true;
-			} else if (cell.getCoords().y == mazeHeight - 1 && !corners[2]) {
+			} else if (cell.getCoords().x == mazeHeight - 1 && !corners[2]) {
 				// Cell is on the bottom left => horizontal wall
 				// below it.
 				setWallBoundsBelowCell(wall, cell);
@@ -728,8 +729,8 @@ public class MazeThread extends Thread {
 				// the left of it.
 				setWallBoundsLeftCell(wall, cell);
 			}
-		} else if (cell.getCoords().x == mazeWidth - 1) {
-			if (cell.getCoords().y == 0 && !corners[1]) {
+		} else if (cell.getCoords().y == mazeWidth - 1) {
+			if (cell.getCoords().x == 0 && !corners[1]) {
 				// Cell is on the top right => horizontal wall above
 				// it.
 				setWallBoundsAboveCell(wall, cell);
@@ -737,7 +738,7 @@ public class MazeThread extends Thread {
 				// cells at (0, maze.getHeight() - 1) and null will
 				// be drawn on the right.
 				corners[1] = true;
-			} else if (cell.getCoords().y == mazeHeight - 1 && !corners[3]) {
+			} else if (cell.getCoords().x == mazeHeight - 1 && !corners[3]) {
 				// Cell is on the bottom right => horizontal wall
 				// below it.
 				setWallBoundsBelowCell(wall, cell);
@@ -751,11 +752,11 @@ public class MazeThread extends Thread {
 				// right of it.
 				setWallBoundsRightCell(wall, cell);
 			}
-		} else if (cell.getCoords().y == 0) {
+		} else if (cell.getCoords().x == 0) {
 			// Cell is on the top => horizontal wall above
 			// it.
 			setWallBoundsAboveCell(wall, cell);
-		} else if (cell.getCoords().y == mazeHeight - 1) {
+		} else if (cell.getCoords().x == mazeHeight - 1) {
 			// Cell is on the bottom => horizontal wall below
 			// it.
 			setWallBoundsBelowCell(wall, cell);
@@ -763,11 +764,11 @@ public class MazeThread extends Thread {
 	}
 
 	private Rect calculateCellRect(Cell cell) {
-		return new Rect(cell.getCoords().x * (cellWidth + wallWidth)
-				+ wallWidth + boundaryWidth, cell.getCoords().y
+		return new Rect(cell.getCoords().y * (cellWidth + wallWidth)
+				+ wallWidth + boundaryWidth, cell.getCoords().x
 				* (cellHeight + wallWidth) + wallWidth + boundaryHeight,
-				(cell.getCoords().x + 1) * (cellWidth + wallWidth)
-						+ boundaryWidth, (cell.getCoords().y + 1)
+				(cell.getCoords().y + 1) * (cellWidth + wallWidth)
+						+ boundaryWidth, (cell.getCoords().x + 1)
 						* (cellHeight + wallWidth) + boundaryHeight);
 	}
 }
