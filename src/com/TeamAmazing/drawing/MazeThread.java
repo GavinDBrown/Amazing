@@ -118,9 +118,10 @@ public class MazeThread extends Thread {
 	private long timeStart;
 
 	public MazeThread(SurfaceHolder surfaceHolder, Context context,
-			Handler uiHandler) {
+			Handler uiHandler, int mazeType) {
 		mSurfaceHolder = surfaceHolder;
 		this.uiHandler = uiHandler;
+		this.mazeType = mazeType;
 		mContext = context;
 
 		p = new Paint();
@@ -134,10 +135,6 @@ public class MazeThread extends Thread {
 		ufo = new Point();
 
 		resetMaze();
-	}
-
-	public void setMazeType(int mazeType) {
-		this.mazeType = mazeType;
 	}
 
 	public void halt() {

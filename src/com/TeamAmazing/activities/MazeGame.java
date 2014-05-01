@@ -73,11 +73,8 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 		// get handles to the View and start the Thread.
 		mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
 		mMazeThread = new MazeThread(mMazeView.getHolder(), this,
-				activityHandler);
-		// TODO it seems sketchy setting the mazetype after the mazeThread is
-		// created, they should be done simultaneously.
-		mMazeThread.setMazeType(getIntent().getIntExtra(StartMenu.MAZE_TYPE,
-				StartMenu.PERFECT_MAZE));
+				activityHandler, getIntent().getIntExtra(StartMenu.MAZE_TYPE,
+		                StartMenu.PERFECT_MAZE));
 		mMazeView.setThread(mMazeThread);
 		mMazeThread.start();
 	}
