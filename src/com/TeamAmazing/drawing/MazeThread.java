@@ -86,9 +86,9 @@ public class MazeThread extends Thread {
 	private volatile int mCanvasHeight;
 	private volatile int mCanvasWidth;
 
-	// Handles to important objects
+	// References to important objects
 	private SurfaceHolder mSurfaceHolder;
-	private Handler uiHandler;
+	private Handler mHandler;
 	private Context mContext;
 
 	public static final int MESSAGE_MAZE_COMPLETED = 1;
@@ -120,7 +120,7 @@ public class MazeThread extends Thread {
 	public MazeThread(SurfaceHolder surfaceHolder, Context context,
 			Handler uiHandler, int mazeType) {
 		mSurfaceHolder = surfaceHolder;
-		this.uiHandler = uiHandler;
+		this.mHandler = uiHandler;
 		this.mazeType = mazeType;
 		mContext = context;
 
@@ -259,7 +259,7 @@ public class MazeThread extends Thread {
 			if (mState != STATE_WAIT_FOR_DIALOG) {
 				timeElapsed = timeElapsed
 						+ (int) (System.currentTimeMillis() - timeStart);
-				uiHandler.dispatchMessage(uiHandler.obtainMessage(
+				mHandler.sendMessage(mHandler.obtainMessage(
 						MESSAGE_UPDATE_TIMER, timeElapsed, 0, null));
 			}
 
@@ -338,7 +338,7 @@ public class MazeThread extends Thread {
 
 	private void mazeCompleted() {
 		// Send a message to the UI thread
-		uiHandler.dispatchMessage(uiHandler.obtainMessage(
+		mHandler.sendMessage(mHandler.obtainMessage(
 				MESSAGE_MAZE_COMPLETED, timeElapsed, 0, null));
 		synchronized (mSurfaceHolder) {
 			mState = STATE_WAIT_FOR_DIALOG;

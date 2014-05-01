@@ -24,6 +24,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
@@ -39,217 +40,223 @@ import com.TeamAmazing.drawing.MazeThread;
 import com.TeamAmazing.game.R;
 
 public class MazeGame extends Activity implements OnDialogClosedListener {
-	/** A handle to the thread that's running the maze. */
-	private MazeThread mMazeThread;
+    /** A handle to the thread that's running the maze. */
+    private MazeThread mMazeThread;
 
-	/** A handle to the View displaying the maze. */
-	private MazeSurfaceView mMazeView;
+    /** A handle to the View displaying the maze. */
+    private MazeSurfaceView mMazeView;
 
-	private MyActivityHandler activityHandler;
+    private MyActivityHandler activityHandler;
+    private Handler mHandler;
 
-	private Menu mOptionsMenu;
+    private Menu mOptionsMenu;
 
-	private String timerText = "";
+    private String timerText = "";
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		
-		// Set the desired orientation
-		if (prefs.getBoolean("pref_orientation", true)) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-		} else {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-		}
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(this);
 
-		activityHandler = new MyActivityHandler(this);
+        // Set the desired orientation
+        if (prefs.getBoolean("pref_orientation", true)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
 
-		setContentView(R.layout.maze_game);
-		// get handles to the View and start the Thread.
-		mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
-		mMazeThread = new MazeThread(mMazeView.getHolder(), this,
-				activityHandler, getIntent().getIntExtra(StartMenu.MAZE_TYPE,
-		                StartMenu.PERFECT_MAZE));
-		mMazeView.setThread(mMazeThread);
-		mMazeThread.start();
-	}
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
-	@Override
-	public void onStart() {
-		super.onStart();
-	}
+        activityHandler = new MyActivityHandler(this, Looper.getMainLooper());
+        // Defines a Handler object that's attached to the UI thread
+        mHandler = new Handler(Looper.getMainLooper()) {
+            /*
+             * handleMessage() defines the operations to perform when the
+             * Handler receives a new Message to process.
+             */
+            @Override
+            public void handleMessage(Message inputMessage) {
+                // Gets the image task from the incoming Message object.
+                // PhotoTask photoTask = (PhotoTask) inputMessage.obj;
+                // ...
+            }
+            // ...
+        };
 
-	@Override
-	public void onPause() {
-		super.onPause();
-		mMazeThread.pause();
-	}
+        setContentView(R.layout.maze_game);
+        // get handles to the View and start the Thread.
+        mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
+        mMazeThread = new MazeThread(mMazeView.getHolder(), this,
+                activityHandler, getIntent().getIntExtra(StartMenu.MAZE_TYPE,
+                        StartMenu.PERFECT_MAZE));
+        mMazeView.setThread(mMazeThread);
+        mMazeThread.start();
+    }
 
-	@Override
-	public void onResume() {
-		super.onResume();
-		mMazeThread.unpause();
-	}
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
 
-	@Override
-	public void onStop() {
-		super.onStop();
-	}
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMazeThread.pause();
+    }
 
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		if (mMazeThread != null) {
-			mMazeThread.halt();
-			boolean retry = true;
-			while (retry) {
-				try {
-					mMazeThread.join();
-					retry = false;
-				} catch (InterruptedException e) {
-				}
-			}
-			mMazeThread = null;
-			mMazeView = null;
-		}
-	}
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMazeThread.unpause();
+    }
 
-	@Override
-	public void onRestoreInstanceState(Bundle inState) {
-		super.onRestoreInstanceState(inState);
-		mMazeThread.restoreState(inState);
-	}
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
 
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		mMazeThread.saveState(outState);
-	}
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mMazeThread != null) {
+            mMazeThread.halt();
+            boolean retry = true;
+            while (retry) {
+                try {
+                    mMazeThread.join();
+                    retry = false;
+                } catch (InterruptedException e) {
+                }
+            }
+            mMazeThread = null;
+            mMazeView = null;
+        }
+    }
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		mOptionsMenu = menu;
-		// Inflate the menu items for use in the action bar
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.maze_game_activity_actions, menu);
-		return super.onCreateOptionsMenu(menu);
-	}
+    @Override
+    public void onRestoreInstanceState(Bundle inState) {
+        super.onRestoreInstanceState(inState);
+        mMazeThread.restoreState(inState);
+    }
 
-	@Override
-	public boolean onPrepareOptionsMenu(final Menu menu) {
-		final MenuItem menuItem = menu.findItem(R.id.maze_timer);
-		final TextView textView = (TextView) menuItem.getActionView();
-		textView.setText(timerText);
-		return super.onPrepareOptionsMenu(menu);
-	}
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mMazeThread.saveState(outState);
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle presses on the action bar items
-		switch (item.getItemId()) {
-		case R.id.reset_maze:
-			mMazeThread.resetMaze();
-			return true;
-		case android.R.id.home:
-			// This ensures that the parent activity is recreated with any
-			// information it may have saved.
-			Intent intent = NavUtils.getParentActivityIntent(this);
-			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-					| Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			NavUtils.navigateUpTo(this, intent);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        mOptionsMenu = menu;
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.maze_game_activity_actions, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
-	@Override
-	public void onReset() {
-		mMazeThread.resetMaze();
-	}
+    @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        final MenuItem menuItem = menu.findItem(R.id.maze_timer);
+        final TextView textView = (TextView) menuItem.getActionView();
+        textView.setText(timerText);
+        return super.onPrepareOptionsMenu(menu);
+    }
 
-	/**
-	 * Called when the user clicks the "menu" button in the
-	 * mazeCompletedDialogFragment.
-	 */
-	@Override
-	public void onMenu() {
-		// Move up the backstack to the start menu
-		Intent intent = NavUtils.getParentActivityIntent(this);
-		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		NavUtils.navigateUpTo(this, intent);
-	}
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle presses on the action bar items
+        switch (item.getItemId()) {
+            case R.id.reset_maze:
+                mMazeThread.resetMaze();
+                return true;
+            case android.R.id.home:
+                // This ensures that the parent activity is recreated with any
+                // information it may have saved.
+                Intent intent = NavUtils.getParentActivityIntent(this);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                NavUtils.navigateUpTo(this, intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
-	static class MyActivityHandler extends Handler {
-		private final WeakReference<MazeGame> mActivity;
+    @Override
+    public void onReset() {
+        mMazeThread.resetMaze();
+    }
 
-		MyActivityHandler(MazeGame act) {
-			mActivity = new WeakReference<MazeGame>(act);
-		}
+    /**
+     * Called when the user clicks the "menu" button in the
+     * mazeCompletedDialogFragment.
+     */
+    @Override
+    public void onMenu() {
+        // Move up the backstack to the start menu
+        Intent intent = NavUtils.getParentActivityIntent(this);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        NavUtils.navigateUpTo(this, intent);
+    }
 
-		@Override
-		public void handleMessage(Message msg) {
-			MazeGame act = mActivity.get();
-			if (act != null) {
-				act.handleMessage(msg);
-			}
-		}
-	}
+    static class MyActivityHandler extends Handler {
+        private final WeakReference<MazeGame> mActivity;
 
-	public void handleMessage(Message msg) {
-		switch ((int) msg.what) {
-		case MazeThread.MESSAGE_MAZE_COMPLETED:
-			// display congratulatory dialog
-			MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
-			Bundle args = new Bundle();
-			args.putInt("time", msg.arg1);
-			congratulationsFragment.setArguments(args);
-			congratulationsFragment.setCancelable(false);
-			congratulationsFragment.show(getFragmentManager(),
-					"TAG_MAZE_COMPLETED");
-			break;
-		case MazeThread.MESSAGE_UPDATE_TIMER:
-			// update the timer with the supplied string
-			timerText = millisToString(msg.arg1);
-			if (mOptionsMenu != null) {
-				// TODO somehow was not running on the UI thread without the
-				// runOnUiThread method, why?
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
+        MyActivityHandler(MazeGame act, Looper looper) {
+            super(looper);
+            mActivity = new WeakReference<MazeGame>(act);
+        }
 
-						onPrepareOptionsMenu(mOptionsMenu);
+        @Override
+        public void handleMessage(Message msg) {
+            MazeGame act = mActivity.get();
+            if (act != null) {
+                act.handleMessage(msg);
+            }
+        }
+    }
 
-					}
-				});
+    public void handleMessage(Message msg) {
+        switch ((int) msg.what) {
+            case MazeThread.MESSAGE_MAZE_COMPLETED:
+                // display congratulatory dialog
+                MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
+                Bundle args = new Bundle();
+                args.putInt("time", msg.arg1);
+                congratulationsFragment.setArguments(args);
+                congratulationsFragment.setCancelable(false);
+                congratulationsFragment.show(getFragmentManager(),
+                        "TAG_MAZE_COMPLETED");
+                break;
+            case MazeThread.MESSAGE_UPDATE_TIMER:
+                // update the timer with the supplied string
+                timerText = millisToString(msg.arg1);
+                if (mOptionsMenu != null) {
+                    onPrepareOptionsMenu(mOptionsMenu);
+                }
+        }
+    }
 
-			}
-		}
-	}
+    private String millisToString(int time) {
+        int millis = (time % 1000) / 100;
+        int second = (time / 1000) % 60;
+        int minute = (time / (1000 * 60)) % 60;
+        int hour = (time / (1000 * 60 * 60)) % 24;
+        String string;
 
-	private String millisToString(int time) {
-		int millis = (time % 1000) / 100;
-		int second = (time / 1000) % 60;
-		int minute = (time / (1000 * 60)) % 60;
-		int hour = (time / (1000 * 60 * 60)) % 24;
-		String string;
+        if (hour > 0) {
+            string = String.format("%d:%02d:%02d.%d", hour, minute, second,
+                    millis);
+        } else if (minute > 0) {
+            string = String.format("%d:%02d.%d", minute, second, millis);
+        } else {
+            string = String.format("%d.%d", second, millis);
+        }
 
-		if (hour > 0) {
-			string = String.format("%d:%02d:%02d.%d", hour, minute, second,
-					millis);
-		} else if (minute > 0) {
-			string = String.format("%d:%02d.%d", minute, second, millis);
-		} else {
-			string = String.format("%d.%d", second, millis);
-		}
-
-		return string;
-	}
+        return string;
+    }
 
 }
