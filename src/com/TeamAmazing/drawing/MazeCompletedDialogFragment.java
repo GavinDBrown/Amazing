@@ -1,4 +1,4 @@
-//    Amazing, the simple maze game.
+//    Amazing, the maze game.
 //    Copyright (C) 2014  Gavin Brown
 //
 //    This program is free software: you can redistribute it and/or modify
