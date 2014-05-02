@@ -1,22 +1,19 @@
-//    Amazing, the maze game.
-//    Copyright (C) 2014  Gavin Brown
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/*  Amazing, the maze game.
+ * Copyright (C) 2014  Gavin Brown
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 package com.TeamAmazing.activities;
-
-import java.lang.ref.WeakReference;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -34,31 +31,40 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.TeamAmazing.drawing.MazeCompletedDialogFragment;
-import com.TeamAmazing.drawing.MazeCompletedDialogFragment.OnDialogClosedListener;
+import com.TeamAmazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
 import com.TeamAmazing.drawing.MazeSurfaceView;
 import com.TeamAmazing.drawing.MazeThread;
 import com.TeamAmazing.game.R;
 
-public class MazeGame extends Activity implements OnDialogClosedListener {
-    /** A handle to the thread that's running the maze. */
+import java.lang.ref.WeakReference;
+import java.util.Locale;
+
+public class MazeGame extends Activity implements OnDialogButtonPressedCallback {
+    /** The thread that's running the maze. */
     private MazeThread mMazeThread;
 
-    /** A handle to the View displaying the maze. */
+    /** The View displaying the maze. */
     private MazeSurfaceView mMazeView;
 
-    private MyActivityHandler activityHandler;
-    private Handler mHandler;
+    private ActivityHandler mActivityHandler;
 
     private Menu mOptionsMenu;
 
-    private String timerText = "";
+    private String mTimerText = "";
 
+    public static final String MAZE_COMPLETED_TIME_ID = "mazeCompletedTime";
+
+    /**
+     * Called when an instance of MazeGame is created. Changes the screen
+     * orientation as needed. Enables up navigation in the actionbar. Creates an
+     * ActivityHandler with a weak reference to this activity and a reference to
+     * the UI thread. Sets the content view. Creates a MazeThread and starts it.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(this);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Set the desired orientation
         if (prefs.getBoolean("pref_orientation", true)) {
@@ -69,28 +75,14 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
-        activityHandler = new MyActivityHandler(this, Looper.getMainLooper());
         // Defines a Handler object that's attached to the UI thread
-        mHandler = new Handler(Looper.getMainLooper()) {
-            /*
-             * handleMessage() defines the operations to perform when the
-             * Handler receives a new Message to process.
-             */
-            @Override
-            public void handleMessage(Message inputMessage) {
-                // Gets the image task from the incoming Message object.
-                // PhotoTask photoTask = (PhotoTask) inputMessage.obj;
-                // ...
-            }
-            // ...
-        };
+        mActivityHandler = new ActivityHandler(this, Looper.getMainLooper());
 
         setContentView(R.layout.maze_game);
-        // get handles to the View and start the Thread.
+        // get handles to the View and start the MazeThread.
         mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
-        mMazeThread = new MazeThread(mMazeView.getHolder(), this,
-                activityHandler, getIntent().getIntExtra(StartMenu.MAZE_TYPE,
-                        StartMenu.PERFECT_MAZE));
+        mMazeThread = new MazeThread(mMazeView.getHolder(), this, mActivityHandler, getIntent()
+                .getIntExtra(StartMenu.MAZE_TYPE, StartMenu.PERFECT_MAZE));
         mMazeView.setThread(mMazeThread);
         mMazeThread.start();
     }
@@ -130,8 +122,6 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
                 } catch (InterruptedException e) {
                 }
             }
-            mMazeThread = null;
-            mMazeView = null;
         }
     }
 
@@ -160,7 +150,7 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
     public boolean onPrepareOptionsMenu(final Menu menu) {
         final MenuItem menuItem = menu.findItem(R.id.maze_timer);
         final TextView textView = (TextView) menuItem.getActionView();
-        textView.setText(timerText);
+        textView.setText(mTimerText);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -169,14 +159,13 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.reset_maze:
-                mMazeThread.resetMaze();
+                mMazeThread.newMaze();
                 return true;
             case android.R.id.home:
-                // This ensures that the parent activity is recreated with any
-                // information it may have saved.
+                // Ensure that the parent activity is resumed if it's on the
+                // stack
                 Intent intent = NavUtils.getParentActivityIntent(this);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 NavUtils.navigateUpTo(this, intent);
                 return true;
             default:
@@ -186,26 +175,28 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
 
     @Override
     public void onReset() {
-        mMazeThread.resetMaze();
+        mMazeThread.newMaze();
     }
 
     /**
-     * Called when the user clicks the "menu" button in the
-     * mazeCompletedDialogFragment.
+     * Called when the menu button is pressed in the
+     * MazeCompletedDialogFragment. Navigates back to the StartMenu activity.
      */
     @Override
-    public void onMenu() {
-        // Move up the backstack to the start menu
+    public void onStartMenu() {
         Intent intent = NavUtils.getParentActivityIntent(this);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         NavUtils.navigateUpTo(this, intent);
     }
 
-    static class MyActivityHandler extends Handler {
+    /**
+     * Subclass of Handler that contains a WeakReference to an Activity and
+     * passes messages through for the activity to handle.
+     */
+    static class ActivityHandler extends Handler {
         private final WeakReference<MazeGame> mActivity;
 
-        MyActivityHandler(MazeGame act, Looper looper) {
+        ActivityHandler(MazeGame act, Looper looper) {
             super(looper);
             mActivity = new WeakReference<MazeGame>(act);
         }
@@ -219,27 +210,34 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
         }
     }
 
+    /**
+     * Called on the UI Thread via an ActivityHandler. Displays the
+     * MazeCompletedDialogFragment or updates the timer in the actionbar.
+     */
     public void handleMessage(Message msg) {
-        switch ((int) msg.what) {
+        switch (msg.what) {
             case MazeThread.MESSAGE_MAZE_COMPLETED:
                 // display congratulatory dialog
                 MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
                 Bundle args = new Bundle();
-                args.putInt("time", msg.arg1);
+                args.putInt(MAZE_COMPLETED_TIME_ID, msg.arg1);
                 congratulationsFragment.setArguments(args);
                 congratulationsFragment.setCancelable(false);
-                congratulationsFragment.show(getFragmentManager(),
-                        "TAG_MAZE_COMPLETED");
+                congratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
                 break;
             case MazeThread.MESSAGE_UPDATE_TIMER:
                 // update the timer with the supplied string
-                timerText = millisToString(msg.arg1);
+                mTimerText = millisToString(msg.arg1);
                 if (mOptionsMenu != null) {
                     onPrepareOptionsMenu(mOptionsMenu);
                 }
         }
     }
 
+    /**
+     * Convert an integer representing time in milliseconds to a pretty string
+     * format.
+     */
     private String millisToString(int time) {
         int millis = (time % 1000) / 100;
         int second = (time / 1000) % 60;
@@ -248,15 +246,13 @@ public class MazeGame extends Activity implements OnDialogClosedListener {
         String string;
 
         if (hour > 0) {
-            string = String.format("%d:%02d:%02d.%d", hour, minute, second,
-                    millis);
+            string = String.format(Locale.US, "%d:%02d:%02d.%d", hour, minute, second, millis);
         } else if (minute > 0) {
-            string = String.format("%d:%02d.%d", minute, second, millis);
+            string = String.format(Locale.US, "%d:%02d.%d", minute, second, millis);
         } else {
-            string = String.format("%d.%d", second, millis);
+            string = String.format(Locale.US, "%d.%d", second, millis);
         }
 
         return string;
     }
-
 }
