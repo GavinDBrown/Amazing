@@ -21,6 +21,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -71,6 +72,7 @@ public class MazeThread extends Thread {
     private static final float REBOUND_FAC = .5f;
     private static final String UFO_ID = "ufo";
     private Point mUfo;
+    private Path mPath;
     private Bitmap mUfoBm;
 
     // maze variables
@@ -119,6 +121,7 @@ public class MazeThread extends Thread {
         mPaint.setStrokeWidth(1);
 
         mUfo = new Point();
+        mPath = new Path();
 
         newMaze();
     }
@@ -247,7 +250,7 @@ public class MazeThread extends Thread {
 
     private void mDraw(Canvas canvas) {
         // draw the background
-        mPaint.setColor(mContext.getResources().getColor(R.color.paperwhite));
+        mPaint.setColor(mContext.getResources().getColor(R.color.paper_white));
         canvas.drawRect(0, 0, mCanvasWidth, mCanvasHeight, mPaint);
 
         // draw the maze
@@ -260,6 +263,14 @@ public class MazeThread extends Thread {
         mPaint.setColor(Color.RED);
         mPaint.setAlpha(150);
         canvas.drawRect(mEndRect, mPaint);
+        mPaint.setAlpha(255);
+
+        // Draw the path
+        mPaint.setColor(mContext.getResources().getColor(R.color.pencil_grey));
+        mPaint.setStrokeWidth(3);
+        mPaint.setStyle(Paint.Style.STROKE);
+        canvas.drawPath(mPath, mPaint);
+        mPaint.setStyle(Paint.Style.FILL);
 
         // Draw the ufo.
         canvas.drawBitmap(mUfoBm, mUfo.x - mUfoWidth / 2, mUfo.y - mUfoHeight / 2, null);
@@ -270,6 +281,9 @@ public class MazeThread extends Thread {
      * Update the position of the UFO
      */
     private void updatePosition() {
+        // Add previous position to mPath
+        mPath.lineTo(mUfo.x, mUfo.y);
+
         Point vel = new Point(Math.round(mUfoXVelocity), Math.round(mUfoYVelocity));
         while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
             if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
@@ -318,6 +332,8 @@ public class MazeThread extends Thread {
                 calculateGFXSizes();
                 mUfo.x = mStartRect.centerX();
                 mUfo.y = mStartRect.centerY();
+                mPath.reset();
+                mPath.moveTo(mUfo.x, mUfo.y);
                 mState = STATE_RUNNING;
                 mSurfaceHolder.notify();
             } else {
