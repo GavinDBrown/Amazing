@@ -34,8 +34,6 @@ import com.TeamAmazing.Maze.Wall;
 import com.TeamAmazing.activities.StartMenu;
 import com.TeamAmazing.game.R;
 
-import java.util.Random;
-
 public class MazeThread extends Thread {
 
     // touch event variables
@@ -104,14 +102,6 @@ public class MazeThread extends Thread {
 
     private Paint mPaint;
 
-    // star variables
-    private static final int NUM_OF_STARS = 25;
-    private Point[] mStarField;
-    private static final String STARFIELD_ID = "starfield";
-    private int mStarAlpha = 80;
-    private int mStarFade = 2;
-    private Random mRand;
-
     // Timing variables
     private static final String TIME_ELAPSED_ID = "timeElapsed";
     private int mTimeElapsed = 0;
@@ -127,9 +117,6 @@ public class MazeThread extends Thread {
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setAlpha(255);
         mPaint.setStrokeWidth(1);
-
-        mRand = new Random();
-        mStarField = new Point[NUM_OF_STARS];
 
         mUfo = new Point();
 
@@ -177,7 +164,6 @@ public class MazeThread extends Thread {
                 outState.putFloat(X_FRICTION_ID, mXFriction);
                 outState.putFloat(Y_FRICTION_ID, mYFriction);
                 outState.putInt(TIME_ELAPSED_ID, mTimeElapsed);
-                outState.putParcelableArray(STARFIELD_ID, mStarField);
             }
         }
         return outState;
@@ -199,7 +185,6 @@ public class MazeThread extends Thread {
             mXFriction = savedState.getFloat(X_FRICTION_ID);
             mYFriction = savedState.getFloat(Y_FRICTION_ID);
             mTimeElapsed = savedState.getInt(TIME_ELAPSED_ID);
-            mStarField = (Point[]) savedState.getParcelableArray(STARFIELD_ID);
         }
     }
 
@@ -265,16 +250,6 @@ public class MazeThread extends Thread {
         mPaint.setColor(Color.BLACK);
         canvas.drawRect(0, 0, mCanvasWidth, mCanvasHeight, mPaint);
 
-        // draw the stars
-        mPaint.setColor(Color.CYAN);
-        mPaint.setAlpha(mStarAlpha += mStarFade);
-        if (mStarAlpha >= 252 || mStarAlpha <= 80)
-            mStarFade = mStarFade * -1;
-        mPaint.setStrokeWidth(5);
-        for (int i = 0; i < NUM_OF_STARS; i++) {
-            canvas.drawPoint(mStarField[i].x, mStarField[i].y, mPaint);
-        }
-
         // draw the maze
         mPaint.setColor(Color.MAGENTA);
         for (Wall w : mMaze.getWalls()) {
@@ -289,14 +264,6 @@ public class MazeThread extends Thread {
         // Draw the ufo.
         canvas.drawBitmap(mUfoBm, mUfo.x - mUfoWidth / 2, mUfo.y - mUfoHeight / 2, null);
 
-    }
-
-    private void initializeStars() {
-        for (int i = 0; i < NUM_OF_STARS; i++) {
-            int x = mRand.nextInt(mCanvasWidth) + mCellWidth / 2;
-            int y = mRand.nextInt(mCanvasHeight) + mCellHeight / 2;
-            mStarField[i] = (new Point(x, y));
-        }
     }
 
     /**
@@ -348,7 +315,6 @@ public class MazeThread extends Thread {
                 mXFriction = 0;
                 mYFriction = 0;
                 mTimeElapsed = 0;
-                initializeStars();
                 calculateGFXSizes();
                 mUfo.x = mStartRect.centerX();
                 mUfo.y = mStartRect.centerY();
