@@ -247,11 +247,11 @@ public class MazeThread extends Thread {
 
     private void mDraw(Canvas canvas) {
         // draw the background
-        mPaint.setColor(Color.BLACK);
+        mPaint.setColor(mContext.getResources().getColor(R.color.paperwhite));
         canvas.drawRect(0, 0, mCanvasWidth, mCanvasHeight, mPaint);
 
         // draw the maze
-        mPaint.setColor(Color.MAGENTA);
+        mPaint.setColor(Color.BLACK);
         for (Wall w : mMaze.getWalls()) {
             canvas.drawRect(w.getBounds(), mPaint);
         }
