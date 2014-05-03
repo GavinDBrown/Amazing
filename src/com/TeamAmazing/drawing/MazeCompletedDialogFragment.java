@@ -95,8 +95,8 @@ public class MazeCompletedDialogFragment extends DialogFragment {
             message = String.format(Locale.US, res.getString(R.string.maze_finished_minutes),
                     minute, second, millis);
         } else if (minute > 0) {
-            message = String
-                    .format(Locale.US, res.getString(R.string.maze_finished_minute), millis);
+            message = String.format(Locale.US, res.getString(R.string.maze_finished_minute),
+                    second, millis);
         } else {
             message = String.format(Locale.US, res.getString(R.string.maze_finished_seconds),
                     second, millis);

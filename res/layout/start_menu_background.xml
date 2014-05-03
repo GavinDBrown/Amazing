@@ -3,7 +3,7 @@
     android:id="@+id/start_menu_background"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@color/black"
+    android:gravity="center_vertical"
     android:orientation="vertical" >
 
     <Button
@@ -12,9 +12,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
-        android:background="@drawable/rounded_corner_box"
+        android:background="@drawable/start_menu_button"
         android:onClick="startKruskalsMaze"
-        android:text="@string/start_kruskals_maze" />
+        android:text="@string/start_kruskals_maze"
+        android:textColor="@android:color/black" />
 
     <Button
         android:id="@+id/start_medium_maze"
@@ -22,9 +23,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
-        android:background="@drawable/rounded_corner_box"
+        android:background="@drawable/start_menu_button"
         android:onClick="startMediumMaze"
-        android:text="@string/start_medium_maze" />
+        android:text="@string/start_medium_maze"
+        android:textColor="@android:color/black" />
 
     <Button
         android:id="@+id/start_recursive_backtracker_maze"
@@ -32,8 +34,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="@dimen/button_margins"
-        android:background="@drawable/rounded_corner_box"
+        android:background="@drawable/start_menu_button"
         android:onClick="startRecursiveBacktrackerMaze"
-        android:text="@string/start_recursive_backtracker_maze" />
+        android:text="@string/start_recursive_backtracker_maze"
+        android:textColor="@android:color/black" />
 
 </LinearLayout>
