@@ -41,6 +41,7 @@ public class MazeThread extends Thread {
     private volatile float mXTouch;
     private volatile float mYTouch;
     private volatile boolean mIsAccelerating;
+    private static final float TOUCH_TOLERANCE = 4;
 
     // The size of the maze
     private int mCellsPerRow = 12;
@@ -281,11 +282,11 @@ public class MazeThread extends Thread {
      * Update the position of the UFO
      */
     private void updatePosition() {
-        // Add previous position to mPath
-        mPath.lineTo(mUfo.x, mUfo.y);
 
         Point vel = new Point(Math.round(mUfoXVelocity), Math.round(mUfoYVelocity));
+        boolean positionUpdated = false;
         while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
+            positionUpdated = true;
             if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
                 takeNStepsInXDirection(vel, Math.abs(vel.x / vel.y));
                 takeNStepsInYDirection(vel, 1);
@@ -301,6 +302,10 @@ public class MazeThread extends Thread {
                 }
             }
         }
+
+        // Add current position to mPath if the position changed.
+        if (positionUpdated)
+            mPath.lineTo(mUfo.x, mUfo.y);
 
         // Check if we are in the end cell.
         if (mEndRect.contains(mUfo.x, mUfo.y)) {
@@ -466,7 +471,8 @@ public class MazeThread extends Thread {
      * Update the velocity of the ufo.
      */
     private void updateVelocity() {
-        if (mIsAccelerating) {
+        if (mIsAccelerating
+                && (Math.abs(mXTouch - mUfo.x) > TOUCH_TOLERANCE || Math.abs(mYTouch - mUfo.y) > TOUCH_TOLERANCE)) {
             mUfoXVelocity = TOUCH_FACTOR
                     * (mXTouch - mUfo.x + Math.round(PREVIOUS_VELOCITY_FAC * mUfoXVelocity));
             mUfoYVelocity = TOUCH_FACTOR
