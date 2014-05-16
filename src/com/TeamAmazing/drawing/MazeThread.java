@@ -58,9 +58,9 @@ public class MazeThread extends Thread {
     private static final double UFO_ASPECT_RATIO = 35.0 / 18.0;
 
     // ufo variables
-    private static final float PREVIOUS_VELOCITY_FAC = .49f;
-    private static final float TOUCH_FACTOR = .075f;
-    private static final float FRICTION = .05f;
+    private static final float PREVIOUS_VELOCITY_FAC = .25f;
+    private static final float TOUCH_FACTOR = .2f;
+    private static final float FRICTION = .25f;
     private static final String UFO_X_VELOCITY_ID = "ufoxvelocity";
     private float mUfoXVelocity = 0;
     private static final String UFO_Y_VELOCITY_ID = "ufoyvelocity";
@@ -69,8 +69,8 @@ public class MazeThread extends Thread {
     private float mXFriction = 0;
     private static final String Y_FRICTION_ID = "yfriction";
     private float mYFriction = 0;
-    private static final int MAX_SPEED = 10;
-    private static final float REBOUND_FAC = .5f;
+    private static final int MAX_SPEED = 15;
+    private static final float REBOUND_FAC = .25f;
     private static final String UFO_ID = "ufo";
     private Point mUfo;
     private Path mPath;
