@@ -13,6 +13,9 @@
     <string name="pref_orientation_summ_on">Uncheck to use landscape mode.</string>
     <string name="pref_orientation_summ_off">Check to use portrait mode.</string>
     <string name="pref_orientation">Screen Orientation</string>
+    <string name="pref_path">UFO Path</string>
+    <string name="pref_path_summ_on">Uncheck to no longer display the path the UFO has traveled.</string>
+    <string name="pref_path_summ_off">Check to display the path the UFO has traveled.</string>
     <string name="settings">Settings</string>
     <string name="maze_finished_hour">Nice, you made it to the end. See how fast you can do it next time.</string>
     <string name="maze_finished_minutes">Good job, you completed the maze in %1$d minutes and %2$d.%3$d seconds.</string>

@@ -16,6 +16,7 @@
 package com.TeamAmazing.drawing;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -26,6 +27,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -91,6 +93,7 @@ public class MazeThread extends Thread {
     private SurfaceHolder mSurfaceHolder;
     private Handler mHandler;
     private Context mContext;
+    private SharedPreferences mPrefs;
 
     public static final int MESSAGE_MAZE_COMPLETED = 1;
     public static final int MESSAGE_UPDATE_TIMER = 2;
@@ -116,6 +119,7 @@ public class MazeThread extends Thread {
         mHandler = handler;
         mMazeType = mazeType;
         mContext = context;
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.FILL);
@@ -213,8 +217,7 @@ public class MazeThread extends Thread {
             }
             // Check if thread was stopped while it was paused.
             if (mState == STATE_STOPPED)
-                // TODO change the below to a return statement
-                break;
+                return;
 
             mTimeStart = System.currentTimeMillis();
 
@@ -277,11 +280,14 @@ public class MazeThread extends Thread {
         mPaint.setAlpha(255);
 
         // Draw the path
-        mPaint.setColor(mContext.getResources().getColor(R.color.pencil_grey));
-        mPaint.setStrokeWidth(3);
-        mPaint.setStyle(Paint.Style.STROKE);
-        canvas.drawPath(mPath, mPaint);
-        mPaint.setStyle(Paint.Style.FILL);
+        // TODO
+        if (mPrefs.getBoolean("pref_path", true)) {
+            mPaint.setColor(mContext.getResources().getColor(R.color.pencil_grey));
+            mPaint.setStrokeWidth(3);
+            mPaint.setStyle(Paint.Style.STROKE);
+            canvas.drawPath(mPath, mPaint);
+            mPaint.setStyle(Paint.Style.FILL);
+        }
 
         // Draw the ufo.
         canvas.drawBitmap(mUfoBm, mUfo.x - mUfoWidth / 2, mUfo.y - mUfoHeight / 2, null);

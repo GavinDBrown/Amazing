@@ -14,5 +14,11 @@
         android:summaryOn="@string/pref_orientation_summ_on"
         android:summaryOff="@string/pref_orientation_summ_off"
         android:title="@string/pref_orientation" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_path"
+        android:summaryOn="@string/pref_path_summ_on"
+        android:summaryOff="@string/pref_path_summ_off"
+        android:title="@string/pref_path" />
 
 </PreferenceScreen>
