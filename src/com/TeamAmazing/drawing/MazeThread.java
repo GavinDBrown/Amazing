@@ -94,12 +94,13 @@ public class MazeThread extends Thread {
 
     public static final int MESSAGE_MAZE_COMPLETED = 1;
     public static final int MESSAGE_UPDATE_TIMER = 2;
+    public static final int MESSAGE_DISMISS_DIALOG = 3;
 
     // Thread states
     private static final int STATE_STOPPED = 0;
     private static final int STATE_RUNNING = 1;
     private static final int STATE_PAUSED = 2;
-    private static final int STATE_WAIT_FOR_DIALOG = 3;
+    private static final int STATE_MAZE_FINISHED = 3;
     private static final int STATE_RESET_AFTER_MEASURE = 4;
     private volatile int mState = STATE_STOPPED;
 
@@ -149,6 +150,12 @@ public class MazeThread extends Thread {
             if (mState == STATE_PAUSED)
                 mState = STATE_RUNNING;
             mSurfaceHolder.notify();
+            if (mState == STATE_MAZE_FINISHED) {
+                // Dismiss the dialog and set the state to running so the maze
+                // will be drawn once and the dialog recreated.
+                mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_DISMISS_DIALOG));
+                mState = STATE_RUNNING;
+            }
         }
     }
 
@@ -206,6 +213,7 @@ public class MazeThread extends Thread {
             }
             // Check if thread was stopped while it was paused.
             if (mState == STATE_STOPPED)
+                // TODO change the below to a return statement
                 break;
 
             mTimeStart = System.currentTimeMillis();
@@ -220,12 +228,14 @@ public class MazeThread extends Thread {
                         pause();
                     } else {
 
-                        // Update velocity based on touch
-                        // information.
-                        updateVelocity();
+                        if (mState == STATE_RUNNING) {
+                            // Update velocity based on touch
+                            // information.
+                            updateVelocity();
 
-                        // Update position with boundary checking
-                        updatePosition();
+                            // Update position with boundary checking
+                            updatePosition();
+                        }
 
                         // draw to the canvas
                         mDraw(c);
@@ -240,7 +250,7 @@ public class MazeThread extends Thread {
                 }
             }
 
-            if (mState != STATE_WAIT_FOR_DIALOG) {
+            if (mState != STATE_MAZE_FINISHED) {
                 mTimeElapsed = mTimeElapsed + (int) (System.currentTimeMillis() - mTimeStart);
                 mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_UPDATE_TIMER, mTimeElapsed, 0,
                         null));
@@ -318,7 +328,7 @@ public class MazeThread extends Thread {
         // Send a message to the UI thread
         mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_MAZE_COMPLETED, mTimeElapsed, 0, null));
         synchronized (mSurfaceHolder) {
-            mState = STATE_WAIT_FOR_DIALOG;
+            mState = STATE_MAZE_FINISHED;
         }
     }
 

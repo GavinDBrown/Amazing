@@ -48,6 +48,9 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
 
     private ActivityHandler mActivityHandler;
 
+    /** The dialog displayed when the maze is completed. */
+    private MazeCompletedDialogFragment mCongratulationsFragment;
+
     private Menu mOptionsMenu;
 
     private String mTimerText = "";
@@ -218,12 +221,11 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
         switch (msg.what) {
             case MazeThread.MESSAGE_MAZE_COMPLETED:
                 // display congratulatory dialog
-                MazeCompletedDialogFragment congratulationsFragment = new MazeCompletedDialogFragment();
+                mCongratulationsFragment = new MazeCompletedDialogFragment();
                 Bundle args = new Bundle();
                 args.putInt(MAZE_COMPLETED_TIME_ID, msg.arg1);
-                congratulationsFragment.setArguments(args);
-                congratulationsFragment.setCancelable(false);
-                congratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
+                mCongratulationsFragment.setArguments(args);
+                mCongratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
                 break;
             case MazeThread.MESSAGE_UPDATE_TIMER:
                 // update the timer with the supplied string
@@ -231,6 +233,11 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
                 if (mOptionsMenu != null) {
                     onPrepareOptionsMenu(mOptionsMenu);
                 }
+                break;
+            case MazeThread.MESSAGE_DISMISS_DIALOG:
+                if (mCongratulationsFragment != null)
+                    mCongratulationsFragment.dismiss();
+                break;
         }
     }
 
