@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.activities;
+package com.GavinDev.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,7 +24,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
-import com.TeamAmazing.game.R;
+import com.GavinDev.Amazing.R;
 
 public class SettingsActivity extends PreferenceActivity {
     private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;

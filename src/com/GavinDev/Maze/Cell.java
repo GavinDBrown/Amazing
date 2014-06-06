@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.Maze;
+package com.GavinDev.Maze;
 
 import android.graphics.Point;
 import android.os.Parcel;

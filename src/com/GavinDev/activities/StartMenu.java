@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.activities;
+package com.GavinDev.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -26,9 +26,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.TeamAmazing.drawing.GolSurfaceView;
-import com.TeamAmazing.drawing.GolThread;
-import com.TeamAmazing.game.R;
+import com.GavinDev.Amazing.R;
+import com.GavinDev.drawing.GolSurfaceView;
+import com.GavinDev.drawing.GolThread;
 
 public class StartMenu extends Activity {
 

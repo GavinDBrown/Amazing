@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.drawing;
+package com.GavinDev.drawing;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -23,8 +23,8 @@ import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
 
-import com.TeamAmazing.activities.MazeGame;
-import com.TeamAmazing.game.R;
+import com.GavinDev.Amazing.R;
+import com.GavinDev.activities.MazeGame;
 
 import java.util.Locale;
 

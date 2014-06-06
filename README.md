@@ -1,8 +1,7 @@
 Amazing
 =======
 
-A simple maze navigation game.
+An a-maze-ing open source maze navigation game with randomly generated mazes.
 
-Fly the spaceship to the red square. See how fast you can go!
+Navigate the UFO to the end of the maze as fast as you can. Try the different difficulty levels that are each produced with different maze generation algorithms. See how fast you can navigate each maze type!
 
-Find it on Google Play at: https://play.google.com/store/apps/details?id=com.TeamAmazing.game

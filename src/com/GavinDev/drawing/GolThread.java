@@ -13,13 +13,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.drawing;
+package com.GavinDev.drawing;
 
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
 
-import com.TeamAmazing.Maze.GameOfLife;
+import com.GavinDev.Maze.GameOfLife;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

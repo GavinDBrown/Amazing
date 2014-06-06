@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.drawing;
+package com.GavinDev.drawing;
 
 import android.content.Context;
 import android.util.AttributeSet;

@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.TeamAmazing.Maze;
+package com.GavinDev.Maze;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -24,7 +24,7 @@ import android.graphics.Paint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.TeamAmazing.drawing.GolThread;
+import com.GavinDev.drawing.GolThread;
 
 import java.util.HashMap;
 import java.util.HashSet;
