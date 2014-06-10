@@ -15,7 +15,6 @@
 
 package com.GavinDev.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -29,8 +28,9 @@ import android.view.View;
 import com.GavinDev.Amazing.R;
 import com.GavinDev.drawing.GolSurfaceView;
 import com.GavinDev.drawing.GolThread;
+import com.google.example.games.basegameutils.BaseGameActivity;
 
-public class StartMenu extends Activity {
+public class StartMenu extends BaseGameActivity implements View.OnClickListener {
 
     public static final int PERFECT_MAZE = 0;
     public static final int DFS_MAZE = 1;
@@ -74,6 +74,11 @@ public class StartMenu extends Activity {
             // The game of life background is disabled
             setContentView(R.layout.start_menu_background);
         }
+
+        // Set up callbacks to detect if the user clicked on the sign-in and
+        // sign-out buttons.
+        findViewById(R.id.sign_in_button).setOnClickListener(this);
+        findViewById(R.id.sign_out_button).setOnClickListener(this);
 
         prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
@@ -220,6 +225,39 @@ public class StartMenu extends Activity {
         Intent intent = new Intent(this, MazeGame.class);
         intent.putExtra(MAZE_TYPE, GROWING_TREE_MAZE);
         startActivity(intent);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.sign_in_button:
+                // start the asynchronous sign in flow
+                beginUserInitiatedSignIn();
+                break;
+            case R.id.sign_out_button:
+                // sign out.
+                signOut();
+                // show sign-in button, hide the sign-out button
+                findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+                findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onSignInFailed() {
+        // Sign in has failed. So show the user the sign-in button.
+        findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+        findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onSignInSucceeded() {
+        // show sign-out button, hide the sign-in button
+        findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+        findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+
+        // TODO update UI, enable functionality that depends on
+        // sign in, etc
     }
 
 }

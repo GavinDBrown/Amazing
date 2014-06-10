@@ -262,4 +262,5 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
 
         return string;
     }
+
 }
