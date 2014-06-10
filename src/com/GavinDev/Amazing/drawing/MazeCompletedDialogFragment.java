@@ -36,6 +36,8 @@ public class MazeCompletedDialogFragment extends DialogFragment {
         public void onReset();
 
         public void onStartMenu();
+
+        public void onScores();
     }
 
     @Override
@@ -69,6 +71,13 @@ public class MazeCompletedDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int id) {
                 // User clicked reset button
                 mCallback.onReset();
+            }
+        });
+        builder.setNeutralButton(R.string.scores, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked reset button
+                mCallback.onScores();
             }
         });
         builder.setNegativeButton(R.string.menu, new DialogInterface.OnClickListener() {

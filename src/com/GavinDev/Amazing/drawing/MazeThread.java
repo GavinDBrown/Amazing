@@ -35,7 +35,6 @@ import com.GavinDev.Amazing.R;
 import com.GavinDev.Amazing.Maze.Cell;
 import com.GavinDev.Amazing.Maze.Maze;
 import com.GavinDev.Amazing.Maze.Wall;
-import com.GavinDev.Amazing.activities.StartMenu;
 
 public class MazeThread extends Thread {
 
@@ -81,7 +80,7 @@ public class MazeThread extends Thread {
     // maze variables
     private static final String MAZE_ID = "maze";
     private Maze mMaze;
-    private volatile int mMazeType = StartMenu.PERFECT_MAZE;
+    private int mMazeType;
     private Rect mEndRect;
     private Rect mStartRect;
 

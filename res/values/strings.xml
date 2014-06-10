@@ -4,6 +4,7 @@
     <string name="app_name">A-maze-ing</string>
     <string name="reset">New game</string>
     <string name="menu">Menu</string>
+    <string name="scores">Scores</string>
     <string name="maze_timer"></string>
     <string name="start_kruskals_maze">Easy</string>
     <string name="start_medium_maze">Medium</string>

@@ -54,6 +54,8 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
 
     private Menu mOptionsMenu;
 
+    public int mMazeType;
+
     private String mTimerText = "";
 
     public static final String MAZE_COMPLETED_TIME_ID = "mazeCompletedTime";
@@ -85,11 +87,12 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
         // Defines a Handler object that's attached to the UI thread
         mActivityHandler = new ActivityHandler(this, Looper.getMainLooper());
 
+        mMazeType = getIntent().getIntExtra(StartMenu.MAZE_TYPE, -1);
+
         setContentView(R.layout.maze_game);
         // get handles to the View and start the MazeThread.
         mMazeView = (MazeSurfaceView) findViewById(R.id.maze_view);
-        mMazeThread = new MazeThread(mMazeView.getHolder(), this, mActivityHandler, getIntent()
-                .getIntExtra(StartMenu.MAZE_TYPE, StartMenu.PERFECT_MAZE));
+        mMazeThread = new MazeThread(mMazeView.getHolder(), this, mActivityHandler, mMazeType);
         mMazeView.setThread(mMazeThread);
         mMazeThread.start();
     }
@@ -183,6 +186,26 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
     @Override
     public void onReset() {
         mMazeThread.newMaze();
+    }
+
+    @Override
+    public void onScores() {
+        if (isSignedIn()) {
+            switch (mMazeType) {
+                case StartMenu.PERFECT_MAZE:
+                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                            getString(R.string.leaderboard_easy)), 0);
+                    break;
+                case StartMenu.GROWING_TREE_MAZE:
+                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                            getString(R.string.leaderboard_medium)), 0);
+                    break;
+                case StartMenu.DFS_MAZE:
+                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                            getString(R.string.leaderboard_hard)), 0);
+                    break;
+            }
+        }
     }
 
     /**
