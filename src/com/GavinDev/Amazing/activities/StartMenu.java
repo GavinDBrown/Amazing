@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.activities;
+package com.GavinDev.Amazing.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,11 +26,11 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.GavinDev.Amazing.R;
-import com.GavinDev.drawing.GolSurfaceView;
-import com.GavinDev.drawing.GolThread;
+import com.GavinDev.Amazing.drawing.GolSurfaceView;
+import com.GavinDev.Amazing.drawing.GolThread;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
-public class StartMenu extends BaseGameActivity implements View.OnClickListener {
+public class StartMenu extends BaseGameActivity {
 
     public static final int PERFECT_MAZE = 0;
     public static final int DFS_MAZE = 1;
@@ -74,11 +74,6 @@ public class StartMenu extends BaseGameActivity implements View.OnClickListener 
             // The game of life background is disabled
             setContentView(R.layout.start_menu_background);
         }
-
-        // Set up callbacks to detect if the user clicked on the sign-in and
-        // sign-out buttons.
-        findViewById(R.id.sign_in_button).setOnClickListener(this);
-        findViewById(R.id.sign_out_button).setOnClickListener(this);
 
         prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
@@ -191,6 +186,13 @@ public class StartMenu extends BaseGameActivity implements View.OnClickListener 
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.start_menu_activity_actions, menu);
+
+        // Change visibility of buttons based on sign in status
+        if (isSignedIn()) {
+            menu.findItem(R.id.sign_in_button).setVisible(false);
+        } else {
+            menu.findItem(R.id.sign_out_button).setVisible(false);
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -201,6 +203,15 @@ public class StartMenu extends BaseGameActivity implements View.OnClickListener 
             case R.id.settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.sign_in_button:
+                // start the asynchronous sign in flow
+                beginUserInitiatedSignIn();
+                return true;
+            case R.id.sign_out_button:
+                signOut();
+                // change the visibility of the sign in buttons.
+                invalidateOptionsMenu();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -228,33 +239,15 @@ public class StartMenu extends BaseGameActivity implements View.OnClickListener 
     }
 
     @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.sign_in_button:
-                // start the asynchronous sign in flow
-                beginUserInitiatedSignIn();
-                break;
-            case R.id.sign_out_button:
-                // sign out.
-                signOut();
-                // show sign-in button, hide the sign-out button
-                findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-                findViewById(R.id.sign_out_button).setVisibility(View.GONE);
-        }
-    }
-
-    @Override
     public void onSignInFailed() {
         // Sign in has failed. So show the user the sign-in button.
-        findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-        findViewById(R.id.sign_out_button).setVisibility(View.GONE);
+        invalidateOptionsMenu();
     }
 
     @Override
     public void onSignInSucceeded() {
         // show sign-out button, hide the sign-in button
-        findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-        findViewById(R.id.sign_out_button).setVisibility(View.VISIBLE);
+        invalidateOptionsMenu();
 
         // TODO update UI, enable functionality that depends on
         // sign in, etc

@@ -13,12 +13,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.Maze;
+package com.GavinDev.Amazing.Maze;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.GavinDev.activities.StartMenu;
+import com.GavinDev.Amazing.activities.StartMenu;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

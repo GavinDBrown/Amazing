@@ -13,66 +13,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.drawing;
+package com.GavinDev.Amazing.drawing;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class GolSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
-    /** The GolThread is created and destroyed with the StartMenu Activity. */
-    private GolThread mGolThread;
-    SurfaceHolder surfaceHolder;
+public class MazeSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+    /** The thread that actually draws the animation */
+    private MazeThread mMazeThread;
+    SurfaceHolder mSurfaceHolder;
 
-    public GolSurfaceView(Context context, AttributeSet attrs) {
+    // class constructors
+    public MazeSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        // Add our callback to the SurfaceHolder
-        SurfaceHolder holder = getHolder();
-        holder.addCallback(this);
-
+        // initialize our screen holder
+        mSurfaceHolder = getHolder();
+        mSurfaceHolder.addCallback(this);
+        setFocusable(true);
     }
 
-    public GolSurfaceView(Context context) {
+    public MazeSurfaceView(Context context) {
         super(context);
-        // Add our callback to the SurfaceHolder
-        SurfaceHolder holder = getHolder();
-        holder.addCallback(this);
-
+        // initialize our screen holder
+        mSurfaceHolder = getHolder();
+        mSurfaceHolder.addCallback(this);
+        setFocusable(true);
     }
 
     /**
-     * @param golThread The thread to draw into this GolSurfaceView.
+     * @param mazeThread The thread to draw into this MazeSurfaceView.
      */
-    public void setThread(GolThread golThread) {
-        mGolThread = golThread;
+    public void setThread(MazeThread mazeThread) {
+        mMazeThread = mazeThread;
     }
 
-    /**
-     * @return The GolThread that draws into this GolSurfaceView.
-     */
-    public GolThread getThread() {
-        return mGolThread;
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        return mMazeThread.handleTouchEvent(ev);
     }
 
-    /**
-     * Callback invoked when the surface dimensions change.
-     * 
-     * @see GolThread.setSurfaceSize
-     */
+    /** Callback invoked when the surface dimensions change. */
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        mGolThread.setSurfaceSize(width, height);
+        mMazeThread.setSurfaceSize(width, height);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        mGolThread.pause();
+        mMazeThread.pause();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mGolThread.unpause();
+        mMazeThread.unpause();
     }
-
 }

@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.activities;
+package com.GavinDev.Amazing.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -31,10 +31,10 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.GavinDev.Amazing.R;
-import com.GavinDev.drawing.MazeCompletedDialogFragment;
-import com.GavinDev.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
-import com.GavinDev.drawing.MazeSurfaceView;
-import com.GavinDev.drawing.MazeThread;
+import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment;
+import com.GavinDev.Amazing.drawing.MazeSurfaceView;
+import com.GavinDev.Amazing.drawing.MazeThread;
+import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
 
 import java.lang.ref.WeakReference;
 import java.util.Locale;

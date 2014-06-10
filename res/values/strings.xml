@@ -1,7 +1,7 @@
 <resources>
 
-    <string name="app_id">1234</string>
-    <string name="app_name">Amazing</string>
+    <string name="app_id">451040711516</string>
+    <string name="app_name">A-maze-ing</string>
     <string name="reset">New game</string>
     <string name="menu">Menu</string>
     <string name="maze_timer"></string>
@@ -22,5 +22,6 @@
     <string name="maze_finished_minutes">Good job, you completed the maze in %1$d minutes and %2$d.%3$d seconds.</string>
     <string name="maze_finished_minute">Good job, you completed the maze in 1 minute and %1$d.%2$d seconds.</string>
     <string name="maze_finished_seconds">Congratulations, you completed the maze in %1$d.%2$d seconds!</string>
-
+    <string name="sign_in">Sign in</string>
+    <string name="sign_out">Sign out</string>
 </resources>

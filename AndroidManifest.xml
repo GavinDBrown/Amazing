@@ -20,7 +20,7 @@
         <meta-data android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/app_id" />
         <activity
-            android:name="com.GavinDev.activities.StartMenu" >
+            android:name="com.GavinDev.Amazing.activities.StartMenu" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,13 +28,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.GavinDev.activities.MazeGame"
-            android:parentActivityName="com.GavinDev.activities.StartMenu" 
+            android:name="com.GavinDev.Amazing.activities.MazeGame"
+            android:parentActivityName="com.GavinDev.Amazing.activities.StartMenu" 
             android:launchMode="singleTask" >
         </activity>
         <activity
-            android:name="com.GavinDev.activities.SettingsActivity"
-            android:parentActivityName="com.GavinDev.activities.StartMenu" >
+            android:name="com.GavinDev.Amazing.activities.SettingsActivity"
+            android:parentActivityName="com.GavinDev.Amazing.activities.StartMenu" >
         </activity>
     </application>
 

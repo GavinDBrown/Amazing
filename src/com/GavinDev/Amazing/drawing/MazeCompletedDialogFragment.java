@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.drawing;
+package com.GavinDev.Amazing.drawing;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -24,7 +24,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 
 import com.GavinDev.Amazing.R;
-import com.GavinDev.activities.MazeGame;
+import com.GavinDev.Amazing.activities.MazeGame;
 
 import java.util.Locale;
 

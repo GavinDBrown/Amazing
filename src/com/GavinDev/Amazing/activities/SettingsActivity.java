@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.activities;
+package com.GavinDev.Amazing.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;

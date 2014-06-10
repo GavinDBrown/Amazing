@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <com.GavinDev.drawing.GolSurfaceView
+    <com.GavinDev.Amazing.drawing.GolSurfaceView
         android:id="@+id/game_of_life_background"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
@@ -47,19 +47,6 @@
             android:text="@string/start_recursive_backtracker_maze"
             android:textColor="@android:color/black" />
 
-        <!-- sign-in button -->
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/sign_in_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <!-- sign-out button -->
-        <Button
-            android:id="@+id/sign_out_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sign Out"
-            android:visibility="gone" />
     </LinearLayout>
 
 </RelativeLayout>

@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.drawing;
+package com.GavinDev.Amazing.drawing;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -32,10 +32,10 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
 import com.GavinDev.Amazing.R;
-import com.GavinDev.Maze.Cell;
-import com.GavinDev.Maze.Maze;
-import com.GavinDev.Maze.Wall;
-import com.GavinDev.activities.StartMenu;
+import com.GavinDev.Amazing.Maze.Cell;
+import com.GavinDev.Amazing.Maze.Maze;
+import com.GavinDev.Amazing.Maze.Wall;
+import com.GavinDev.Amazing.activities.StartMenu;
 
 public class MazeThread extends Thread {
 
