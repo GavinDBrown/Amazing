@@ -15,7 +15,6 @@
 
 package com.GavinDev.Amazing.activities;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -35,10 +34,12 @@ import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment;
 import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
 import com.GavinDev.Amazing.drawing.MazeSurfaceView;
 import com.GavinDev.Amazing.drawing.MazeThread;
+import com.google.android.gms.games.Games;
+import com.google.example.games.basegameutils.BaseGameActivity;
 
 import java.util.Locale;
 
-public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
+public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedCallback,
         ActivityHandlerCallback {
     /** The thread that's running the maze. */
     private MazeThread mMazeThread;
@@ -77,6 +78,9 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
         }
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Avoid automatic sign-in's in this class.
+        getGameHelper().setMaxAutoSignInAttempts(0);
 
         // Defines a Handler object that's attached to the UI thread
         mActivityHandler = new ActivityHandler(this, Looper.getMainLooper());
@@ -196,6 +200,7 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
      * Called on the UI Thread via an ActivityHandler. Displays the
      * MazeCompletedDialogFragment or updates the timer in the actionbar.
      */
+    @Override
     public void handleMessage(Message msg) {
         switch (msg.what) {
             case MazeThread.MESSAGE_MAZE_COMPLETED:
@@ -207,8 +212,22 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
                 mCongratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
 
                 // Submit score to leaderboard
-                // TODO Games.Leaderboards.submitScore(getApiClient(), );
-
+                if (isSignedIn()) {
+                    switch (msg.arg2) {
+                        case StartMenu.PERFECT_MAZE:
+                            Games.Leaderboards.submitScore(getApiClient(),
+                                    getString(R.string.leaderboard_easy), msg.arg1);
+                            break;
+                        case StartMenu.GROWING_TREE_MAZE:
+                            Games.Leaderboards.submitScore(getApiClient(),
+                                    getString(R.string.leaderboard_medium), msg.arg1);
+                            break;
+                        case StartMenu.DFS_MAZE:
+                            Games.Leaderboards.submitScore(getApiClient(),
+                                    getString(R.string.leaderboard_hard), msg.arg1);
+                            break;
+                    }
+                }
                 break;
             case MazeThread.MESSAGE_UPDATE_TIMER:
                 // update the timer with the supplied string
@@ -244,6 +263,16 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
         }
 
         return string;
+    }
+
+    @Override
+    public void onSignInFailed() {
+        // ignore
+    }
+
+    @Override
+    public void onSignInSucceeded() {
+        // ignore
     }
 
 }

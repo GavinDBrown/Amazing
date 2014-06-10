@@ -332,7 +332,8 @@ public class MazeThread extends Thread {
 
     private void mazeCompleted() {
         // Send a message to the UI thread
-        mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_MAZE_COMPLETED, mTimeElapsed, 0, null));
+        mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_MAZE_COMPLETED, mTimeElapsed,
+                mMazeType, null));
         synchronized (mSurfaceHolder) {
             mState = STATE_MAZE_FINISHED;
         }
