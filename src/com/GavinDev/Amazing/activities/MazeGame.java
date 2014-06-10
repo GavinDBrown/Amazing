@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -31,15 +30,16 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.GavinDev.Amazing.R;
+import com.GavinDev.Amazing.activities.ActivityHandler.ActivityHandlerCallback;
 import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment;
+import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
 import com.GavinDev.Amazing.drawing.MazeSurfaceView;
 import com.GavinDev.Amazing.drawing.MazeThread;
-import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
 
-import java.lang.ref.WeakReference;
 import java.util.Locale;
 
-public class MazeGame extends Activity implements OnDialogButtonPressedCallback {
+public class MazeGame extends Activity implements OnDialogButtonPressedCallback,
+        ActivityHandlerCallback {
     /** The thread that's running the maze. */
     private MazeThread mMazeThread;
 
@@ -193,27 +193,6 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
     }
 
     /**
-     * Subclass of Handler that contains a WeakReference to an Activity and
-     * passes messages through for the activity to handle.
-     */
-    static class ActivityHandler extends Handler {
-        private final WeakReference<MazeGame> mActivity;
-
-        ActivityHandler(MazeGame act, Looper looper) {
-            super(looper);
-            mActivity = new WeakReference<MazeGame>(act);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            MazeGame act = mActivity.get();
-            if (act != null) {
-                act.handleMessage(msg);
-            }
-        }
-    }
-
-    /**
      * Called on the UI Thread via an ActivityHandler. Displays the
      * MazeCompletedDialogFragment or updates the timer in the actionbar.
      */
@@ -226,6 +205,10 @@ public class MazeGame extends Activity implements OnDialogButtonPressedCallback 
                 args.putInt(MAZE_COMPLETED_TIME_ID, msg.arg1);
                 mCongratulationsFragment.setArguments(args);
                 mCongratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
+
+                // Submit score to leaderboard
+                // TODO Games.Leaderboards.submitScore(getApiClient(), );
+
                 break;
             case MazeThread.MESSAGE_UPDATE_TIMER:
                 // update the timer with the supplied string
