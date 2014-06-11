@@ -1,5 +1,11 @@
 <resources>
-
+    <string name="okay">Okay</string>
+    <string name="sign_in_required">Please sign-in to do that.</string>
+    <string name="leaderboard_picker_dialog">Which leaderboard would you like to see?</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="leaderboards">Leaderboards</string>
     <string name="app_id">451040711516</string>
     <string name="app_name">A-maze-ing</string>
     <string name="reset">New game</string>

@@ -1,18 +1,23 @@
 
  <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/settings"
-          android:title="@string/settings"
-          android:showAsAction="never"/>
-    
+      
     <!-- sign-in to google play services -->
-        <item
-            android:id="@+id/sign_in_button"
+    <item   android:id="@+id/sign_in_button"
             android:title="@string/sign_in"
             android:showAsAction="never" />
 
     <!-- sign-out from google play services -->
-        <item
-            android:id="@+id/sign_out_button"
+    <item   android:id="@+id/sign_out_button"
             android:title="@string/sign_out"
             android:showAsAction="never" />
+    
+    <!-- view leaderboard -->
+    <item   android:id="@+id/leaderboards"
+            android:title="@string/leaderboards"
+            android:showAsAction="never" />
+    
+    <!-- settings -->
+    <item android:id="@+id/settings"
+          android:title="@string/settings"
+          android:showAsAction="never"/>
 </menu>

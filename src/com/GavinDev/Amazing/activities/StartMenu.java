@@ -15,6 +15,10 @@
 
 package com.GavinDev.Amazing.activities;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -26,11 +30,13 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.GavinDev.Amazing.R;
+import com.GavinDev.Amazing.activities.LeaderboardPickerDialog.LeaderboardPickerDialogCallback;
 import com.GavinDev.Amazing.drawing.GolSurfaceView;
 import com.GavinDev.Amazing.drawing.GolThread;
+import com.google.android.gms.games.Games;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
-public class StartMenu extends BaseGameActivity {
+public class StartMenu extends BaseGameActivity implements LeaderboardPickerDialogCallback {
 
     public static final int PERFECT_MAZE = 0;
     public static final int DFS_MAZE = 1;
@@ -44,6 +50,9 @@ public class StartMenu extends BaseGameActivity {
     private GolSurfaceView mGOLView;
 
     private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
+
+    /** Whether to show the leaderboard on successful sign-in */
+    private boolean mShowLeaderboard = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -213,6 +222,18 @@ public class StartMenu extends BaseGameActivity {
                 // change the visibility of the sign in buttons.
                 invalidateOptionsMenu();
                 return true;
+            case R.id.leaderboards:
+                if (isSignedIn()) {
+                    // display dialog asking for which leaderboard to show
+                    new LeaderboardPickerDialog()
+                            .show(getFragmentManager(), "TAG_PICK_LEADERBOARD");
+                } else {
+                    // ask user to sign in and then display the dialog asking
+                    // which leaderboard to show.
+                    beginUserInitiatedSignIn();
+                    mShowLeaderboard = true;
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -242,6 +263,14 @@ public class StartMenu extends BaseGameActivity {
     public void onSignInFailed() {
         // Sign in has failed. So show the user the sign-in button.
         invalidateOptionsMenu();
+
+        if (mShowLeaderboard) {
+            mShowLeaderboard = false;
+            // Show dialog telling user they need to sign-in to see
+            // leaderboards
+            new SignInRequiredDialog().show(getFragmentManager(), "TAG_SIGN_IN_REQUIRED");
+
+        }
     }
 
     @Override
@@ -251,6 +280,49 @@ public class StartMenu extends BaseGameActivity {
 
         // TODO update UI, enable functionality that depends on
         // sign in, etc
+
+        if (mShowLeaderboard) {
+            mShowLeaderboard = false;
+            // Display leaderboard picker dialog
+            new LeaderboardPickerDialog().show(getFragmentManager(), "TAG_PICK_LEADERBOARD");
+
+        }
+
+    }
+
+    @Override
+    public void displayEasyLeaderboard() {
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                getString(R.string.leaderboard_easy)), 0);
+    }
+
+    @Override
+    public void displayMediumLeaderboard() {
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                getString(R.string.leaderboard_medium)), 0);
+    }
+
+    @Override
+    public void displayHardLeaderboard() {
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
+                getString(R.string.leaderboard_hard)), 0);
+    }
+
+    public static class SignInRequiredDialog extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(R.string.sign_in_required).setNegativeButton(R.string.okay,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
     }
 
 }

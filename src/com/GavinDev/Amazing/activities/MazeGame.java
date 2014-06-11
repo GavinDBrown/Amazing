@@ -30,8 +30,7 @@ import android.widget.TextView;
 
 import com.GavinDev.Amazing.R;
 import com.GavinDev.Amazing.activities.ActivityHandler.ActivityHandlerCallback;
-import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment;
-import com.GavinDev.Amazing.drawing.MazeCompletedDialogFragment.OnDialogButtonPressedCallback;
+import com.GavinDev.Amazing.activities.MazeCompletedDialog.MazeCompletedDialogCallback;
 import com.GavinDev.Amazing.drawing.MazeSurfaceView;
 import com.GavinDev.Amazing.drawing.MazeThread;
 import com.google.android.gms.games.Games;
@@ -39,7 +38,7 @@ import com.google.example.games.basegameutils.BaseGameActivity;
 
 import java.util.Locale;
 
-public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedCallback,
+public class MazeGame extends BaseGameActivity implements MazeCompletedDialogCallback,
         ActivityHandlerCallback {
     /** The thread that's running the maze. */
     private MazeThread mMazeThread;
@@ -50,7 +49,7 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
     private ActivityHandler mActivityHandler;
 
     /** The dialog displayed when the maze is completed. */
-    private MazeCompletedDialogFragment mCongratulationsFragment;
+    private MazeCompletedDialog mCongratulationsFragment;
 
     private Menu mOptionsMenu;
 
@@ -59,6 +58,9 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
     private String mTimerText = "";
 
     public static final String MAZE_COMPLETED_TIME_ID = "mazeCompletedTime";
+
+    private static final int MINIMUM_TIME_TO_UNLOCK_NOVICE = 30000;
+    private static final int MINIMUM_TIME_TO_UNLOCK_MASTER = 10000;
 
     /**
      * Called when an instance of MazeGame is created. Changes the screen
@@ -227,30 +229,7 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
     public void handleMessage(Message msg) {
         switch (msg.what) {
             case MazeThread.MESSAGE_MAZE_COMPLETED:
-                // display congratulatory dialog
-                mCongratulationsFragment = new MazeCompletedDialogFragment();
-                Bundle args = new Bundle();
-                args.putInt(MAZE_COMPLETED_TIME_ID, msg.arg1);
-                mCongratulationsFragment.setArguments(args);
-                mCongratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
-
-                // Submit score to leaderboard
-                if (isSignedIn()) {
-                    switch (msg.arg2) {
-                        case StartMenu.PERFECT_MAZE:
-                            Games.Leaderboards.submitScore(getApiClient(),
-                                    getString(R.string.leaderboard_easy), msg.arg1);
-                            break;
-                        case StartMenu.GROWING_TREE_MAZE:
-                            Games.Leaderboards.submitScore(getApiClient(),
-                                    getString(R.string.leaderboard_medium), msg.arg1);
-                            break;
-                        case StartMenu.DFS_MAZE:
-                            Games.Leaderboards.submitScore(getApiClient(),
-                                    getString(R.string.leaderboard_hard), msg.arg1);
-                            break;
-                    }
-                }
+                mazeCompleted(msg.arg1, msg.arg2);
                 break;
             case MazeThread.MESSAGE_UPDATE_TIMER:
                 // update the timer with the supplied string
@@ -264,6 +243,58 @@ public class MazeGame extends BaseGameActivity implements OnDialogButtonPressedC
                     mCongratulationsFragment.dismiss();
                 break;
         }
+    }
+
+    private void mazeCompleted(int time, int mazeType) {
+        // display congratulatory dialog
+        mCongratulationsFragment = new MazeCompletedDialog();
+        Bundle args = new Bundle();
+        args.putInt(MAZE_COMPLETED_TIME_ID, time);
+        mCongratulationsFragment.setArguments(args);
+        mCongratulationsFragment.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
+
+        // Submit score to leaderboard
+        if (isSignedIn()) {
+            switch (mazeType) {
+                case StartMenu.PERFECT_MAZE:
+                    Games.Leaderboards.submitScore(getApiClient(),
+                            getString(R.string.leaderboard_easy), time);
+                    if (time < MINIMUM_TIME_TO_UNLOCK_NOVICE) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_easy_maze_novice));
+                    }
+                    if (time < MINIMUM_TIME_TO_UNLOCK_MASTER) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_easy_maze_master));
+                    }
+                    break;
+                case StartMenu.GROWING_TREE_MAZE:
+                    Games.Leaderboards.submitScore(getApiClient(),
+                            getString(R.string.leaderboard_medium), time);
+                    if (time < MINIMUM_TIME_TO_UNLOCK_NOVICE) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_medium_maze_novice));
+                    }
+                    if (time < MINIMUM_TIME_TO_UNLOCK_MASTER) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_medium_maze_master));
+                    }
+                    break;
+                case StartMenu.DFS_MAZE:
+                    Games.Leaderboards.submitScore(getApiClient(),
+                            getString(R.string.leaderboard_hard), time);
+                    if (time < MINIMUM_TIME_TO_UNLOCK_NOVICE) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_hard_maze_novice));
+                    }
+                    if (time < MINIMUM_TIME_TO_UNLOCK_MASTER) {
+                        Games.Achievements.unlock(getApiClient(),
+                                getString(R.string.achievement_hard_maze_master));
+                    }
+                    break;
+            }
+        }
+
     }
 
     /**
