@@ -53,6 +53,7 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
 
     /** Whether to show the leaderboard on successful sign-in */
     private boolean mShowLeaderboard = false;
+    private boolean mShowAchievements = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -234,6 +235,17 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
                     mShowLeaderboard = true;
                 }
                 return true;
+            case R.id.achievements:
+                if (isSignedIn()) {
+                    startActivityForResult(
+                            Games.Achievements.getAchievementsIntent(getApiClient()), 0);
+                } else {
+                    // ask user to sign in and then display the dialog asking
+                    // which leaderboard to show.
+                    beginUserInitiatedSignIn();
+                    mShowAchievements = true;
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -264,13 +276,14 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
         // Sign in has failed. So show the user the sign-in button.
         invalidateOptionsMenu();
 
-        if (mShowLeaderboard) {
-            mShowLeaderboard = false;
+        if (mShowLeaderboard || mShowAchievements) {
             // Show dialog telling user they need to sign-in to see
             // leaderboards
             new SignInRequiredDialog().show(getFragmentManager(), "TAG_SIGN_IN_REQUIRED");
 
         }
+        mShowLeaderboard = false;
+        mShowAchievements = false;
     }
 
     @Override
@@ -286,6 +299,11 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
             // Display leaderboard picker dialog
             new LeaderboardPickerDialog().show(getFragmentManager(), "TAG_PICK_LEADERBOARD");
 
+        }
+        if (mShowAchievements) {
+            mShowAchievements = false;
+            // Display achievements
+            startActivityForResult(Games.Achievements.getAchievementsIntent(getApiClient()), 0);
         }
 
     }

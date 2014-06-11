@@ -16,6 +16,11 @@
             android:title="@string/leaderboards"
             android:showAsAction="never" />
     
+        <!-- view achievements -->
+    <item   android:id="@+id/achievements"
+            android:title="@string/achievements"
+            android:showAsAction="never" />
+    
     <!-- settings -->
     <item android:id="@+id/settings"
           android:title="@string/settings"
