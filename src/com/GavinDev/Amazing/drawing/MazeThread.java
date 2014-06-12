@@ -17,6 +17,7 @@ package com.GavinDev.Amazing.drawing;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -46,8 +47,8 @@ public class MazeThread extends Thread {
     private static final float TOUCH_TOLERANCE = 4;
 
     // The size of the maze
-    private int mCellsPerRow = 12;
-    private int mCellsPerColumn = 15;
+    private int mCellsPerRow;
+    private int mCellsPerColumn;
 
     // Pixel sizes of objects
     private int mCellWidth;
@@ -130,29 +131,47 @@ public class MazeThread extends Thread {
         mPath = new Path();
 
         // Set maxSpeed depending on screen DPI
+        float baseMaxSpeed = 18f; // The maxSpeed for screens at
+                                  // DisplayMetrics.DENSITY_XHIGH
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
         switch (metrics.densityDpi) {
             case DisplayMetrics.DENSITY_LOW:
-                mMaxSpeed = 6.75f;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_LOW;
                 break;
             case DisplayMetrics.DENSITY_MEDIUM:
-                mMaxSpeed = 9f;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_MEDIUM;
                 break;
             case DisplayMetrics.DENSITY_TV:
-                mMaxSpeed = 11.98125f;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_TV;
                 break;
             case DisplayMetrics.DENSITY_HIGH:
-                mMaxSpeed = 13.5f;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_HIGH;
                 break;
             case DisplayMetrics.DENSITY_XHIGH:
-                mMaxSpeed = 18;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_XHIGH;
                 break;
             case DisplayMetrics.DENSITY_XXHIGH:
-                mMaxSpeed = 27;
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_XXHIGH;
                 break;
-            case DisplayMetrics.DENSITY_XXXHIGH:
-                mMaxSpeed = 36;
+            default:
+                mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
+                        * DisplayMetrics.DENSITY_XHIGH;
                 break;
+        }
+
+        // set the cells per column/row depending on orientation.
+        if (mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            mCellsPerRow = 12;
+            mCellsPerColumn = 15;
+        } else {
+            mCellsPerRow = 15;
+            mCellsPerColumn = 12;
         }
 
         newMaze();
@@ -403,6 +422,12 @@ public class MazeThread extends Thread {
             // cellWidth/Height, whichever is smaller
             mCellWidth = (int) (mCanvasWidth / (mCellsPerRow + (mCellsPerRow + 1) / 12.0));
             mCellHeight = (int) (mCanvasHeight / (mCellsPerColumn + (mCellsPerColumn + 1) / 12.0));
+
+            // enforce square maze cells
+            mCellHeight = Math.min(mCellWidth, mCellHeight);
+            mCellWidth = mCellHeight;
+
+            // Set wall and boundary sizes
             mWallWidth = mCellWidth > mCellHeight ? mCellHeight / 12 : mCellWidth / 12;
             mBoundaryWidth = (mCanvasWidth - mCellWidth * mCellsPerRow - mWallWidth
                     * (mCellsPerRow + 1)) / 2;
