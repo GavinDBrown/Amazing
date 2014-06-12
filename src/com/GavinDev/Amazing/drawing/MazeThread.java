@@ -28,6 +28,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
@@ -70,7 +71,7 @@ public class MazeThread extends Thread {
     private float mXFriction = 0;
     private static final String Y_FRICTION_ID = "yfriction";
     private float mYFriction = 0;
-    private static final int MAX_SPEED = 15;
+    private static float mMaxSpeed;
     private static final float REBOUND_FAC = .25f;
     private static final String UFO_ID = "ufo";
     private Point mUfo;
@@ -127,6 +128,32 @@ public class MazeThread extends Thread {
 
         mUfo = new Point();
         mPath = new Path();
+
+        // Set maxSpeed depending on screen DPI
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        switch (metrics.densityDpi) {
+            case DisplayMetrics.DENSITY_LOW:
+                mMaxSpeed = 6.75f;
+                break;
+            case DisplayMetrics.DENSITY_MEDIUM:
+                mMaxSpeed = 9f;
+                break;
+            case DisplayMetrics.DENSITY_TV:
+                mMaxSpeed = 11.98125f;
+                break;
+            case DisplayMetrics.DENSITY_HIGH:
+                mMaxSpeed = 13.5f;
+                break;
+            case DisplayMetrics.DENSITY_XHIGH:
+                mMaxSpeed = 18;
+                break;
+            case DisplayMetrics.DENSITY_XXHIGH:
+                mMaxSpeed = 27;
+                break;
+            case DisplayMetrics.DENSITY_XXXHIGH:
+                mMaxSpeed = 36;
+                break;
+        }
 
         newMaze();
     }
@@ -494,11 +521,11 @@ public class MazeThread extends Thread {
             mUfoYVelocity = TOUCH_FACTOR
                     * (mYTouch - mUfo.y + Math.round(PREVIOUS_VELOCITY_FAC * mUfoYVelocity));
             // Enforce max speed;
-            int accSpeed = (int) Math.round(Math.sqrt(Math.pow(mUfoXVelocity, 2)
-                    + Math.pow(mUfoYVelocity, 2)));
-            if (accSpeed > MAX_SPEED + 1) {
-                mUfoXVelocity = mUfoXVelocity * MAX_SPEED / accSpeed;
-                mUfoYVelocity = mUfoYVelocity * MAX_SPEED / accSpeed;
+            float accSpeed = (float) Math.sqrt(Math.pow(mUfoXVelocity, 2)
+                    + Math.pow(mUfoYVelocity, 2));
+            if (accSpeed > mMaxSpeed) {
+                mUfoXVelocity = mUfoXVelocity * mMaxSpeed / accSpeed;
+                mUfoYVelocity = mUfoYVelocity * mMaxSpeed / accSpeed;
             }
         } else {
             // Decrease speed with friction.
