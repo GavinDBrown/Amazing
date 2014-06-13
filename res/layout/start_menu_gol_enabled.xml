@@ -4,7 +4,7 @@
     android:layout_height="fill_parent" >
 
     <com.GavinDev.Amazing.drawing.GolSurfaceView
-        android:id="@+id/game_of_life_background"
+        android:id="@+id/start_menu_gol_enabled"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
@@ -21,7 +21,6 @@
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
             android:background="@drawable/start_menu_button"
-            android:onClick="startKruskalsMaze"
             android:text="@string/start_kruskals_maze"
             android:textColor="@android:color/black" />
 
@@ -32,7 +31,6 @@
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
             android:background="@drawable/start_menu_button"
-            android:onClick="startMediumMaze"
             android:text="@string/start_medium_maze"
             android:textColor="@android:color/black" />
 
@@ -43,7 +41,6 @@
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
             android:background="@drawable/start_menu_button"
-            android:onClick="startRecursiveBacktrackerMaze"
             android:text="@string/start_recursive_backtracker_maze"
             android:textColor="@android:color/black" />
 

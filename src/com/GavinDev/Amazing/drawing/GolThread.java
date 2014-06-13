@@ -16,7 +16,6 @@
 package com.GavinDev.Amazing.drawing;
 
 import android.graphics.Canvas;
-import android.os.Bundle;
 import android.view.SurfaceHolder;
 
 import com.GavinDev.Amazing.Maze.GameOfLife;
@@ -35,8 +34,8 @@ public class GolThread extends Thread {
     private GameOfLife mGameOfLife;
     private final Object mGolLock = new Object();
 
-    /** String to identify GameOfLife object in bundle. */
-    private static final String GAME_OF_LIFE_ID = "gameoflife";
+    // /** String to identify GameOfLife object in bundle. */
+    // private static final String GAME_OF_LIFE_ID = "gameoflife";
 
     /**
      * Current height of the surface/canvas.
@@ -104,32 +103,32 @@ public class GolThread extends Thread {
         }
     }
 
-    /**
-     * Dump game state to the provided Bundle. Typically called when the
-     * Activity is being suspended.
-     * 
-     * @return Bundle with this view's state
-     */
-    public Bundle saveState(Bundle outState) {
-        synchronized (mGolLock) {
-            if (outState != null) {
-                outState.putParcelable(GAME_OF_LIFE_ID, mGameOfLife);
-            }
-        }
-        return outState;
-    }
+    // /**
+    // * Dump game state to the provided Bundle. Typically called when the
+    // * Activity is being suspended.
+    // *
+    // * @return Bundle with this view's state
+    // */
+    // public Bundle saveState(Bundle outState) {
+    // synchronized (mGolLock) {
+    // if (outState != null) {
+    // outState.putParcelable(GAME_OF_LIFE_ID, mGameOfLife);
+    // }
+    // }
+    // return outState;
+    // }
 
-    /**
-     * Restores state from the indicated Bundle. Typically called when the
-     * Activity is being restored after having been previously destroyed.
-     * 
-     * @param savedState Bundle containing the state
-     */
-    public synchronized void restoreState(Bundle savedState) {
-        synchronized (mGolLock) {
-            mGameOfLife = (GameOfLife) savedState.getParcelable(GAME_OF_LIFE_ID);
-        }
-    }
+    // /**
+    // * Restores state from the indicated Bundle. Typically called when the
+    // * Activity is being restored after having been previously destroyed.
+    // *
+    // * @param savedState Bundle containing the state
+    // */
+    // public synchronized void restoreState(Bundle savedState) {
+    // synchronized (mGolLock) {
+    // mGameOfLife = (GameOfLife) savedState.getParcelable(GAME_OF_LIFE_ID);
+    // }
+    // }
 
     @Override
     public void run() {

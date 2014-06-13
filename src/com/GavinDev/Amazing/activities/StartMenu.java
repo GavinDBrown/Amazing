@@ -21,33 +21,34 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.GavinDev.Amazing.R;
 import com.GavinDev.Amazing.activities.LeaderboardPickerDialog.LeaderboardPickerDialogCallback;
-import com.GavinDev.Amazing.drawing.GolSurfaceView;
-import com.GavinDev.Amazing.drawing.GolThread;
 import com.google.android.gms.games.Games;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
-public class StartMenu extends BaseGameActivity implements LeaderboardPickerDialogCallback {
+public class StartMenu extends BaseGameActivity implements LeaderboardPickerDialogCallback,
+        StartMenuFragmentGolEnabled.Listener, StartMenuFragmentGolDisabled.Listener {
 
+    // Fragments
+    StartMenuFragmentGolEnabled mStartMenuFragmentGolEnabled;
+    StartMenuFragmentGolDisabled mStartMenuFragmentGolDisabled;
+
+    // tag for debug logging
+    final boolean ENABLE_DEBUG = true;
+    final String TAG = "com.GavinDev.Amazing.activites.StartMenu";
+
+    // Maze types
     public static final int PERFECT_MAZE = 0;
     public static final int DFS_MAZE = 1;
     public static final int GROWING_TREE_MAZE = 2;
     public static final String MAZE_TYPE = "com.TeamAmazing.game.StartMenu.MAZE_TYPE";
-
-    /** A handle to the thread that's running the Game Of Life animation. */
-    private GolThread mGOLThread;
-
-    /** A handle to the View in which the background is running. */
-    private GolSurfaceView mGOLView;
 
     private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
 
@@ -55,34 +56,47 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
     private boolean mShowLeaderboard = false;
     private boolean mShowAchievements = false;
 
+    // request codes we use when invoking an external activity
+    final int RC_RESOLVE = 5000, RC_UNUSED = 5001;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_start_menu);
 
-        // Finish this activity if there is already a task running that starts
-        // with this activity.
-        if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
-            finish();
-            return;
-        }
+        // create fragments
+        mStartMenuFragmentGolEnabled = new StartMenuFragmentGolEnabled();
+        mStartMenuFragmentGolDisabled = new StartMenuFragmentGolDisabled();
+
+        // listen to fragment events
+        mStartMenuFragmentGolEnabled.setListener(this);
+        mStartMenuFragmentGolDisabled.setListener(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        // IMPORTANT: if this Activity supported rotation, we'd have to be
+        // more careful about adding the fragment, since the fragment would
+        // already be there after rotation and trying to add it again would
+        // result in overlapping fragments. But since we don't support rotation,
+        // we don't deal with that for code simplicity.
+
+        // TODO re-enable orientation choice
+
         // Set the desired orientation
-        if (prefs.getBoolean("pref_orientation", true)) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
+        // if (prefs.getBoolean("pref_orientation", true)) {
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        // } else {
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        // }
 
-        // Check if the game of life background is enabled
+        // Check if the game of life background is enabled and add initial
+        // fragment
         if (prefs.getBoolean("pref_start_background", true)) {
-            setContentView(R.layout.game_of_life_background);
-            startGOLBackground();
-
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, mStartMenuFragmentGolEnabled).commit();
         } else {
-            // The game of life background is disabled
-            setContentView(R.layout.start_menu_background);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, mStartMenuFragmentGolDisabled).commit();
         }
 
         prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -91,13 +105,15 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
                 if ("pref_start_background".equals(key)) {
                     if (prefs.getBoolean("pref_start_background", true)) {
                         // background is going from disabled -> enabled
-                        setContentView(R.layout.game_of_life_background);
-                        startGOLBackground();
+                        getSupportFragmentManager().beginTransaction()
+                                .replace(R.id.fragment_container, mStartMenuFragmentGolEnabled)
+                                .commitAllowingStateLoss();
 
                     } else {
                         // background is going from enabled -> disabled
-                        setContentView(R.layout.start_menu_background);
-                        stopGOLBackground();
+                        getSupportFragmentManager().beginTransaction()
+                                .replace(R.id.fragment_container, mStartMenuFragmentGolDisabled)
+                                .commitAllowingStateLoss();
                     }
                 }
             }
@@ -107,76 +123,10 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
 
     }
 
-    private void startGOLBackground() {
-        // get handles to the GOLView and it's GOLThread
-        mGOLView = (GolSurfaceView) findViewById(R.id.game_of_life_background);
-        mGOLThread = new GolThread(mGOLView.getHolder());
-        mGOLView.setThread(mGOLThread);
-        mGOLThread.start();
-    }
-
-    private void stopGOLBackground() {
-        if (mGOLThread != null) {
-            mGOLThread.halt(); // stop the animation if it's valid
-            boolean retry = true;
-            while (retry) {
-                try {
-                    mGOLThread.join();
-                    retry = false;
-                } catch (InterruptedException e) {
-                }
-            }
-            mGOLThread = null;
-            mGOLView = null;
-        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        // Check if the GOLBackground is enabled
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_start_background",
-                true)) {
-            mGOLThread.saveState(outState);
-        }
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        // Check if the GOLBackground is enabled
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_start_background",
-                true))
-            mGOLThread.restoreState(savedInstanceState);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_start_background",
-                true)) {
-            mGOLThread.unpause();
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_start_background",
-                true)) {
-            mGOLThread.pause();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
+    // Switch UI to the given fragment
+    void switchToFragment(Fragment newFrag) {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, newFrag)
+                .commit();
     }
 
     @Override
@@ -184,11 +134,6 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
         super.onDestroy();
         PreferenceManager.getDefaultSharedPreferences(this)
                 .unregisterOnSharedPreferenceChangeListener(prefsListener);
-
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_start_background",
-                true)) {
-            stopGOLBackground();
-        }
     }
 
     @Override
@@ -251,24 +196,29 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
         }
     }
 
-    // Kruskal's algorithm
-    public void startKruskalsMaze(View v) {
-        Intent intent = new Intent(this, MazeGame.class);
-        intent.putExtra(MAZE_TYPE, PERFECT_MAZE);
+    @Override
+    public void onStartMazeRequested(int mazeType) {
+        Intent intent;
+        switch (mazeType) {
+            case PERFECT_MAZE:
+                intent = new Intent(this, MazeGame.class);
+                intent.putExtra(MAZE_TYPE, PERFECT_MAZE);
+                break;
+            case GROWING_TREE_MAZE:
+                intent = new Intent(this, MazeGame.class);
+                intent.putExtra(MAZE_TYPE, GROWING_TREE_MAZE);
+                break;
+            case DFS_MAZE:
+                intent = new Intent(this, MazeGame.class);
+                intent.putExtra(MAZE_TYPE, DFS_MAZE);
+                break;
+            default:
+                intent = new Intent(this, MazeGame.class);
+                intent.putExtra(MAZE_TYPE, PERFECT_MAZE);
+                break;
+        }
         startActivity(intent);
-    }
 
-    // Recursive backtracker algorithm
-    public void startRecursiveBacktrackerMaze(View v) {
-        Intent intent = new Intent(this, MazeGame.class);
-        intent.putExtra(MAZE_TYPE, DFS_MAZE);
-        startActivity(intent);
-    }
-
-    public void startMediumMaze(View v) {
-        Intent intent = new Intent(this, MazeGame.class);
-        intent.putExtra(MAZE_TYPE, GROWING_TREE_MAZE);
-        startActivity(intent);
     }
 
     @Override
@@ -291,9 +241,6 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
         // show sign-out button, hide the sign-in button
         invalidateOptionsMenu();
 
-        // TODO update UI, enable functionality that depends on
-        // sign in, etc
-
         if (mShowLeaderboard) {
             mShowLeaderboard = false;
             // Display leaderboard picker dialog
@@ -311,19 +258,19 @@ public class StartMenu extends BaseGameActivity implements LeaderboardPickerDial
     @Override
     public void displayEasyLeaderboard() {
         startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
-                getString(R.string.leaderboard_easy)), 0);
+                getString(R.string.leaderboard_easy)), RC_UNUSED);
     }
 
     @Override
     public void displayMediumLeaderboard() {
         startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
-                getString(R.string.leaderboard_medium)), 0);
+                getString(R.string.leaderboard_medium)), RC_UNUSED);
     }
 
     @Override
     public void displayHardLeaderboard() {
         startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(),
-                getString(R.string.leaderboard_hard)), 0);
+                getString(R.string.leaderboard_hard)), RC_UNUSED);
     }
 
     public static class SignInRequiredDialog extends DialogFragment {
