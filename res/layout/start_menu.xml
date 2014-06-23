@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent"
+    android:background="@android:color/black" >
 
-    <com.GavinDev.Amazing.drawing.GolSurfaceView
-        android:id="@+id/start_menu_gol_enabled"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
+    <!-- We use a FrameLayout so the GolSurfaceView can be programmatically added (baesd on user preferences) behind the buttons at runtime. -->
 
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:orientation="vertical" >
 
         <Button
             android:id="@+id/start_kruskals_maze"
-            android:layout_width="100dip"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
@@ -26,7 +24,7 @@
 
         <Button
             android:id="@+id/start_medium_maze"
-            android:layout_width="100dip"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
@@ -36,14 +34,13 @@
 
         <Button
             android:id="@+id/start_recursive_backtracker_maze"
-            android:layout_width="100dip"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_margin="@dimen/button_margins"
             android:background="@drawable/start_menu_button"
             android:text="@string/start_recursive_backtracker_maze"
             android:textColor="@android:color/black" />
-
     </LinearLayout>
 
-</RelativeLayout>
+</FrameLayout>

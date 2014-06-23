@@ -18,7 +18,7 @@ package com.GavinDev.Amazing.Maze;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.GavinDev.Amazing.activities.StartMenu;
+import com.GavinDev.Amazing.UI.GameActivity;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,13 +48,13 @@ public class Maze implements Parcelable {
             }
         }
         switch (mazeType) {
-            case StartMenu.PERFECT_MAZE:
+            case GameActivity.PERFECT_MAZE:
                 kruskalMaze();
                 break;
-            case StartMenu.DFS_MAZE:
+            case GameActivity.DFS_MAZE:
                 dfsMaze();
                 break;
-            case StartMenu.GROWING_TREE_MAZE:
+            case GameActivity.GROWING_TREE_MAZE:
                 growingTreeMaze();
                 break;
             default:

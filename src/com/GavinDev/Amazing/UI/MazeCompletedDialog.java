@@ -13,27 +13,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.GavinDev.Amazing.activities;
+package com.GavinDev.Amazing.UI;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.os.Bundle;
 
 import com.GavinDev.Amazing.R;
 
-public class LeaderboardPickerDialog extends DialogFragment {
-    LeaderboardPickerDialogCallback mCallback;
+import java.util.Locale;
+
+public class MazeCompletedDialog extends DialogFragment {
+    MazeCompletedDialogCallback mCallback;
 
     // Interface the container activity must implement
-    public interface LeaderboardPickerDialogCallback {
-        public void displayEasyLeaderboard();
+    public interface MazeCompletedDialogCallback {
+        public void onReset();
 
-        public void displayMediumLeaderboard();
+        public void onStartMenu();
 
-        public void displayHardLeaderboard();
+        public void onScores(int mazeType);
     }
 
     @Override
@@ -43,7 +46,7 @@ public class LeaderboardPickerDialog extends DialogFragment {
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception
         try {
-            mCallback = (LeaderboardPickerDialogCallback) activity;
+            mCallback = (MazeCompletedDialogCallback) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnDialogButtonPressedCallback");
@@ -52,31 +55,63 @@ public class LeaderboardPickerDialog extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Bundle args = getArguments();
+        int time = args.getInt(MazeGameFragment.MAZE_COMPLETED_TIME_ID);
+        final int mazeType = args.getInt(MazeGameFragment.MAZE_TYPE_ID);
+        String message = mMessageFormater(time);
+
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(),
                 AlertDialog.THEME_HOLO_DARK);
 
-        builder.setMessage(getString(R.string.leaderboard_picker_dialog));
+        builder.setMessage(message);
 
-        builder.setNegativeButton(R.string.easy, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.reset, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                mCallback.displayEasyLeaderboard();
+                // User clicked reset button
+                mCallback.onReset();
             }
         });
-        builder.setNeutralButton(R.string.medium, new DialogInterface.OnClickListener() {
+        builder.setNeutralButton(R.string.scores, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                mCallback.displayMediumLeaderboard();
+                // User clicked reset button
+                mCallback.onScores(mazeType);
             }
         });
-        builder.setPositiveButton(R.string.hard, new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.menu, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-                mCallback.displayHardLeaderboard();
+                mCallback.onStartMenu();
             }
         });
         // Create the AlertDialog object and return it
         return builder.create();
     }
+
+    private String mMessageFormater(int time) {
+        int millis = (time % 1000) / 100;
+        int second = (time / 1000) % 60;
+        int minute = (time / (1000 * 60)) % 60;
+        int hour = (time / (1000 * 60 * 60)) % 24;
+        String message;
+        Resources res = getResources();
+
+        if (hour > 0) {
+            message = res.getString(R.string.maze_finished_hour);
+        } else if (minute > 1) {
+            message = String.format(Locale.US, res.getString(R.string.maze_finished_minutes),
+                    minute, second, millis);
+        } else if (minute > 0) {
+            message = String.format(Locale.US, res.getString(R.string.maze_finished_minute),
+                    second, millis);
+        } else {
+            message = String.format(Locale.US, res.getString(R.string.maze_finished_seconds),
+                    second, millis);
+        }
+
+        return message;
+    }
+
 }

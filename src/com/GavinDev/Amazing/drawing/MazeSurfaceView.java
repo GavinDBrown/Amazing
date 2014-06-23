@@ -44,7 +44,9 @@ public class MazeSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     /**
-     * @param mazeThread The thread to draw into this MazeSurfaceView.
+     * @param mazeThread The thread to draw into this MazeSurfaceView. We
+     *            require a reference to it so we can pass it touch events and
+     *            SurfaceHolder callbacks.
      */
     public void setThread(MazeThread mazeThread) {
         mMazeThread = mazeThread;

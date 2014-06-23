@@ -27,7 +27,6 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
@@ -38,6 +37,10 @@ import com.GavinDev.Amazing.Maze.Cell;
 import com.GavinDev.Amazing.Maze.Maze;
 import com.GavinDev.Amazing.Maze.Wall;
 
+/**
+ * MazeThread draws the maze onto the MazeSurfaceView. Handles touch events
+ * passed to it to update the state of the maze game.
+ */
 public class MazeThread extends Thread {
 
     // touch event variables
@@ -92,9 +95,8 @@ public class MazeThread extends Thread {
 
     // References to important objects
     private SurfaceHolder mSurfaceHolder;
-    private Handler mHandler;
-    private Context mContext;
     private SharedPreferences mPrefs;
+    private Callback mCallback;
 
     public static final int MESSAGE_MAZE_COMPLETED = 1;
     public static final int MESSAGE_UPDATE_TIMER = 2;
@@ -108,32 +110,59 @@ public class MazeThread extends Thread {
     private static final int STATE_RESET_AFTER_MEASURE = 4;
     private volatile int mState = STATE_STOPPED;
 
-    private Paint mPaint;
+    // Paints and bitmaps
+    private Paint mMazePaint;
+    private Paint mPathPaint;
+    private Paint mBackgroundPaint;
+    private Bitmap mUfoBitmap;
 
     // Timing variables
     private static final String TIME_ELAPSED_ID = "timeElapsed";
     private int mTimeElapsed = 0;
     private long mTimeStart;
 
-    public MazeThread(SurfaceHolder surfaceHolder, Context context, Handler handler, int mazeType) {
-        mSurfaceHolder = surfaceHolder;
-        mHandler = handler;
-        mMazeType = mazeType;
-        mContext = context;
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+    /**
+     * Callback that the hosting object must implement to receive updates from
+     * the maze game.
+     */
+    public interface Callback {
 
-        mPaint = new Paint();
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setAlpha(255);
-        mPaint.setStrokeWidth(1);
+        void mazeCompleted(int timeElapsed, int mazeType);
+
+        void updateTimer(int timeElapsed);
+
+        void dismissMazeFinishedDialog();
+
+    }
+
+    public MazeThread(SurfaceHolder surfaceHolder, Context context, Callback cb, int mazeType) {
+        mCallback = cb;
+        mSurfaceHolder = surfaceHolder;
+        mMazeType = mazeType;
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        mMazePaint = new Paint();
+        mMazePaint.setStyle(Paint.Style.FILL);
+
+        mMazePaint.setStrokeWidth(1);
+        mPathPaint = new Paint();
+        mPathPaint.setColor(context.getResources().getColor(R.color.pencil_grey));
+        mPathPaint.setStrokeWidth(3);
+        mPathPaint.setStyle(Paint.Style.STROKE);
+        mBackgroundPaint = new Paint();
+        mBackgroundPaint.setStyle(Paint.Style.FILL);
+        mBackgroundPaint.setAlpha(255);
+        mBackgroundPaint.setColor(context.getResources().getColor(R.color.paper_white));
 
         mUfo = new Point();
         mPath = new Path();
 
+        mUfoBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.ufo);
+
         // Set maxSpeed depending on screen DPI
         float baseMaxSpeed = 18f; // The maxSpeed for screens at
                                   // DisplayMetrics.DENSITY_XHIGH
-        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         switch (metrics.densityDpi) {
             case DisplayMetrics.DENSITY_LOW:
                 mMaxSpeed = (baseMaxSpeed / DisplayMetrics.DENSITY_XHIGH)
@@ -166,7 +195,7 @@ public class MazeThread extends Thread {
         }
 
         // set the cells per column/row depending on orientation.
-        if (mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+        if (context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             mCellsPerRow = 12;
             mCellsPerColumn = 15;
         } else {
@@ -175,16 +204,6 @@ public class MazeThread extends Thread {
         }
 
         newMaze();
-    }
-
-    /**
-     * Stops this MazeThread.
-     */
-    public void halt() {
-        synchronized (mSurfaceHolder) {
-            mState = STATE_STOPPED;
-            mSurfaceHolder.notify();
-        }
     }
 
     public void pause() {
@@ -202,9 +221,19 @@ public class MazeThread extends Thread {
             if (mState == STATE_MAZE_FINISHED) {
                 // Dismiss the dialog and set the state to running so the maze
                 // will be drawn once and the dialog recreated.
-                mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_DISMISS_DIALOG));
+                mCallback.dismissMazeFinishedDialog();
                 mState = STATE_RUNNING;
             }
+        }
+    }
+
+    /**
+     * Stop this MazeThread.
+     */
+    public void halt() {
+        synchronized (mSurfaceHolder) {
+            mState = STATE_STOPPED;
+            mSurfaceHolder.notify();
         }
     }
 
@@ -233,21 +262,25 @@ public class MazeThread extends Thread {
      * Restores state from the indicated Bundle. Typically called when the
      * Activity is being restored after having been previously destroyed.
      * 
-     * @param savedState Bundle containing the state
+     * @param savedInstanceState Bundle containing the state
      */
-    public synchronized void restoreState(Bundle savedState) {
+    public void restoreState(Bundle savedInstanceState) {
         synchronized (mSurfaceHolder) {
-            mMaze = savedState.getParcelable(MAZE_ID);
+            mMaze = savedInstanceState.getParcelable(MAZE_ID);
             mState = STATE_RUNNING;
-            mUfo = savedState.getParcelable(UFO_ID);
-            mUfoXVelocity = savedState.getFloat(UFO_X_VELOCITY_ID);
-            mUfoYVelocity = savedState.getFloat(UFO_Y_VELOCITY_ID);
-            mXFriction = savedState.getFloat(X_FRICTION_ID);
-            mYFriction = savedState.getFloat(Y_FRICTION_ID);
-            mTimeElapsed = savedState.getInt(TIME_ELAPSED_ID);
+            mUfo = savedInstanceState.getParcelable(UFO_ID);
+            mUfoXVelocity = savedInstanceState.getFloat(UFO_X_VELOCITY_ID);
+            mUfoYVelocity = savedInstanceState.getFloat(UFO_Y_VELOCITY_ID);
+            mXFriction = savedInstanceState.getFloat(X_FRICTION_ID);
+            mYFriction = savedInstanceState.getFloat(Y_FRICTION_ID);
+            mTimeElapsed = savedInstanceState.getInt(TIME_ELAPSED_ID);
         }
     }
 
+    /**
+     * The main game loop: while in STATE_RUNNING updates the game and then
+     * draws it.
+     */
     @Override
     public void run() {
         while (mState != STATE_STOPPED) {
@@ -300,92 +333,39 @@ public class MazeThread extends Thread {
 
             if (mState != STATE_MAZE_FINISHED) {
                 mTimeElapsed = mTimeElapsed + (int) (System.currentTimeMillis() - mTimeStart);
-                mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_UPDATE_TIMER, mTimeElapsed, 0,
-                        null));
+                mCallback.updateTimer(mTimeElapsed);
             }
 
         }
-    }
-
-    private void mDraw(Canvas canvas) {
-        // draw the background
-        mPaint.setColor(mContext.getResources().getColor(R.color.paper_white));
-        canvas.drawRect(0, 0, mCanvasWidth, mCanvasHeight, mPaint);
-
-        // draw the maze
-        mPaint.setColor(Color.BLACK);
-        for (Wall w : mMaze.getWalls()) {
-            canvas.drawRect(w.getBounds(), mPaint);
-        }
-
-        // Draw the end cell.
-        mPaint.setColor(Color.RED);
-        mPaint.setAlpha(150);
-        canvas.drawRect(mEndRect, mPaint);
-        mPaint.setAlpha(255);
-
-        // Draw the path
-        // TODO
-        if (mPrefs.getBoolean("pref_path", true)) {
-            mPaint.setColor(mContext.getResources().getColor(R.color.pencil_grey));
-            mPaint.setStrokeWidth(3);
-            mPaint.setStyle(Paint.Style.STROKE);
-            canvas.drawPath(mPath, mPaint);
-            mPaint.setStyle(Paint.Style.FILL);
-        }
-
-        // Draw the ufo.
-        canvas.drawBitmap(mUfoBm, mUfo.x - mUfoWidth / 2, mUfo.y - mUfoHeight / 2, null);
-
     }
 
     /**
-     * Update the position of the UFO
+     * Called by the UI thread when there is a touch event. Must be Thread Safe.
      */
-    private void updatePosition() {
-
-        Point vel = new Point(Math.round(mUfoXVelocity), Math.round(mUfoYVelocity));
-        boolean positionUpdated = false;
-        while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
-            positionUpdated = true;
-            if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
-                takeNStepsInXDirection(vel, Math.abs(vel.x / vel.y));
-                takeNStepsInYDirection(vel, 1);
-            } else if (Math.abs(vel.y) > Math.abs(vel.x) && vel.x != 0) {
-                takeNStepsInYDirection(vel, Math.abs(vel.y / vel.x));
-                takeNStepsInXDirection(vel, 1);
-            } else {
-                if (Math.abs(vel.x) > 0) {
-                    takeNStepsInXDirection(vel, 1);
-                }
-                if (Math.abs(vel.y) > 0) {
-                    takeNStepsInYDirection(vel, 1);
-                }
-            }
-        }
-
-        // Add current position to mPath if the position changed.
-        if (positionUpdated)
-            mPath.lineTo(mUfo.x, mUfo.y);
-
-        // Check if we are in the end cell.
-        if (mEndRect.contains(mUfo.x, mUfo.y)) {
-            // Sprite is inside the end cell.
-            mazeCompleted();
-        }
-    }
-
-    private void mazeCompleted() {
-        // Send a message to the UI thread
-        mHandler.sendMessage(mHandler.obtainMessage(MESSAGE_MAZE_COMPLETED, mTimeElapsed,
-                mMazeType, null));
+    public boolean handleTouchEvent(MotionEvent ev) {
         synchronized (mSurfaceHolder) {
-            mState = STATE_MAZE_FINISHED;
+            switch (ev.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    mXTouch = ev.getX();
+                    mYTouch = ev.getY();
+                    mIsAccelerating = true;
+                    break;
+                case MotionEvent.ACTION_UP:
+                    mIsAccelerating = false;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    mXTouch = ev.getX();
+                    mYTouch = ev.getY();
+                    mIsAccelerating = true;
+                    break;
+            }
+            return true;
         }
     }
 
     /**
      * Note: Can be called from UI thread or MazeThread. Creates a new maze.
+     * Must be Thread Safe.
      */
     public void newMaze() {
         synchronized (mSurfaceHolder) {
@@ -410,7 +390,8 @@ public class MazeThread extends Thread {
     }
 
     /**
-     * Calculates the pixel sizes of the maze related objects.
+     * Calculates the pixel sizes of the maze related objects. Must be Thread
+     * Safe.
      */
     public void calculateGFXSizes() {
         synchronized (mSurfaceHolder) {
@@ -446,9 +427,7 @@ public class MazeThread extends Thread {
             }
 
             // resize the ufo bitmap
-            mUfoBm = Bitmap.createScaledBitmap(
-                    BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ufo),
-                    mUfoWidth, mUfoHeight, false);
+            mUfoBm = Bitmap.createScaledBitmap(mUfoBitmap, mUfoWidth, mUfoHeight, false);
 
             // get bounds for start and end rectangles
             mEndRect = calculateCellRect(mMaze.getCell(Cell.END_CELL));
@@ -497,7 +476,7 @@ public class MazeThread extends Thread {
     }
 
     /**
-     * Callback invoked when the surface dimensions change.
+     * Callback invoked when the surface dimensions change. Must be Thread Safe.
      */
     public void setSurfaceSize(int width, int height) {
         // synchronized to make sure these all change atomically
@@ -513,25 +492,39 @@ public class MazeThread extends Thread {
         }
     }
 
-    /** Called by the UI thread when there is a touch event. */
-    public boolean handleTouchEvent(MotionEvent ev) {
-        synchronized (mSurfaceHolder) {
-            switch (ev.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    mXTouch = ev.getX();
-                    mYTouch = ev.getY();
-                    mIsAccelerating = true;
-                    break;
-                case MotionEvent.ACTION_UP:
-                    mIsAccelerating = false;
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    mXTouch = ev.getX();
-                    mYTouch = ev.getY();
-                    mIsAccelerating = true;
-                    break;
+    /**
+     * Update the position of the UFO
+     */
+    private void updatePosition() {
+
+        Point vel = new Point(Math.round(mUfoXVelocity), Math.round(mUfoYVelocity));
+        boolean positionUpdated = false;
+        while (Math.abs(vel.x) > 0 || Math.abs(vel.y) > 0) {
+            positionUpdated = true;
+            if (Math.abs(vel.x) > Math.abs(vel.y) && vel.y != 0) {
+                takeNStepsInXDirection(vel, Math.abs(vel.x / vel.y));
+                takeNStepsInYDirection(vel, 1);
+            } else if (Math.abs(vel.y) > Math.abs(vel.x) && vel.x != 0) {
+                takeNStepsInYDirection(vel, Math.abs(vel.y / vel.x));
+                takeNStepsInXDirection(vel, 1);
+            } else {
+                if (Math.abs(vel.x) > 0) {
+                    takeNStepsInXDirection(vel, 1);
+                }
+                if (Math.abs(vel.y) > 0) {
+                    takeNStepsInYDirection(vel, 1);
+                }
             }
-            return true;
+        }
+
+        // Add current position to mPath if the position changed.
+        if (positionUpdated)
+            mPath.lineTo(mUfo.x, mUfo.y);
+
+        // Check if we are in the end cell.
+        if (mEndRect.contains(mUfo.x, mUfo.y)) {
+            // Sprite is inside the end cell.
+            mazeCompleted();
         }
     }
 
@@ -673,6 +666,44 @@ public class MazeThread extends Thread {
             }
             n--;
         }
+    }
+
+    private void mazeCompleted() {
+        mCallback.mazeCompleted(mTimeElapsed, mMazeType);
+        synchronized (mSurfaceHolder) {
+            mState = STATE_MAZE_FINISHED;
+        }
+    }
+
+    /**
+     * Draws the current state of the game onto the supplied canvas.
+     * 
+     * @param canvas
+     */
+    private void mDraw(Canvas canvas) {
+        // draw the background
+        canvas.drawRect(0, 0, mCanvasWidth, mCanvasHeight, mBackgroundPaint);
+
+        // draw the maze
+        mMazePaint.setColor(Color.BLACK);
+        for (Wall w : mMaze.getWalls()) {
+            canvas.drawRect(w.getBounds(), mMazePaint);
+        }
+
+        // Draw the end cell.
+        mMazePaint.setColor(Color.RED);
+        mMazePaint.setAlpha(150);
+        canvas.drawRect(mEndRect, mMazePaint);
+        mMazePaint.setAlpha(255);
+
+        // Draw the path
+        if (mPrefs.getBoolean("pref_path", true)) {
+            canvas.drawPath(mPath, mPathPaint);
+        }
+
+        // Draw the ufo.
+        canvas.drawBitmap(mUfoBm, mUfo.x - mUfoWidth / 2, mUfo.y - mUfoHeight / 2, null);
+
     }
 
     /**
@@ -821,4 +852,5 @@ public class MazeThread extends Thread {
                 + mBoundaryWidth, (cell.getCoords().x + 1) * (mCellHeight + mWallWidth)
                 + mBoundaryHeight);
     }
+
 }
