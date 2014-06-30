@@ -16,17 +16,14 @@
 package com.GavinDev.Amazing.UI;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.GavinDev.Amazing.R;
 import com.GavinDev.Amazing.UI.LeaderboardPickerDialog.LeaderboardPickerDialogCallback;
@@ -106,10 +103,10 @@ public class GameActivity extends Activity implements LeaderboardPickerDialogCal
                 invalidateOptionsMenu();
 
                 if (mShowLeaderboard || mShowAchievements) {
-                    // Show dialog telling user they need to sign-in to see
-                    // leaderboards
-                    new SignInRequiredDialog().show(getFragmentManager(), "TAG_SIGN_IN_REQUIRED");
-
+                    // Show tpast telling user they need to sign-in
+                    Toast t = Toast.makeText(getApplicationContext(), R.string.sign_in_required,
+                            Toast.LENGTH_SHORT);
+                    t.show();
                 }
                 mShowLeaderboard = false;
                 mShowAchievements = false;
@@ -319,23 +316,6 @@ public class GameActivity extends Activity implements LeaderboardPickerDialogCal
                 RC_UNUSED);
     }
 
-    public static class SignInRequiredDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setMessage(R.string.sign_in_required).setNegativeButton(R.string.okay,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int id) {
-                            // User cancelled the dialog
-                        }
-                    });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
-    }
-
     @Override
     public void onReset() {
         mMazeGameFragment.reset();
@@ -343,7 +323,10 @@ public class GameActivity extends Activity implements LeaderboardPickerDialogCal
 
     @Override
     public void onScores(int mazeType) {
-        if (mGameServicesHelper.isSignedIn()) {
+        if (!mGameServicesHelper.isSignedIn()) {
+            mGameServicesHelper.beginUserInitiatedSignIn();
+            mShowLeaderboard = true;
+        } else {
             switch (mazeType) {
                 case GameActivity.PERFECT_MAZE:
                     startActivityForResult(Games.Leaderboards.getLeaderboardIntent(
@@ -361,9 +344,6 @@ public class GameActivity extends Activity implements LeaderboardPickerDialogCal
                             getString(R.string.leaderboard_hard)), 0);
                     break;
             }
-        } else {
-            // Tell the user they need to sign in to do that.
-            new SignInRequiredDialog().show(getFragmentManager(), "TAG_SIGN_IN_REQUIRED");
         }
     }
 

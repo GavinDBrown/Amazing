@@ -1,7 +1,7 @@
 <resources>
     <string name="achievements">Achievements</string>
     <string name="okay">Okay</string>
-    <string name="sign_in_required">Please sign-in to do that.</string>
+    <string name="sign_in_required">Sign-in required.</string>
     <string name="leaderboard_picker_dialog">Which leaderboard would you like to see?</string>
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
