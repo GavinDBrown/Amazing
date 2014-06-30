@@ -228,10 +228,7 @@ public class MazeGameFragment extends Fragment implements MazeThread.Callback {
             @Override
             public void run() {
                 // display congratulatory dialog
-                mCongratulationsDialog = new MazeCompletedDialog();
-                Bundle args = new Bundle();
-                args.putInt(MAZE_COMPLETED_TIME_ID, time);
-                mCongratulationsDialog.setArguments(args);
+                mCongratulationsDialog = MazeCompletedDialog.newInstance(time, mazeType);
                 mCongratulationsDialog.show(getFragmentManager(), "TAG_MAZE_COMPLETED");
 
                 // Submit score to leaderboard

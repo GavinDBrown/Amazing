@@ -53,6 +53,16 @@ public class MazeCompletedDialog extends DialogFragment {
         }
     }
 
+    public static MazeCompletedDialog newInstance(int time, int mazeType) {
+        MazeCompletedDialog d = new MazeCompletedDialog();
+        Bundle args = new Bundle();
+        args.putInt(MazeGameFragment.MAZE_COMPLETED_TIME_ID, time);
+        args.putInt(MazeGameFragment.MAZE_TYPE_ID, mazeType);
+        d.setArguments(args);
+        return d;
+
+    }
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Bundle args = getArguments();
